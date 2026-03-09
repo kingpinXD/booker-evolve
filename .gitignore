@@ -1,0 +1,22 @@
+# Environment / secrets
+.env
+.env.*
+
+# Cache (SerpAPI responses)
+.cache/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Go
+bin/
+vendor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/

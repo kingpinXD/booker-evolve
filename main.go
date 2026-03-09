@@ -10,7 +10,8 @@ import (
 	"booker/httpclient"
 	"booker/llm"
 	"booker/provider"
-	"booker/provider/kiwi"
+	"booker/provider/cache"
+	"booker/provider/serpapi"
 	"booker/search"
 	"booker/search/multicity"
 	"booker/types"
@@ -22,9 +23,11 @@ func main() {
 
 	// Register providers.
 	registry := provider.NewRegistry()
-	kiwiCfg := cfg.Providers[config.ProviderKiwi]
-	if err := registry.Register(kiwi.New(kiwiCfg, httpClient)); err != nil {
-		log.Fatalf("registering kiwi: %v", err)
+	serpCfg := cfg.Providers[config.ProviderSerpAPI]
+	raw := serpapi.New(serpCfg, httpClient)
+	cached := cache.Wrap(raw, ".cache/flights", 0)
+	if err := registry.Register(cached); err != nil {
+		log.Fatalf("registering serpapi: %v", err)
 	}
 
 	// Create LLM client.
@@ -36,16 +39,28 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	// Only search cities we have cached data for.
+	cachedCities := []multicity.StopoverCity{
+		{City: "Hong Kong", Airport: "HKG", Region: "east_asia",
+			MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover},
+		{City: "Bangkok", Airport: "BKK", Region: "southeast_asia",
+			MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover},
+		{City: "Istanbul", Airport: "IST", Region: "europe",
+			MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover},
+		{City: "Tokyo", Airport: "NRT", Region: "east_asia",
+			MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover},
+	}
+
 	params := multicity.SearchParams{
-		Origin:            "DEL",
-		Destination:       "YYZ",
-		OriginKiwiID:      "Airport:DEL",
-		DestinationKiwiID: "Airport:YYZ",
-		DepartureDate:     "2026-03-26",
-		Passengers:        1,
-		CabinClass:        types.CabinEconomy,
-		FlexDays:          7,
-		MaxResults:         5,
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2026-03-24",
+		Leg2Date:      "2026-03-30",
+		Passengers:    1,
+		CabinClass:    types.CabinEconomy,
+		Stopovers:     cachedCities,
+		FlexDays:      0,
+		MaxResults:    5,
 	}
 
 	log.Println("=== Booker: Multi-City Halt Search ===")

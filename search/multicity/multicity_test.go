@@ -71,35 +71,55 @@ func TestDELToYYZ_March24(t *testing.T) {
 	}
 
 	t.Logf("Total itineraries found: %d", len(results))
+	if len(results) == 0 {
+		t.Fatal("expected itineraries but got 0")
+	}
+
+	// Print summary table.
+	t.Logf("\n  %-3s  %-5s  %-11s  %-13s  %-35s  %-12s  %-7s  %-7s",
+		"#", "Score", "Price (CAD)", "Route", "Airlines", "Stopover", "Leg1", "Leg2")
+	t.Logf("  %s", "-------------------------------------------------------------------------------------------------------------")
 
 	for i, itin := range results {
 		cad, _ := currency.Convert(itin.TotalPrice, "CAD")
-		t.Logf("\n--- #%d | C$%.2f (US$%.2f) | Score: %.0f ---",
-			i+1, cad.Amount, itin.TotalPrice.Amount, itin.Score)
-		if itin.Reasoning != "" {
-			t.Logf("  LLM: %s", itin.Reasoning)
-		}
-		for j, leg := range itin.Legs {
-			legCAD, _ := currency.Convert(leg.Flight.Price, "CAD")
-			t.Logf("  LEG %d (C$%.2f):", j+1, legCAD.Amount)
-			for _, seg := range leg.Flight.Outbound {
-				t.Logf("    %s  %s(%s) → %s(%s)  %s → %s  [%s] %s",
-					seg.FlightNumber,
-					seg.OriginCity, seg.Origin,
-					seg.DestinationCity, seg.Destination,
-					seg.DepartureTime.Format("Jan 02 15:04"),
-					seg.ArrivalTime.Format("Jan 02 15:04"),
-					seg.Duration,
-					seg.AirlineName)
-			}
-			if leg.Stopover != nil {
-				t.Logf("  STOPOVER: %s (%s) — %s",
-					leg.Stopover.City, leg.Stopover.Airport, leg.Stopover.Duration)
-			}
-		}
-	}
 
-	if len(results) == 0 {
-		t.Fatal("expected itineraries but got 0")
+		// Route string.
+		route := ""
+		if len(itin.Legs) >= 2 {
+			leg1 := itin.Legs[0].Flight.Outbound
+			leg2 := itin.Legs[1].Flight.Outbound
+			if len(leg1) > 0 && len(leg2) > 0 {
+				route = leg1[0].Origin + "→" + leg2[0].Origin + "→" + leg2[len(leg2)-1].Destination
+			}
+		}
+
+		// Airlines.
+		airlines := ""
+		for j, leg := range itin.Legs {
+			if len(leg.Flight.Outbound) > 0 {
+				if j > 0 {
+					airlines += " + "
+				}
+				airlines += leg.Flight.Outbound[0].AirlineName
+			}
+		}
+
+		// Stopover city.
+		stopover := ""
+		if itin.Legs[0].Stopover != nil {
+			stopover = itin.Legs[0].Stopover.City
+		}
+
+		// Departure times for each leg.
+		leg1Time, leg2Time := "", ""
+		if len(itin.Legs) >= 1 && len(itin.Legs[0].Flight.Outbound) > 0 {
+			leg1Time = itin.Legs[0].Flight.Outbound[0].DepartureTime.Format("15:04")
+		}
+		if len(itin.Legs) >= 2 && len(itin.Legs[1].Flight.Outbound) > 0 {
+			leg2Time = itin.Legs[1].Flight.Outbound[0].DepartureTime.Format("15:04")
+		}
+
+		t.Logf("  %-3d  %-5.0f  C$%-9.2f  %-13s  %-35s  %-12s  %-7s  %-7s",
+			i+1, itin.Score, cad.Amount, route, airlines, stopover, leg1Time, leg2Time)
 	}
 }

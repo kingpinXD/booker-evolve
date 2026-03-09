@@ -17,6 +17,7 @@ const (
 type LLMProvider string
 
 const (
+	LLMAnuma  LLMProvider = "anuma"
 	LLMOpenAI LLMProvider = "openai"
 )
 
@@ -28,12 +29,16 @@ type Config struct {
 }
 
 // LLMConfig holds settings for the LLM backend.
+// Primary is tried first; Fallback is used if Primary fails.
 type LLMConfig struct {
-	Provider LLMProvider
-	APIKey   string
-	Model    string
-	BaseURL  string
+	Provider  LLMProvider
+	APIKey    string
+	Model     string
+	BaseURL   string
 	MaxTokens int
+	AuthHeader string // "Authorization" for OpenAI, "X-API-Key" for Anuma
+
+	Fallback *LLMConfig // optional fallback provider
 }
 
 // ProviderConfig holds credentials and settings for a single provider.
@@ -59,6 +64,7 @@ const (
 	EnvKiwiAPIKey    = "BOOKER_KIWI_API_KEY"
 	EnvSerpAPIKey    = "BOOKER_SERPAPI_KEY"
 	EnvOpenAIAPIKey  = "BOOKER_OPENAI_API_KEY"
+	EnvAnumaAPIKey   = "BOOKER_ANUMA_API_KEY"
 )
 
 // Default returns the default configuration.
@@ -81,11 +87,20 @@ func Default() Config {
 			},
 		},
 		LLM: LLMConfig{
-			Provider:  LLMOpenAI,
-			APIKey:    os.Getenv(EnvOpenAIAPIKey),
-			Model:     OpenAIModelDefault,
-			BaseURL:   OpenAIBaseURL,
-			MaxTokens: OpenAIMaxTokensDefault,
+			Provider:   LLMAnuma,
+			APIKey:     os.Getenv(EnvAnumaAPIKey),
+			Model:      AnumaModelDefault,
+			BaseURL:    AnumaBaseURL,
+			MaxTokens:  OpenAIMaxTokensDefault,
+			AuthHeader: AnumaAuthHeader,
+			Fallback: &LLMConfig{
+				Provider:   LLMOpenAI,
+				APIKey:     os.Getenv(EnvOpenAIAPIKey),
+				Model:      OpenAIModelDefault,
+				BaseURL:    OpenAIBaseURL,
+				MaxTokens:  OpenAIMaxTokensDefault,
+				AuthHeader: "Authorization",
+			},
 		},
 		HTTP: HTTPConfig{
 			Timeout:         30 * time.Second,

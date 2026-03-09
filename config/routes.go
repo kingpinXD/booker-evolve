@@ -2,29 +2,29 @@ package config
 
 // Kiwi via RapidAPI
 const (
-	KiwiBaseURL      = "https://kiwi-com-cheap-flights.p.rapidapi.com"
-	KiwiRapidAPIHost = "kiwi-com-cheap-flights.p.rapidapi.com"
-	KiwiOneWayPath   = "/one-way"
+	KiwiBaseURL       = "https://kiwi-com-cheap-flights.p.rapidapi.com"
+	KiwiRapidAPIHost  = "kiwi-com-cheap-flights.p.rapidapi.com"
+	KiwiOneWayPath    = "/one-way"
 	KiwiRoundTripPath = "/round-trip"
 )
 
 // Kiwi query parameter keys.
 const (
-	KiwiParamSource       = "source"
-	KiwiParamDestination  = "destination"
-	KiwiParamCurrency     = "currency"
-	KiwiParamLocale       = "locale"
-	KiwiParamAdults       = "adults"
-	KiwiParamChildren     = "children"
-	KiwiParamInfants      = "infants"
-	KiwiParamCabinClass   = "cabinClass"
-	KiwiParamSortBy       = "sortBy"
-	KiwiParamSortOrder    = "sortOrder"
-	KiwiParamLimit        = "limit"
-	KiwiParamTransport    = "transportTypes"
-	KiwiParamProviders    = "contentProviders"
-	KiwiParamHandbags     = "handbags"
-	KiwiParamHoldbags     = "holdbags"
+	KiwiParamSource      = "source"
+	KiwiParamDestination = "destination"
+	KiwiParamCurrency    = "currency"
+	KiwiParamLocale      = "locale"
+	KiwiParamAdults      = "adults"
+	KiwiParamChildren    = "children"
+	KiwiParamInfants     = "infants"
+	KiwiParamCabinClass  = "cabinClass"
+	KiwiParamSortBy      = "sortBy"
+	KiwiParamSortOrder   = "sortOrder"
+	KiwiParamLimit       = "limit"
+	KiwiParamTransport   = "transportTypes"
+	KiwiParamProviders   = "contentProviders"
+	KiwiParamHandbags    = "handbags"
+	KiwiParamHoldbags    = "holdbags"
 )
 
 // Kiwi source/destination prefix types.
@@ -63,7 +63,7 @@ const (
 
 // SerpAPI (Google Flights)
 const (
-	SerpAPIBaseURL = "https://serpapi.com"
+	SerpAPIBaseURL    = "https://serpapi.com"
 	SerpAPISearchPath = "/search.json"
 
 	SerpAPIParamEngine    = "engine"
@@ -84,8 +84,8 @@ const (
 	SerpAPITypeRoundTrip = "1"
 	SerpAPITypeMultiCity = "3"
 
-	SerpAPIParamMultiCityJSON   = "multi_city_json"
-	SerpAPIParamDepartureToken  = "departure_token"
+	SerpAPIParamMultiCityJSON  = "multi_city_json"
+	SerpAPIParamDepartureToken = "departure_token"
 
 	SerpAPIClassEconomy        = "1"
 	SerpAPIClassPremiumEconomy = "2"
@@ -95,18 +95,26 @@ const (
 
 // HTTP header keys.
 const (
-	HeaderContentType   = "Content-Type"
-	HeaderRapidAPIKey   = "x-rapidapi-key"
-	HeaderRapidAPIHost  = "x-rapidapi-host"
-	ContentTypeJSON     = "application/json"
+	HeaderContentType  = "Content-Type"
+	HeaderRapidAPIKey  = "x-rapidapi-key"
+	HeaderRapidAPIHost = "x-rapidapi-host"
+	ContentTypeJSON    = "application/json"
 )
 
 // OpenAI API
 const (
-	OpenAIBaseURL           = "https://api.openai.com/v1"
-	OpenAIChatCompletions   = "/chat/completions"
-	OpenAIModelDefault      = "gpt-4o-mini"
-	OpenAIMaxTokensDefault  = 4096
+	OpenAIBaseURL          = "https://api.openai.com/v1"
+	OpenAIChatCompletions  = "/chat/completions"
+	OpenAIModelDefault     = "gpt-4o-mini"
+	OpenAIMaxTokensDefault = 4096
+)
+
+// Anuma API (OpenAI-compatible LLM router)
+const (
+	AnumaBaseURL         = "https://portal.anuma-dev.ai/api/v1"
+	AnumaChatCompletions = "/chat/completions"
+	AnumaModelDefault    = "openai/gpt-4o-mini"
+	AnumaAuthHeader      = "X-API-Key"
 )
 
 // Default query values.

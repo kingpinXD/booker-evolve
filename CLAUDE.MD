@@ -1,3 +1,12 @@
+## Related Repositories
+
+- **Anuma AI Portal** (backend): `/Users/tanmay/IdeaProjects/jedi2002/ai-portal`
+  - Go backend for the Anuma LLM router service
+  - OpenAI-compatible API at `POST /api/v1/chat/completions`
+  - Auth via `X-API-Key: anuma_live_<key_id>.<secret>` header
+  - Supports models: `auto`, `gpt-4o-mini`, `claude-3-5-sonnet`, `gpt-4o`, `o1`
+  - Routes through Bifrost multi-provider gateway (OpenAI, Anthropic, Google, Mistral)
+
 ## Code Standards
 
 ### General Principles

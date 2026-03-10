@@ -169,4 +169,37 @@ func TestPicker_BuildSystemPrompt(t *testing.T) {
 	if !strings.Contains(prompt, `"strategy"`) {
 		t.Error("system prompt missing JSON format instruction")
 	}
+	if !strings.Contains(prompt, "both") {
+		t.Error("system prompt missing 'both' option")
+	}
+}
+
+func TestPicker_LLMReturnsBoth(t *testing.T) {
+	direct := &fakeStrategy{name: "direct", desc: "Direct flights"}
+	mc := &fakeStrategy{name: "multicity", desc: "Multi-city with stopover"}
+	mock := &mockLLM{response: `{"strategy": "both", "reason": "compare options"}`}
+	p := NewPicker(mock, direct, mc)
+
+	got, err := p.Pick(context.Background(), Request{Context: "not sure which is better"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Name() != "composite" {
+		t.Errorf("got strategy %q, want %q", got.Name(), "composite")
+	}
+}
+
+func TestPicker_LLMReturnsBoth_SingleStrategy(t *testing.T) {
+	direct := &fakeStrategy{name: "direct", desc: "Direct flights"}
+	mock := &mockLLM{response: `{"strategy": "both", "reason": "compare"}`}
+	// With only one strategy registered, "both" should return it directly.
+	p := NewPicker(mock, direct)
+
+	got, err := p.Pick(context.Background(), Request{Context: "compare"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Name() != "direct" {
+		t.Errorf("got strategy %q, want %q", got.Name(), "direct")
+	}
 }

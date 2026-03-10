@@ -93,6 +93,10 @@ func (p *Picker) pickWithLLM(ctx context.Context, req Request) (Strategy, error)
 		return nil, fmt.Errorf("parsing picker response: %w", err)
 	}
 
+	if result.Strategy == "both" {
+		return NewCompositeStrategy(nil, p.strategies...), nil
+	}
+
 	for _, s := range p.strategies {
 		if s.Name() == result.Strategy {
 			return s, nil
@@ -108,6 +112,7 @@ func (p *Picker) buildSystemPrompt() string {
 	for _, s := range p.strategies {
 		fmt.Fprintf(&b, "- %s: %s\n", s.Name(), s.Description())
 	}
+	b.WriteString("- both: Run all strategies in parallel and merge results. Use when the best approach is unclear or the user wants to compare options.\n")
 	b.WriteString("\nRespond ONLY with JSON: {\"strategy\": \"<name>\", \"reason\": \"<one sentence>\"}")
 	return b.String()
 }

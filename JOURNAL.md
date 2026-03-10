@@ -29,3 +29,7 @@ Ran self-assessment: build, tests, vet, and lint all pass. Coverage unchanged at
 ## Day 4 -- 00:00 -- Execute combiner tests, skip kiwi, fix lint
 
 Self-assessment found 1 gofmt lint issue in search/strategy.go (extra whitespace alignment). Fixed and committed. Skipped Task 6 (kiwi parser tests) per CLAUDE.md directive to ignore the Kiwi provider entirely. Completed Task 7: added 28 table-driven tests for combiner.go covering CombineLegs, hasLongLayover, lastArrival, firstDeparture, buildItinerary, PrimaryAirline, and SameAirline. combiner.go functions at 96-100% coverage. Total project coverage rose from 11.2% to 17.2%. Zero reverts, zero API calls.
+
+## Day 4 -- 13:41 -- Session close and next-session handoff
+
+Day 4 produced 3 commits: gofmt fix (14a4130), combiner tests (b5a74ad), and session wrap-up (04d2551). Coverage rose from 11.2% to 17.2% with zero reverts and zero API calls. Tasks 8 (direct search Strategy, issue #3) and 9 (Strategy picker wiring, issue #5) remain deferred as the highest-priority items for Day 5.

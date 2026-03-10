@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"booker/config"
+	"booker/provider"
 	"booker/types"
 )
 
@@ -107,5 +108,111 @@ func TestCacheTTLExpiry(t *testing.T) {
 
 	if fake.calls != 2 {
 		t.Fatalf("expected 2 calls after TTL expiry, got %d", fake.calls)
+	}
+}
+
+// fakeMultiCityProvider implements both provider.Provider and provider.MultiCitySearcher.
+type fakeMultiCityProvider struct {
+	calls   int
+	results []provider.MultiCityResult
+}
+
+func (f *fakeMultiCityProvider) Name() config.ProviderName { return "fakemc" }
+func (f *fakeMultiCityProvider) Search(_ context.Context, _ types.SearchRequest) ([]types.Flight, error) {
+	return nil, nil
+}
+func (f *fakeMultiCityProvider) SearchMultiCity(_ context.Context, _ provider.MultiCityRequest) ([]provider.MultiCityResult, error) {
+	f.calls++
+	return f.results, nil
+}
+
+func TestMultiCityCacheMiss(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "cache")
+	fake := &fakeMultiCityProvider{
+		results: []provider.MultiCityResult{
+			{
+				Leg1:  types.Flight{Price: types.Money{Amount: 200, Currency: "USD"}},
+				Leg2:  types.Flight{Price: types.Money{Amount: 150, Currency: "USD"}},
+				Price: types.Money{Amount: 350, Currency: "USD"},
+			},
+		},
+	}
+
+	cached := Wrap(fake, dir, 0)
+	req := provider.MultiCityRequest{
+		Origin: "JFK", Stopover: "IST", Destination: "DEL",
+		Leg1Date: "2026-04-01", Leg2Date: "2026-04-05",
+		Passengers: 1, CabinClass: types.CabinEconomy,
+	}
+
+	results, err := cached.SearchMultiCity(context.Background(), req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if fake.calls != 1 {
+		t.Fatalf("expected 1 call on miss, got %d", fake.calls)
+	}
+	if len(results) != 1 || results[0].Price.Amount != 350 {
+		t.Fatalf("unexpected results: %+v", results)
+	}
+}
+
+func TestMultiCityCacheHit(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "cache")
+	fake := &fakeMultiCityProvider{
+		results: []provider.MultiCityResult{
+			{Price: types.Money{Amount: 400, Currency: "USD"}},
+		},
+	}
+
+	cached := Wrap(fake, dir, 0)
+	req := provider.MultiCityRequest{
+		Origin: "JFK", Stopover: "IST", Destination: "DEL",
+		Leg1Date: "2026-04-01", Leg2Date: "2026-04-05",
+		Passengers: 1, CabinClass: types.CabinEconomy,
+	}
+
+	// First call: miss.
+	_, _ = cached.SearchMultiCity(context.Background(), req)
+	// Second call: hit.
+	results, err := cached.SearchMultiCity(context.Background(), req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if fake.calls != 1 {
+		t.Fatalf("expected 1 call after cache hit, got %d", fake.calls)
+	}
+	if len(results) != 1 || results[0].Price.Amount != 400 {
+		t.Fatalf("unexpected cached results: %+v", results)
+	}
+}
+
+func TestMultiCityCachePath_Deterministic(t *testing.T) {
+	fake := &fakeMultiCityProvider{}
+	cached := Wrap(fake, "/tmp/test", 0)
+	req := provider.MultiCityRequest{
+		Origin: "JFK", Stopover: "IST", Destination: "DEL",
+		Leg1Date: "2026-04-01", Leg2Date: "2026-04-05",
+		Passengers: 1, CabinClass: types.CabinEconomy,
+	}
+
+	path1 := cached.multiCityCachePath(req)
+	path2 := cached.multiCityCachePath(req)
+	if path1 != path2 {
+		t.Errorf("cache paths differ:\n  %s\n  %s", path1, path2)
+	}
+}
+
+func TestMultiCityNotSupported(t *testing.T) {
+	// fakeProvider does NOT implement MultiCitySearcher.
+	fake := &fakeProvider{}
+	cached := Wrap(fake, t.TempDir(), 0)
+	req := provider.MultiCityRequest{
+		Origin: "JFK", Stopover: "IST", Destination: "DEL",
+	}
+
+	_, err := cached.SearchMultiCity(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error for non-multi-city provider, got nil")
 	}
 }

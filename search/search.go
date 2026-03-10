@@ -43,8 +43,8 @@ import (
 // PriceInsights contains pricing context from the flight search provider.
 // Helps users gauge whether results are a good deal.
 type PriceInsights struct {
-	LowestPrice       float64  // cheapest available fare in USD
-	PriceLevel        string   // "low", "typical", or "high"
+	LowestPrice       float64    // cheapest available fare in USD
+	PriceLevel        string     // "low", "typical", or "high"
 	TypicalPriceRange [2]float64 // [low, high] typical fare range in USD
 }
 

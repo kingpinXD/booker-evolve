@@ -51,6 +51,13 @@ This project includes a self-evolving agent system. The agent (booker-agent) run
 - `skills/*`
 - `CLAUDE.md`
 
+### API Usage
+- **SerpAPI** (primary flight provider) has a limited free tier. Minimize API calls during evolution sessions.
+- **Always use the caching layer** (`provider/cache/`) — check cache before making live requests.
+- **Session limit: 6 SerpAPI calls max.** If a task would exceed this, skip it and log the reason.
+- When developing new features that touch flight search, write tests against cached/mocked data first. Only make live API calls if absolutely necessary.
+- Prefer working with existing cached data in `.cache/flights/` during development.
+
 ### Safety Rules
 - Every code change must pass: `go build && go test ./... && go vet ./...`
 - Maximum 3 fix attempts per failure, then auto-revert

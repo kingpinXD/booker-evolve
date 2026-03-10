@@ -42,6 +42,13 @@ If tests fail after a change:
 - `CLAUDE.md`
 - `.golangci.yml`
 
+## API Call Budget
+
+- SerpAPI has a strict free-tier limit. **Max 6 SerpAPI calls per session.**
+- Always use cached data (`.cache/flights/`) and the cache layer (`provider/cache/`) instead of live requests.
+- Write tests against mocked/cached responses, never against live APIs.
+- If a task requires live SerpAPI calls and the budget is exhausted, skip the task.
+
 ## Commit Guidelines
 
 - Message format: `<type>: <description>` (e.g., `test: add coverage for currency package`)

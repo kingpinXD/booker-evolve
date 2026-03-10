@@ -47,6 +47,10 @@ Evaluate the current state of the booker codebase and produce a prioritized list
 5. Packages with no tests
 6. Low coverage functions
 
+## API Call Awareness
+
+When planning tasks, note that SerpAPI has a **6 call per session limit**. Deprioritize tasks that require live SerpAPI calls. Prefer tasks that work with cached data, tests, or non-API code.
+
 ## Output
 
 Write findings to stdout as a numbered list, highest priority first. Each item should include:

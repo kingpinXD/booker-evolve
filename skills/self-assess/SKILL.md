@@ -44,8 +44,10 @@ Evaluate the current state of the booker codebase and produce a prioritized list
 2. Test failures (existing tests are broken)
 3. Vet warnings (potential bugs)
 4. Lint errors (code quality)
-5. Packages with no tests
-6. Low coverage functions
+5. **New features** that make booker more useful (new stopover cities, better ranking, flexible dates, multi-route support, etc.) — with tests for the new code
+6. Idiomatic Go refactors (reorganize packages, improve interfaces, simplify code structure)
+7. Coverage for new or recently changed code
+8. Coverage for existing untested code (lowest priority — only if nothing else to do)
 
 ## API Call Awareness
 

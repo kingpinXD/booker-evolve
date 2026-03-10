@@ -63,6 +63,11 @@ This project includes a self-evolving agent system. The agent (booker-agent) run
 - When developing new features that touch flight search, write tests against cached/mocked data first. Only make live API calls if absolutely necessary.
 - Prefer working with existing cached data in `.cache/flights/` during development.
 
+### Development Direction
+- **Prefer new features over retroactive coverage.** Adding tests for existing stable code is low priority. Focus on building new capabilities (more routes, better ranking, flexible dates, multi-city improvements) and writing tests for that new code.
+- **Refactoring is welcome.** The codebase can be reorganized to be more idiomatic Go — better package boundaries, cleaner interfaces, simpler function signatures. If something feels awkward or over-engineered, improve it.
+- Coverage for existing code is fine as a fallback when there are no features or refactors to work on.
+
 ### Safety Rules
 - Every code change must pass: `go build && go test ./... && go vet ./...`
 - Maximum 3 fix attempts per failure, then auto-revert

@@ -75,7 +75,33 @@ If tests fail after a change:
    ```bash
    git checkout -- <modified-files>
    ```
-5. Log the failure and move to the next task.
+5. Mark the task as `skipped` in TODO.md with the failure reason.
+6. Log the failure in JOURNAL.md and move to the next task.
+
+## BLOCKED.md — Escalation to Human
+
+If you encounter a problem that blocks ALL future work (not just one task), create `BLOCKED.md`:
+
+```markdown
+# BLOCKED — Human Intervention Required
+
+**Session:** Day N
+**Task:** [what you were working on]
+
+## Problem
+[Exact error output]
+
+## What I Tried
+[List of fix attempts and their results]
+
+## Why I'm Blocked
+[Why this cannot be resolved automatically]
+
+## Suggested Fix
+[Your best guess at what a human should do]
+```
+
+Only create BLOCKED.md for systemic issues: broken builds not caused by your changes, environment problems, dependency failures, or pre-existing test failures you cannot fix. If just one task is hard, skip it and move on — do not block the entire agent.
 
 ## Protected Files — Never Modify
 

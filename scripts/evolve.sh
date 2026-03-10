@@ -112,6 +112,16 @@ log "=== Evolution Session: Day $DAY ==="
 log "Start SHA: $START_SHA"
 log "Timestamp: $TIMESTAMP_PRETTY UTC"
 
+# --- Check for BLOCKED.md ---
+if [[ -f BLOCKED.md ]]; then
+  log "BLOCKED.md found. Agent is blocked and waiting for human intervention."
+  log "Contents:"
+  cat BLOCKED.md | while IFS= read -r line; do log "  $line"; done
+  log "Remove BLOCKED.md to unblock the agent. Skipping session."
+  increment_day
+  exit 0
+fi
+
 # =============================================================================
 # Phase A: PLANNING
 # =============================================================================
@@ -315,7 +325,19 @@ After completing each task (success OR failure):
 - If you learned something generalizable, append to LEARNINGS.md.
 - These updates are part of the task, not optional.
 
-If tests fail, you have 3 attempts to fix. After 3 failures, revert code with git checkout, mark the task as skipped in TODO.md with the failure reason.
+If tests fail, you have 3 attempts to fix. After 3 failures:
+- Revert your code changes with git checkout.
+- Mark the task as skipped in TODO.md with the failure reason.
+- If the failure is something you cannot fix (e.g., broken dependency, environment issue,
+  pre-existing test failure not caused by your changes), create BLOCKED.md with:
+  - What you were trying to do
+  - The exact error output
+  - What you tried to fix it
+  - Why you believe human help is needed
+  Then commit BLOCKED.md. The agent will halt until a human removes it.
+- Only create BLOCKED.md for problems that block ALL future work. If just one task is hard,
+  skip it and move on.
+
 Do not modify any protected files (except JOURNAL.md, LEARNINGS.md, and TODO.md which you must update)."
 
   timeout "$TASK_TIMEOUT" claude -p "$TASK_PROMPT" \
@@ -456,13 +478,78 @@ if [[ "$VERIFIED" == "true" ]]; then
     log "Local mode: skipping push. Tag: $TAG"
   fi
 else
-  log "BUILD VERIFICATION FAILED after 3 attempts. Rolling back."
-  safe_rollback
+  log "BUILD VERIFICATION FAILED after 3 attempts. Creating BLOCKED.md for human review."
+
+  # Capture the failure details
+  BUILD_OUT=$(go build ./... 2>&1 || true)
+  TEST_OUT=$(go test ./... 2>&1 | tail -40 || true)
+  VET_OUT=$(go vet ./... 2>&1 || true)
+  LINT_OUT=$(golangci-lint run 2>&1 | tail -20 || true)
+
+  cat > BLOCKED.md <<BLOCKED_EOF
+# BLOCKED — Human Intervention Required
+
+**Session:** Day $DAY
+**Timestamp:** $TIMESTAMP_PRETTY UTC
+**Start SHA:** $START_SHA
+**Current SHA:** $(git rev-parse HEAD)
+
+## What Happened
+
+Build verification failed after 3 fix attempts. The agent cannot resolve this automatically.
+
+## Failures
+
+### go build
+\`\`\`
+$BUILD_OUT
+\`\`\`
+
+### go test (last 40 lines)
+\`\`\`
+$TEST_OUT
+\`\`\`
+
+### go vet
+\`\`\`
+$VET_OUT
+\`\`\`
+
+### golangci-lint (last 20 lines)
+\`\`\`
+$LINT_OUT
+\`\`\`
+
+## How to Unblock
+
+1. Fix the failing checks above
+2. Run \`make verify\` to confirm everything passes
+3. Delete this file: \`rm BLOCKED.md\`
+4. Commit and push — the next scheduled session will resume automatically
+BLOCKED_EOF
+
+  git add -A
+  git commit -m "$(cat <<'COMMIT_EOF'
+chore(session): blocked — build verification failed, needs human help
+
+Build verification failed after 3 automated fix attempts on Day $DAY.
+The agent has exhausted its retry budget and cannot resolve the issue.
+
+BLOCKED.md contains the full failure output (build, test, vet, lint).
+The agent will skip all future sessions until BLOCKED.md is removed.
+
+A human needs to:
+1. Review the failures in BLOCKED.md
+2. Fix the underlying issue
+3. Delete BLOCKED.md and push
+COMMIT_EOF
+  )" 2>/dev/null || true
+
   if [[ "$NO_PUSH" != "1" ]]; then
-    git push origin main --force-with-lease
-    log "Rolled back and pushed to $START_SHA"
+    git push origin main 2>/dev/null || log "WARNING: push failed"
+    log "Pushed BLOCKED.md to origin. Agent will wait for human intervention."
   else
-    log "Local mode: rolled back to $START_SHA"
+    log "Local mode: BLOCKED.md created. Agent will wait for human intervention."
   fi
 fi
 

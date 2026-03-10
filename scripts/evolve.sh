@@ -276,12 +276,12 @@ fi
 log "Tasks found: $TASK_COUNT"
 
 EVOLVE_SKILL=$(load_skill "skills/evolve/SKILL.md")
+SESSION_TIMEOUT=1500  # 25 minutes
+IMPL_BUDGET=$((TASK_BUDGET * TASK_COUNT > TASK_BUDGET * 3 ? TASK_BUDGET * 3 : TASK_BUDGET * TASK_COUNT))
 
-for i in $(seq 1 "$TASK_COUNT"); do
-  log "--- Task $i of $TASK_COUNT ---"
-  TASK_SHA=$(git rev-parse HEAD)
+IMPL_SHA=$(git rev-parse HEAD)
 
-  TASK_PROMPT="You are booker-agent, a self-evolving agent for the booker Go project.
+IMPL_PROMPT="You are booker-agent, a self-evolving agent for the booker Go project.
 
 $IDENTITY
 
@@ -289,68 +289,58 @@ $PERSONALITY
 
 $EVOLVE_SKILL
 
-Read SESSION_PLAN.md and TODO.md. Implement Task $i.
+Read SESSION_PLAN.md and TODO.md. You have $TASK_COUNT tasks to implement this session.
 
-Before writing any code:
+Session limits — stop when EITHER is reached:
+- 25 minutes of wall-clock time
+- 70% context window usage (if context feels large or responses compress, wrap up)
+When hitting a limit, commit current work, update TODO.md with remaining tasks, and stop.
+
+Parallel execution:
+- Identify tasks that are independent (different packages, unrelated features).
+- For independent tasks, use git worktrees and the Task tool to work in parallel:
+    git worktree add .worktrees/task-N -b evolve-task-N
+  Spawn a parallel agent per worktree using the Task tool.
+- Tasks that touch the same files must run sequentially.
+- At the end, rebase all branches into main:
+    git checkout main && git rebase evolve-task-N
+  Then clean up: git worktree remove .worktrees/task-N && git branch -d evolve-task-N
+
+For each task:
 1. Read the task in SESSION_PLAN.md and the corresponding TODO.md entry.
 2. Set the task status to in-progress in TODO.md.
 3. Write your plan under the task entry: what files to change, what approach, what tests.
 4. Break the work into checkbox steps in TODO.md if not already done.
-5. Only then start implementing.
-
-During implementation:
-- Follow TDD: write/update test first, verify it fails, then implement.
-- Check off TODO steps as you complete them.
-- Run the full verification after each change:
-  go build ./... && go test ./... && go vet ./... && golangci-lint run
+5. Implement using TDD: write/update test first, verify it fails, then implement.
+6. Check off TODO steps as you complete them.
+7. Run the full verification: go build ./... && go test ./... && go vet ./... && golangci-lint run
+8. Commit after each task with a descriptive message. Include 'Context: ~X%' at the end of
+   every commit message (your estimate of how much context window you have used so far).
 
 Testing rules (line counts only include .go files — exclude .md files, generated files, mocks, docs):
 - Under 400 lines of Go code changed: unit tests are sufficient.
 - 400-1000 lines of Go code changed: include at least one integration test.
-- Check Go-only diff size: git diff --stat -- '*.go' ':!*_gen.go' ':!*_string.go' ':!*mock*'
-
-Session size rules:
-- Target under 300 lines of Go code per session.
-- If a task would exceed this, defer remaining work to the next session via TODO.md.
-
-Commit rules:
-- Do NOT commit after each task. Stage changes with git add only.
-- One single commit will be made at the end of the session covering everything.
-- The orchestrator handles the final commit — you just stage your work.
 
 After completing each task (success OR failure):
 - Set the task status in TODO.md to done or skipped (with reason).
-- Append a brief entry to JOURNAL.md: ### Day $DAY, Task $i -- [title] + 1-2 sentences.
+- Append a brief entry to JOURNAL.md: ### Day $DAY, Task N -- [title] + 1-2 sentences.
 - If you learned something generalizable, append to LEARNINGS.md.
-- These updates are part of the task, not optional.
-- Stage all changes (code + .md files) with git add. Do not commit.
 
 If tests fail, you have 3 attempts to fix. After 3 failures:
 - Revert your code changes with git checkout.
 - Mark the task as skipped in TODO.md with the failure reason.
-- If the failure is something you cannot fix (e.g., broken dependency, environment issue,
-  pre-existing test failure not caused by your changes), create BLOCKED.md with:
-  - What you were trying to do
-  - The exact error output
-  - What you tried to fix it
-  - Why you believe human help is needed
-  Then commit BLOCKED.md. The agent will halt until a human removes it.
-- Only create BLOCKED.md for problems that block ALL future work. If just one task is hard,
-  skip it and move on.
+- If the failure blocks ALL future work, create BLOCKED.md (see evolve skill for format).
+- If just one task is hard, skip it and move on.
 
 Do not modify any protected files (except JOURNAL.md, LEARNINGS.md, and TODO.md which you must update)."
 
-  timeout "$TASK_TIMEOUT" claude -p "$TASK_PROMPT" \
-    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-    --max-budget-usd "$TASK_BUDGET" \
-    --output-format text \
-    2>&1 | tee "$LOG_DIR/task-${i}.log" || {
-      log "Task $i timed out or failed, reverting to $TASK_SHA"
-      git reset --hard "$TASK_SHA"
-    }
-
-  log "Task $i complete"
-done
+timeout "$SESSION_TIMEOUT" claude -p "$IMPL_PROMPT" \
+  --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Task" \
+  --max-budget-usd "$IMPL_BUDGET" \
+  --output-format text \
+  2>&1 | tee "$LOG_DIR/phase-b.log" || {
+    log "Implementation phase timed out or failed"
+  }
 
 log "Implementation phase complete"
 
@@ -426,36 +416,21 @@ fi
 log "Reflection phase complete"
 
 # =============================================================================
-# SINGLE SESSION COMMIT (all code + journal + learnings + TODO)
+# FINALIZE SESSION STATE (DAY_COUNT + any uncommitted .md files)
 # =============================================================================
 
-log "Creating single session commit..."
-git add -A 2>/dev/null || true
+log "Finalizing session state..."
+increment_day
+git add DAY_COUNT TODO.md SESSION_PLAN.md JOURNAL.md LEARNINGS.md 2>/dev/null || true
 if ! git diff --cached --quiet 2>/dev/null; then
   PENDING_LEFT=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || echo 0)
-  DONE_COUNT=$(grep -c '^\*\*Status:\*\* done' TODO.md 2>/dev/null || echo 0)
-  GO_LINES=$(git diff --cached --stat -- '*.go' ':!*_gen.go' ':!*_string.go' ':!*mock*' | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
-  CHANGES_SUMMARY=$(git log --oneline "$START_SHA"..HEAD 2>/dev/null || echo "")
-  DIFF_FILES=$(git diff --cached --name-only | head -20)
-
   git commit -m "$(cat <<COMMIT_EOF
-evolve(day$DAY): session complete — $DONE_COUNT tasks done, $PENDING_LEFT remaining
+chore(day$DAY): finalize session state
 
-Session Day $DAY ($TIMESTAMP_PRETTY UTC). $GO_LINES lines of Go code changed.
-
-Files modified:
-$DIFF_FILES
-
-Tasks completed: $DONE_COUNT
-Tasks remaining: $PENDING_LEFT (carried to next session in TODO.md)
-
-See JOURNAL.md for session details and LEARNINGS.md for insights.
+Day counter incremented to $(cat DAY_COUNT).
+Tasks remaining: $PENDING_LEFT (carried to next session in TODO.md).
 COMMIT_EOF
   )" 2>/dev/null || true
-
-  log "Session committed ($DONE_COUNT done, $PENDING_LEFT remaining, $GO_LINES Go lines)."
-else
-  log "No changes to commit."
 fi
 
 # =============================================================================
@@ -569,9 +544,4 @@ COMMIT_EOF
 fi
 
 # --- Finalize ---
-increment_day
-git add DAY_COUNT && git commit -m "chore: increment day count to $(cat DAY_COUNT)" 2>/dev/null || true
-if [[ "$NO_PUSH" != "1" ]]; then
-  git push origin main 2>/dev/null || log "WARNING: failed to push DAY_COUNT"
-fi
 log "=== Session complete ==="

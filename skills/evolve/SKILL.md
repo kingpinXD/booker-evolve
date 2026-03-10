@@ -38,13 +38,41 @@ Rules:
 - If you cannot finish (timeout, 3-strike revert, budget), set status to `skipped` with a reason
 - Unfinished tasks carry over to the next session automatically
 
+## Session Limits
+
+Stop working when EITHER limit is reached (whichever comes first):
+- **25 minutes** of wall-clock time in the session
+- **70% context window usage** — if you notice responses getting compressed or context feels large, wrap up
+
+When hitting a limit: commit your current work, update TODO.md with remaining tasks, and stop.
+
 ## TDD Workflow
 
 1. Write or update a test that captures the desired behavior
 2. Run `go test ./...` — verify the new test **fails**
 3. Implement the minimal code change to make it pass
 4. Run the full verification: `go build ./... && go test ./... && go vet ./... && golangci-lint run`
-5. Stage the changes with `git add` — do NOT commit yet (one commit at session end)
+5. Commit the task with a descriptive message (see Commit Message Guidelines)
+
+## Parallel Execution
+
+Use parallel agents and git worktrees to work on multiple independent tasks simultaneously:
+
+1. Identify tasks that don't depend on each other (e.g., different packages, unrelated features)
+2. For each parallel task, create a worktree:
+   ```bash
+   git worktree add .worktrees/task-N -b evolve-task-N
+   ```
+3. Use the Task tool to spawn agents that work in separate worktrees concurrently
+4. Each agent works independently: implement, test, commit in its own branch
+5. At the end, rebase all branches into main:
+   ```bash
+   git checkout main
+   git rebase evolve-task-N
+   ```
+6. Clean up worktrees: `git worktree remove .worktrees/task-N`
+
+Only parallelize truly independent tasks. If tasks touch the same files, run them sequentially.
 
 ## Testing Strategy
 
@@ -59,7 +87,7 @@ Choose test type based on change size. When counting lines, only count `.go` fil
 - **Modify existing functions** instead of creating new duplicates
 - **Prefer early returns** over deeply nested conditionals
 - **Prefer switch** over chains of if-else
-- **One commit per session** — do NOT commit after each task. Stage all changes (code, tests, JOURNAL.md, LEARNINGS.md, TODO.md) and commit once at the end with a single descriptive message covering everything done in the session.
+- **Commit after each task** — each task gets its own commit. Include context usage in the commit message (see Commit Message Guidelines).
 - Target under 300 lines of Go code per session. If a task would exceed this, defer remaining work to the next session via TODO.md.
 - **Run the full check** after every change:
   ```bash
@@ -137,7 +165,8 @@ Format:
 - **Scope**: package or area affected (e.g., `serpapi`, `multicity`, `cache`, `config`)
 - **Short summary**: imperative mood, under 72 chars (e.g., "add retry logic for transient failures")
 - **Body**: required. Explain the reasoning, not just the diff.
-- **One commit per session** covering all tasks, journal, learnings, and TODO updates.
+- **One commit per task.** Each task gets its own commit.
+- **Context usage**: include `Context: ~X%` at the end of every commit message.
 - Never commit code that fails `go build` or `golangci-lint run`
 
 Example:
@@ -151,6 +180,8 @@ drop stopover cities that had expired cache entries during API outages.
 - Fall back to stale cache entry if provider returns a non-auth error
 - Log a warning so stale usage is visible in session logs
 - Added unit test for stale-fallback path
+
+Context: ~35%
 ```
 
 ## Journal & Learnings

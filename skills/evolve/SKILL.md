@@ -2,6 +2,42 @@
 
 Rules for safely modifying the booker codebase.
 
+## Plan Before You Build
+
+Before writing any code for a task, always plan first:
+
+1. Read the task description and understand the goal
+2. Explore the relevant code (read files, check existing tests, understand interfaces)
+3. Write a short plan as a comment in TODO.md under the task entry:
+   - What files need to change
+   - What approach you will take
+   - What tests you will write
+4. Only then start implementing
+
+## TODO Tracking
+
+The file `TODO.md` is the source of truth for session work. Format:
+
+```markdown
+# TODO
+
+Carried from: Day N (only if resuming previous work)
+
+## Task 1: [title]
+**Status:** pending | in-progress | done | skipped
+**Plan:** [1-3 sentences: approach, files, tests]
+- [ ] step one
+- [ ] step two
+- [x] completed step
+```
+
+Rules:
+- At the start of each task, set status to `in-progress` and write your plan
+- Check off steps as you complete them
+- If you finish, set status to `done`
+- If you cannot finish (timeout, 3-strike revert, budget), set status to `skipped` with a reason
+- Unfinished tasks carry over to the next session automatically
+
 ## TDD Workflow
 
 1. Write or update a test that captures the desired behavior

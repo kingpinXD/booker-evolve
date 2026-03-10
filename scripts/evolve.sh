@@ -125,16 +125,74 @@ JOURNAL_TAIL=$(tail -50 JOURNAL.md 2>/dev/null || echo "No journal yet")
 LEARNINGS_TAIL=$(tail -30 LEARNINGS.md 2>/dev/null || echo "No learnings yet")
 SELF_ASSESS_SKILL=$(load_skill "skills/self-assess/SKILL.md")
 
-# Fetch and format GitHub issues (if gh is available)
-ISSUES_BLOCK=""
-if command -v gh >/dev/null 2>&1; then
-  ISSUES_RAW=$(gh issue list --limit 10 --json number,title,body,labels,comments 2>/dev/null || echo "[]")
-  if [[ "$ISSUES_RAW" != "[]" ]] && [[ -f scripts/format_issues.py ]]; then
-    ISSUES_BLOCK=$(echo "$ISSUES_RAW" | python3 scripts/format_issues.py 2>/dev/null || echo "")
+# Check for unfinished TODOs from a previous session
+HAS_PENDING_TODOS=false
+if [[ -f TODO.md ]]; then
+  PENDING_COUNT=$(grep -c '^\- \[ \]' TODO.md 2>/dev/null || echo 0)
+  PENDING_TASKS=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || echo 0)
+  if [[ "$PENDING_TASKS" -gt 0 || "$PENDING_COUNT" -gt 0 ]]; then
+    HAS_PENDING_TODOS=true
+    log "Found existing TODO.md with $PENDING_TASKS unfinished tasks ($PENDING_COUNT unchecked steps). Resuming."
   fi
 fi
 
-PLAN_PROMPT="You are booker-agent, a self-evolving agent for the booker Go project.
+if [[ "$HAS_PENDING_TODOS" == "true" ]]; then
+  # Resume: use existing TODO.md and SESSION_PLAN.md, skip fresh planning
+  EXISTING_TODO=$(cat TODO.md)
+  EXISTING_PLAN=$(cat SESSION_PLAN.md 2>/dev/null || echo "No previous SESSION_PLAN.md")
+
+  RESUME_PROMPT="You are booker-agent, a self-evolving agent for the booker Go project.
+
+$IDENTITY
+
+$PERSONALITY
+
+$SELF_ASSESS_SKILL
+
+Recent journal:
+$JOURNAL_TAIL
+
+Recent learnings:
+$LEARNINGS_TAIL
+
+You have unfinished work from a previous session. Here is the existing TODO.md:
+
+$EXISTING_TODO
+
+And the previous SESSION_PLAN.md:
+
+$EXISTING_PLAN
+
+Your task:
+1. Run the self-assessment steps (build, test, vet, coverage) to understand current state.
+2. Review the existing TODO.md. Tasks marked pending or in-progress are your priority.
+3. If any pending tasks are no longer relevant (e.g., already fixed, obsolete), mark them skipped with a reason.
+4. You may add up to 2 NEW tasks if the self-assessment reveals urgent issues (build failures, test failures), but unfinished tasks come first.
+5. Update SESSION_PLAN.md to reflect the resumed plan. Keep the same format.
+6. Update TODO.md to reflect any changes.
+
+Do NOT discard previous work. Continuity matters."
+
+  claude -p "$RESUME_PROMPT" \
+    --allowedTools "Bash(read-only:*),Read,Write,Edit,Glob,Grep" \
+    --max-budget-usd "$PLAN_BUDGET" \
+    --output-format text \
+    2>&1 | tee "$LOG_DIR/phase-a.log"
+
+  log "Resumed planning from previous session."
+
+else
+  # Fresh planning: no pending TODOs
+  # Fetch and format GitHub issues (if gh is available)
+  ISSUES_BLOCK=""
+  if command -v gh >/dev/null 2>&1; then
+    ISSUES_RAW=$(gh issue list --limit 10 --json number,title,body,labels,comments 2>/dev/null || echo "[]")
+    if [[ "$ISSUES_RAW" != "[]" ]] && [[ -f scripts/format_issues.py ]]; then
+      ISSUES_BLOCK=$(echo "$ISSUES_RAW" | python3 scripts/format_issues.py 2>/dev/null || echo "")
+    fi
+  fi
+
+  PLAN_PROMPT="You are booker-agent, a self-evolving agent for the booker Go project.
 
 $IDENTITY
 
@@ -161,20 +219,38 @@ Each task in SESSION_PLAN.md should follow this format:
 **Files:** [likely files to touch]
 **Test:** [how to verify success]
 
-Write SESSION_PLAN.md when done."
+Write SESSION_PLAN.md when done.
 
-claude -p "$PLAN_PROMPT" \
-  --allowedTools "Bash(read-only:*),Read,Write,Edit,Glob,Grep" \
-  --max-budget-usd "$PLAN_BUDGET" \
-  --output-format text \
-  2>&1 | tee "$LOG_DIR/phase-a.log"
+Then create TODO.md from the plan. Format:
+# TODO
+## Task 1: [title]
+**Status:** pending
+**Plan:** [to be filled during implementation]
+- [ ] [step from the plan]
+- [ ] [step from the plan]
+
+Every task in SESSION_PLAN.md must have a corresponding entry in TODO.md."
+
+  claude -p "$PLAN_PROMPT" \
+    --allowedTools "Bash(read-only:*),Read,Write,Edit,Glob,Grep" \
+    --max-budget-usd "$PLAN_BUDGET" \
+    --output-format text \
+    2>&1 | tee "$LOG_DIR/phase-a.log"
+
+  log "Fresh planning complete."
+fi
 
 if [[ ! -f SESSION_PLAN.md ]]; then
   log "ERROR: SESSION_PLAN.md was not created. Aborting."
   exit 1
 fi
 
-log "Planning complete. SESSION_PLAN.md created."
+if [[ ! -f TODO.md ]]; then
+  log "ERROR: TODO.md was not created. Aborting."
+  exit 1
+fi
+
+log "Planning phase complete. SESSION_PLAN.md and TODO.md ready."
 
 # =============================================================================
 # Phase B: IMPLEMENTATION
@@ -203,9 +279,19 @@ $PERSONALITY
 
 $EVOLVE_SKILL
 
-Read SESSION_PLAN.md and implement Task $i.
-Follow TDD: write/update test first, verify it fails, then implement.
-After changes, run the full verification:
+Read SESSION_PLAN.md and TODO.md. Implement Task $i.
+
+Before writing any code:
+1. Read the task in SESSION_PLAN.md and the corresponding TODO.md entry.
+2. Set the task status to in-progress in TODO.md.
+3. Write your plan under the task entry: what files to change, what approach, what tests.
+4. Break the work into checkbox steps in TODO.md if not already done.
+5. Only then start implementing.
+
+During implementation:
+- Follow TDD: write/update test first, verify it fails, then implement.
+- Check off TODO steps as you complete them.
+- Run the full verification after each change:
   go build ./... && go test ./... && go vet ./... && golangci-lint run
 
 Testing rules (line counts exclude generated files: docs, mocks, *_gen.go, *_string.go):
@@ -224,12 +310,13 @@ Commit message rules:
 - Never write a one-liner commit message. Always include a body.
 
 After completing each task (success OR failure):
-- Append a brief entry to JOURNAL.md: ### Day $DAY, Task \$i -- [title] + 1-2 sentences.
+- Set the task status in TODO.md to done or skipped (with reason).
+- Append a brief entry to JOURNAL.md: ### Day $DAY, Task $i -- [title] + 1-2 sentences.
 - If you learned something generalizable, append to LEARNINGS.md.
 - These updates are part of the task, not optional.
 
-If tests fail, you have 3 attempts to fix. After 3 failures, revert with git checkout.
-Do not modify any protected files (except JOURNAL.md and LEARNINGS.md which you must update)."
+If tests fail, you have 3 attempts to fix. After 3 failures, revert code with git checkout, mark the task as skipped in TODO.md with the failure reason.
+Do not modify any protected files (except JOURNAL.md, LEARNINGS.md, and TODO.md which you must update)."
 
   timeout "$TASK_TIMEOUT" claude -p "$TASK_PROMPT" \
     --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
@@ -315,6 +402,24 @@ if [[ -f ISSUE_RESPONSE.md ]] && command -v gh >/dev/null 2>&1; then
 fi
 
 log "Reflection phase complete"
+
+# =============================================================================
+# COMMIT SESSION STATE (TODO.md, SESSION_PLAN.md, JOURNAL.md, LEARNINGS.md)
+# =============================================================================
+
+log "Committing session state..."
+git add TODO.md SESSION_PLAN.md JOURNAL.md LEARNINGS.md 2>/dev/null || true
+if ! git diff --cached --quiet 2>/dev/null; then
+  PENDING_LEFT=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || echo 0)
+  if [[ "$PENDING_LEFT" -gt 0 ]]; then
+    git commit -m "chore(session): save progress — $PENDING_LEFT tasks remaining for next session" 2>/dev/null || true
+  else
+    git commit -m "chore(session): save session state — all tasks completed" 2>/dev/null || true
+  fi
+  log "Session state committed ($PENDING_LEFT tasks remaining)."
+else
+  log "No session state changes to commit."
+fi
 
 # =============================================================================
 # BUILD VERIFICATION

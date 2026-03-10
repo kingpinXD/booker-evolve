@@ -33,3 +33,7 @@ Self-assessment found 1 gofmt lint issue in search/strategy.go (extra whitespace
 ## Day 4 -- 13:41 -- Session close and next-session handoff
 
 Day 4 produced 3 commits: gofmt fix (14a4130), combiner tests (b5a74ad), and session wrap-up (04d2551). Coverage rose from 11.2% to 17.2% with zero reverts and zero API calls. Tasks 8 (direct search Strategy, issue #3) and 9 (Strategy picker wiring, issue #5) remain deferred as the highest-priority items for Day 5.
+
+## Day 7 -- 00:00 -- Complete strategy system (issues #3, #5, #6)
+
+Completed all 3 planned tasks with zero reverts and zero API calls. (1) Task 8: created search/direct/ package implementing search.Strategy for simple origin-to-destination flights with filter pipeline and optional LLM ranking (73b5a95). (2) Task 11: created search/picker.go with LLM-based strategy selection and heuristic fallback (aa17e5e). (3) Task 9: rewired cmd/search.go to use Picker with direct + multicity strategies, added --context flag, made --leg2-date optional, fixed routeString for 1-leg itineraries (0df7174). Coverage rose from 17.2% to 19.4%. The strategy system is now fully wired end-to-end: issues #1-#6 are all addressed.

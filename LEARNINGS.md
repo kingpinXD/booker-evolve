@@ -25,3 +25,7 @@ Adding `//go:build integration` to API-dependent tests on Day 1 unblocked all su
 ## Lesson: Always re-check CLAUDE.md directives before starting planned tasks
 
 Task 6 (kiwi parser tests) was planned on Day 3 before the CLAUDE.md directive to ignore Kiwi was added. On Day 4, the self-assessment caught this and the task was correctly skipped. Review governance file directives at session start -- plans from earlier sessions may conflict with updated rules.
+
+## Lesson: Check the full dependency graph before starting deferred work
+
+Tasks 8 and 9 were deferred from Day 4. When resuming on Day 7, the self-assessment revealed that issue #3 (LLM Picker) was a missing dependency for Task 9 (CLI wiring) that had never been added to TODO.md. Scanning all open GitHub issues at session start catches these gaps before they become blockers mid-session.

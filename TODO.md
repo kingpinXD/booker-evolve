@@ -36,10 +36,18 @@
 **Status:** done
 **Commit:** 14a4130
 
-## Task 8: Implement direct search Strategy (issue #3)
-**Status:** pending
-**Note:** Deferred. Next session priority.
+---
 
-## Task 9: Wire Strategy picker into cmd/search.go (issue #5)
-**Status:** pending
-**Note:** Depends on Task 8.
+## Day 7 Tasks
+
+## Task 8: Implement direct search Strategy (issue #5)
+**Status:** done
+**Commit:** 73b5a95
+
+## Task 11: Implement LLM-based strategy Picker (issue #3)
+**Status:** done
+**Commit:** aa17e5e
+
+## Task 9: Wire Strategy picker into cmd/search.go (issue #6)
+**Status:** done
+**Commit:** 0df7174

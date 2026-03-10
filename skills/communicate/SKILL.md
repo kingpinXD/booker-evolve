@@ -37,11 +37,14 @@ When a GitHub issue was addressed during the session, write:
 ## Issue #N: [title]
 
 **Status:** [investigating|fixed|wontfix|needs-info]
+**Commit:** [short SHA of the commit that fixes it, e.g. abc1234]
 **Summary:** [1-2 sentences explaining what was done]
 **Changes:** [list of files modified, or "none" if just investigated]
 ```
 
-Multiple issues can be listed in the same file. This file is ephemeral — it gets parsed by evolve.sh to post comments and then ignored.
+- If Status is `fixed`, include the commit SHA. The orchestrator will close the issue automatically.
+- Multiple issues can be listed in the same file.
+- This file is ephemeral — it gets parsed by evolve.sh to post comments and close fixed issues.
 
 ## Style Rules
 

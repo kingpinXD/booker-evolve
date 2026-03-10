@@ -372,38 +372,40 @@ claude -p "$REFLECT_PROMPT" \
   --output-format text \
   2>&1 | tee "$LOG_DIR/phase-c.log"
 
-# Post issue comments if ISSUE_RESPONSE.md exists
+# Post issue comments and close fixed issues
 if [[ -f ISSUE_RESPONSE.md ]] && command -v gh >/dev/null 2>&1; then
-  log "Posting issue responses..."
+  log "Processing issue responses..."
+  ISSUE_NUM=""
+  COMMENT=""
+  IS_FIXED=false
+
+  post_and_close() {
+    local num="$1" body="$2" fixed="$3"
+    if [[ -z "$num" || -z "$body" ]]; then return; fi
+    gh issue comment "$num" --body "$body" 2>/dev/null || \
+      log "Failed to post comment on issue #$num"
+    if [[ "$fixed" == "true" ]]; then
+      gh issue close "$num" 2>/dev/null && \
+        log "Closed issue #$num (fixed)" || \
+        log "Failed to close issue #$num"
+    fi
+  }
+
   while IFS= read -r line; do
     if [[ "$line" =~ ^##\ Issue\ \#([0-9]+) ]]; then
+      post_and_close "${ISSUE_NUM:-}" "$COMMENT" "$IS_FIXED"
       ISSUE_NUM="${BASH_REMATCH[1]}"
-      # Collect the section until next ## or EOF
       COMMENT=""
+      IS_FIXED=false
     elif [[ -n "${ISSUE_NUM:-}" ]]; then
-      if [[ "$line" =~ ^## ]]; then
-        # Post previous issue comment
-        if [[ -n "$COMMENT" ]]; then
-          gh issue comment "$ISSUE_NUM" --body "$COMMENT" 2>/dev/null || \
-            log "Failed to post comment on issue #$ISSUE_NUM"
-        fi
-        if [[ "$line" =~ ^##\ Issue\ \#([0-9]+) ]]; then
-          ISSUE_NUM="${BASH_REMATCH[1]}"
-          COMMENT=""
-        else
-          ISSUE_NUM=""
-        fi
-      else
-        COMMENT="${COMMENT}${line}
-"
+      if [[ "$line" =~ ^\*\*Status:\*\*.*fixed ]]; then
+        IS_FIXED=true
       fi
+      COMMENT="${COMMENT}${line}
+"
     fi
   done < ISSUE_RESPONSE.md
-  # Post last issue comment
-  if [[ -n "${ISSUE_NUM:-}" ]] && [[ -n "${COMMENT:-}" ]]; then
-    gh issue comment "$ISSUE_NUM" --body "$COMMENT" 2>/dev/null || \
-      log "Failed to post comment on issue #$ISSUE_NUM"
-  fi
+  post_and_close "${ISSUE_NUM:-}" "$COMMENT" "$IS_FIXED"
 fi
 
 log "Reflection phase complete"

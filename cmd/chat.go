@@ -162,6 +162,15 @@ func resultSummaryForChat(results []search.Itinerary) string {
 		len(results), minPrice, maxPrice)
 }
 
+// refinementHint returns a system message listing available refinement levers.
+// Appended to conversation history after results so the LLM knows what to suggest.
+func refinementHint() string {
+	return "The user can refine their search. Available options: " +
+		"try different dates, search nearby airports for cheaper fares, " +
+		"change cabin class (economy/business/first), filter to direct flights only, " +
+		"adjust number of passengers, or add a return date for round-trip pricing."
+}
+
 func runChat(cmd *cobra.Command, _ []string) error {
 	if !viper.GetBool(keyVerbose) {
 		log.SetOutput(io.Discard)
@@ -252,10 +261,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 			printTable(results, cur)
 		}
 
-		// Add result summary to conversation history so the LLM can reference
-		// what was shown when the user asks for refinement.
+		// Add result summary and refinement guidance to conversation history
+		// so the LLM knows what was shown and what levers are available.
 		summary := resultSummaryForChat(results)
 		history = append(history, llm.Message{Role: llm.RoleAssistant, Content: summary})
+		history = append(history, llm.Message{Role: llm.RoleSystem, Content: refinementHint()})
 
 		_, _ = fmt.Fprintln(out, "Want to refine? (e.g., 'show cheaper', 'try business class', or 'quit')")
 	}

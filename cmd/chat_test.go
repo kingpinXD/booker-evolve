@@ -327,6 +327,60 @@ func TestNearbyAirportHint(t *testing.T) {
 	}
 }
 
+func TestRefinementHint(t *testing.T) {
+	hint := refinementHint()
+	for _, lever := range []string{"dates", "nearby airports", "cabin class", "direct flights"} {
+		if !strings.Contains(hint, lever) {
+			t.Errorf("refinement hint missing lever %q, got: %s", lever, hint)
+		}
+	}
+}
+
+func TestChatLoop_RefinementHintInHistory(t *testing.T) {
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+		"Here are some options to consider.",
+	}
+	mock := &chatMockLLM{responses: responses, captureHistory: true}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\nshow me options\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// The second LLM call should have a refinement hint in history.
+	if len(mock.historyLog) < 2 {
+		t.Fatalf("expected at least 2 LLM calls, got %d", len(mock.historyLog))
+	}
+	secondCallHistory := mock.historyLog[1]
+	found := false
+	for _, msg := range secondCallHistory {
+		if msg.Role == "system" && strings.Contains(msg.Content, "nearby airports") && strings.Contains(msg.Content, "cabin class") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected refinement hint with levers in second LLM call history")
+		for _, msg := range secondCallHistory {
+			t.Logf("  [%s] %s", msg.Role, msg.Content[:min(len(msg.Content), 120)])
+		}
+	}
+}
+
 func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && indexOf(s, substr) >= 0
 }

@@ -51,8 +51,13 @@ This project includes a self-evolving agent system. The agent (booker-agent) run
 - `skills/*`
 - `CLAUDE.md`
 
+### Flight Providers
+- **SerpAPI is the only active provider.** Use it for all flight search work.
+- **Ignore the Kiwi provider entirely** (`provider/kiwi/`). Do not fix, test, improve, or integrate Kiwi code. It is inactive and will be removed later.
+- If a task involves Kiwi, skip it.
+
 ### API Usage
-- **SerpAPI** (primary flight provider) has a limited free tier. Minimize API calls during evolution sessions.
+- **SerpAPI** has a limited free tier. Minimize API calls during evolution sessions.
 - **Always use the caching layer** (`provider/cache/`) — check cache before making live requests.
 - **Session limit: 6 SerpAPI calls max.** If a task would exceed this, skip it and log the reason.
 - When developing new features that touch flight search, write tests against cached/mocked data first. Only make live API calls if absolutely necessary.

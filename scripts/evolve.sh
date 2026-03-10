@@ -304,26 +304,26 @@ During implementation:
 - Run the full verification after each change:
   go build ./... && go test ./... && go vet ./... && golangci-lint run
 
-Testing rules (line counts exclude generated files: docs, mocks, *_gen.go, *_string.go):
-- Under 400 lines changed: unit tests are sufficient.
-- 400-1000 lines changed: include at least one integration test.
+Testing rules (line counts only include .go files — exclude .md files, generated files, mocks, docs):
+- Under 400 lines of Go code changed: unit tests are sufficient.
+- 400-1000 lines of Go code changed: include at least one integration test.
+- Check Go-only diff size: git diff --stat -- '*.go' ':!*_gen.go' ':!*_string.go' ':!*mock*'
 
-Commit size rules:
-- Keep each commit under 300 lines of non-generated code.
-- If a task is larger, split into multiple small commits.
-- Check your diff size before committing:
-  git diff --cached --stat -- '*.go' ':!*_gen.go' ':!*_string.go' ':!*mock*' ':!docs/*'
+Session size rules:
+- Target under 300 lines of Go code per session.
+- If a task would exceed this, defer remaining work to the next session via TODO.md.
 
-Commit message rules:
-- Format: type(scope): short summary, followed by a body paragraph.
-- The body must explain WHY the change was made, the reasoning, and any trade-offs.
-- Never write a one-liner commit message. Always include a body.
+Commit rules:
+- Do NOT commit after each task. Stage changes with git add only.
+- One single commit will be made at the end of the session covering everything.
+- The orchestrator handles the final commit — you just stage your work.
 
 After completing each task (success OR failure):
 - Set the task status in TODO.md to done or skipped (with reason).
 - Append a brief entry to JOURNAL.md: ### Day $DAY, Task $i -- [title] + 1-2 sentences.
 - If you learned something generalizable, append to LEARNINGS.md.
 - These updates are part of the task, not optional.
+- Stage all changes (code + .md files) with git add. Do not commit.
 
 If tests fail, you have 3 attempts to fix. After 3 failures:
 - Revert your code changes with git checkout.
@@ -426,21 +426,36 @@ fi
 log "Reflection phase complete"
 
 # =============================================================================
-# COMMIT SESSION STATE (TODO.md, SESSION_PLAN.md, JOURNAL.md, LEARNINGS.md)
+# SINGLE SESSION COMMIT (all code + journal + learnings + TODO)
 # =============================================================================
 
-log "Committing session state..."
-git add TODO.md SESSION_PLAN.md JOURNAL.md LEARNINGS.md 2>/dev/null || true
+log "Creating single session commit..."
+git add -A 2>/dev/null || true
 if ! git diff --cached --quiet 2>/dev/null; then
   PENDING_LEFT=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || echo 0)
-  if [[ "$PENDING_LEFT" -gt 0 ]]; then
-    git commit -m "chore(session): save progress — $PENDING_LEFT tasks remaining for next session" 2>/dev/null || true
-  else
-    git commit -m "chore(session): save session state — all tasks completed" 2>/dev/null || true
-  fi
-  log "Session state committed ($PENDING_LEFT tasks remaining)."
+  DONE_COUNT=$(grep -c '^\*\*Status:\*\* done' TODO.md 2>/dev/null || echo 0)
+  GO_LINES=$(git diff --cached --stat -- '*.go' ':!*_gen.go' ':!*_string.go' ':!*mock*' | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+  CHANGES_SUMMARY=$(git log --oneline "$START_SHA"..HEAD 2>/dev/null || echo "")
+  DIFF_FILES=$(git diff --cached --name-only | head -20)
+
+  git commit -m "$(cat <<COMMIT_EOF
+evolve(day$DAY): session complete — $DONE_COUNT tasks done, $PENDING_LEFT remaining
+
+Session Day $DAY ($TIMESTAMP_PRETTY UTC). $GO_LINES lines of Go code changed.
+
+Files modified:
+$DIFF_FILES
+
+Tasks completed: $DONE_COUNT
+Tasks remaining: $PENDING_LEFT (carried to next session in TODO.md)
+
+See JOURNAL.md for session details and LEARNINGS.md for insights.
+COMMIT_EOF
+  )" 2>/dev/null || true
+
+  log "Session committed ($DONE_COUNT done, $PENDING_LEFT remaining, $GO_LINES Go lines)."
 else
-  log "No session state changes to commit."
+  log "No changes to commit."
 fi
 
 # =============================================================================

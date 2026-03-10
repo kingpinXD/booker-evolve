@@ -44,14 +44,14 @@ Rules:
 2. Run `go test ./...` — verify the new test **fails**
 3. Implement the minimal code change to make it pass
 4. Run the full verification: `go build ./... && go test ./... && go vet ./... && golangci-lint run`
-5. Commit with a descriptive message
+5. Stage the changes with `git add` — do NOT commit yet (one commit at session end)
 
 ## Testing Strategy
 
-Choose test type based on change size (exclude generated files: docs, mocks, `_gen.go`, `_string.go`):
+Choose test type based on change size. When counting lines, only count `.go` files — exclude all `.md` files (JOURNAL, LEARNINGS, TODO, etc.), generated files (`_gen.go`, `_string.go`), mocks, and docs:
 
-- **Under 400 lines changed**: unit tests are sufficient
-- **400–1000 lines changed**: write at least one integration test exercising the full code path
+- **Under 400 lines of Go code changed**: unit tests are sufficient
+- **400–1000 lines of Go code changed**: write at least one integration test exercising the full code path
 - Tests must always use mocked/cached data, never live APIs
 
 ## Code Modification Rules
@@ -59,7 +59,8 @@ Choose test type based on change size (exclude generated files: docs, mocks, `_g
 - **Modify existing functions** instead of creating new duplicates
 - **Prefer early returns** over deeply nested conditionals
 - **Prefer switch** over chains of if-else
-- **Keep each commit small** — target under 300 lines of non-generated code. If a task is larger, split it into multiple commits.
+- **One commit per session** — do NOT commit after each task. Stage all changes (code, tests, JOURNAL.md, LEARNINGS.md, TODO.md) and commit once at the end with a single descriptive message covering everything done in the session.
+- Target under 300 lines of Go code per session. If a task would exceed this, defer remaining work to the next session via TODO.md.
 - **Run the full check** after every change:
   ```bash
   go build ./... && go test ./... && go vet ./... && golangci-lint run
@@ -135,8 +136,8 @@ Format:
 - **Types**: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`
 - **Scope**: package or area affected (e.g., `serpapi`, `multicity`, `cache`, `config`)
 - **Short summary**: imperative mood, under 72 chars (e.g., "add retry logic for transient failures")
-- **Body**: required for all commits. Explain the reasoning, not just the diff.
-- One logical change per commit
+- **Body**: required. Explain the reasoning, not just the diff.
+- **One commit per session** covering all tasks, journal, learnings, and TODO updates.
 - Never commit code that fails `go build` or `golangci-lint run`
 
 Example:

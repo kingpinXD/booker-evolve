@@ -37,3 +37,7 @@ Day 4 produced 3 commits: gofmt fix (14a4130), combiner tests (b5a74ad), and ses
 ## Day 7 -- 00:00 -- Complete strategy system (issues #3, #5, #6)
 
 Completed all 3 planned tasks with zero reverts and zero API calls. (1) Task 8: created search/direct/ package implementing search.Strategy for simple origin-to-destination flights with filter pipeline and optional LLM ranking (73b5a95). (2) Task 11: created search/picker.go with LLM-based strategy selection and heuristic fallback (aa17e5e). (3) Task 9: rewired cmd/search.go to use Picker with direct + multicity strategies, added --context flag, made --leg2-date optional, fixed routeString for 1-leg itineraries (0df7174). Coverage rose from 17.2% to 19.4%. The strategy system is now fully wired end-to-end: issues #1-#6 are all addressed.
+
+## Day 6 -- 14:02 -- Session close and strategy system handoff
+
+All 6 open GitHub issues (#1-#6) are now addressed across Days 1-7. The strategy system is fully wired: Picker selects between direct and multicity strategies via LLM or heuristic fallback, and the CLI exposes it through --context. Coverage stands at 19.4%. Next priorities: test the LLM code paths in picker.go (currently untested), add integration tests for the end-to-end CLI flow, and expand route coverage with new search strategies.

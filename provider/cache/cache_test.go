@@ -267,7 +267,9 @@ func TestCorruptedCacheFile(t *testing.T) {
 
 	// Corrupt the cache file with invalid JSON.
 	path := cached.cachePath(req)
-	os.WriteFile(path, []byte("{invalid json!!!"), 0o644)
+	if err := os.WriteFile(path, []byte("{invalid json!!!"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	// Should treat corrupted file as a miss, re-call the inner provider.
 	flights, err := cached.Search(context.Background(), req)
@@ -303,7 +305,9 @@ func TestCorruptedMultiCityCacheFile(t *testing.T) {
 
 	// Corrupt the cache file.
 	path := cached.multiCityCachePath(req)
-	os.WriteFile(path, []byte("not json"), 0o644)
+	if err := os.WriteFile(path, []byte("not json"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	// Should treat corrupted file as a miss.
 	results, err := cached.SearchMultiCity(context.Background(), req)

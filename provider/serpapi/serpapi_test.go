@@ -66,7 +66,7 @@ func TestSearch_OneWay(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		captured = r.URL.Query()
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(cannedOneWayResponse)
+		_ = json.NewEncoder(w).Encode(cannedOneWayResponse)
 	}))
 	defer ts.Close()
 
@@ -131,7 +131,7 @@ func TestSearch_RoundTrip(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		captured = r.URL.Query()
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(cannedOneWayResponse)
+		_ = json.NewEncoder(w).Encode(cannedOneWayResponse)
 	}))
 	defer ts.Close()
 
@@ -303,9 +303,9 @@ func TestSearchMultiCity_TwoStepFlow(t *testing.T) {
 
 		// Step 1 has no departure_token param; step 2 does.
 		if r.URL.Query().Get(config.SerpAPIParamDepartureToken) != "" {
-			json.NewEncoder(w).Encode(step2Resp)
+			_ = json.NewEncoder(w).Encode(step2Resp)
 		} else {
-			json.NewEncoder(w).Encode(step1Resp)
+			_ = json.NewEncoder(w).Encode(step1Resp)
 		}
 	}))
 	defer ts.Close()
@@ -365,7 +365,7 @@ func TestSearchMultiCity_TwoStepFlow(t *testing.T) {
 func TestSearchMultiCity_EmptyStep1(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(Response{}) // empty response
+		_ = json.NewEncoder(w).Encode(Response{}) // empty response
 	}))
 	defer ts.Close()
 
@@ -409,7 +409,7 @@ func TestSearchMultiCity_NoDepartureToken(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestCount++
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(step1Resp)
+		_ = json.NewEncoder(w).Encode(step1Resp)
 	}))
 	defer ts.Close()
 
@@ -473,9 +473,9 @@ func TestSearchMultiCity_TopNDefault(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.URL.Query().Get(config.SerpAPIParamDepartureToken) != "" {
 			step2Count++
-			json.NewEncoder(w).Encode(step2Resp)
+			_ = json.NewEncoder(w).Encode(step2Resp)
 		} else {
-			json.NewEncoder(w).Encode(Response{OtherFlights: step1Groups})
+			_ = json.NewEncoder(w).Encode(Response{OtherFlights: step1Groups})
 		}
 	}))
 	defer ts.Close()
@@ -528,7 +528,7 @@ func TestSearchMultiCity_Step2Error(t *testing.T) {
 			// Step 2 returns a client error.
 			http.Error(w, "bad request", http.StatusBadRequest)
 		} else {
-			json.NewEncoder(w).Encode(step1Resp)
+			_ = json.NewEncoder(w).Encode(step1Resp)
 		}
 	}))
 	defer ts.Close()

@@ -150,8 +150,6 @@ func FilterByDateRange(flights []types.Flight, earliest, latest time.Time) []typ
 	return filtered
 }
 
-// FilterZeroPrices removes flights with a $0 price — these are data artifacts
-// from providers (e.g. Google Flights returning incomplete pricing).
 // FilterByMaxStops keeps only flights with at most maxStops connections.
 // A direct flight has 0 stops, a one-stop has 1, etc.
 // A negative maxStops means no limit.

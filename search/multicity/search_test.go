@@ -60,8 +60,8 @@ func newTestSearcher(t *testing.T, flights []types.Flight, llmHandler http.Handl
 	t.Cleanup(srv.Close)
 
 	httpCfg := config.HTTPConfig{
-		Timeout:     5 * time.Second,
-		MaxRetries:  1,
+		Timeout:      5 * time.Second,
+		MaxRetries:   1,
 		MaxIdleConns: 2,
 	}
 	llmClient := llm.New(config.LLMConfig{
@@ -100,7 +100,7 @@ func llmRankingHandler(count int) http.HandlerFunc {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}
 }
 
@@ -108,7 +108,7 @@ func llmRankingHandler(count int) http.HandlerFunc {
 func llmErrorHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error":{"message":"LLM unavailable"}}`))
+		_, _ = w.Write([]byte(`{"error":{"message":"LLM unavailable"}}`))
 	}
 }
 

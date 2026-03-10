@@ -135,8 +135,10 @@ SELF_ASSESS_SKILL=$(load_skill "skills/self-assess/SKILL.md")
 # Check for unfinished TODOs from a previous session
 HAS_PENDING_TODOS=false
 if [[ -f TODO.md ]]; then
-  PENDING_COUNT=$(grep -c '^\- \[ \]' TODO.md 2>/dev/null || echo 0)
-  PENDING_TASKS=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || echo 0)
+  PENDING_COUNT=$(grep -c '^\- \[ \]' TODO.md 2>/dev/null || true)
+  PENDING_COUNT=${PENDING_COUNT:-0}
+  PENDING_TASKS=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || true)
+  PENDING_TASKS=${PENDING_TASKS:-0}
   if [[ "$PENDING_TASKS" -gt 0 || "$PENDING_COUNT" -gt 0 ]]; then
     HAS_PENDING_TODOS=true
     log "Found existing TODO.md with $PENDING_TASKS unfinished tasks ($PENDING_COUNT unchecked steps). Resuming."
@@ -239,7 +241,6 @@ Every task in SESSION_PLAN.md must have a corresponding entry in TODO.md."
 
   claude -p "$PLAN_PROMPT" \
     --allowedTools "Bash(read-only:*),Read,Write,Edit,Glob,Grep" \
-
     --output-format text \
     2>&1 | tee "$LOG_DIR/phase-a.log"
 
@@ -330,7 +331,6 @@ Do not modify any protected files (except JOURNAL.md, LEARNINGS.md, and TODO.md 
 
 timeout "$SESSION_TIMEOUT" claude -p "$IMPL_PROMPT" \
   --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Task" \
-
   --output-format text \
   2>&1 | tee "$LOG_DIR/phase-b.log" || {
     log "Implementation phase timed out or failed"
@@ -369,7 +369,6 @@ Do the following:
 
 claude -p "$REFLECT_PROMPT" \
   --allowedTools "Bash(read-only:*),Read,Write,Edit,Glob,Grep" \
-
   --output-format text \
   2>&1 | tee "$LOG_DIR/phase-c.log"
 
@@ -417,7 +416,8 @@ log "Finalizing session state..."
 increment_day
 git add DAY_COUNT TODO.md SESSION_PLAN.md JOURNAL.md LEARNINGS.md 2>/dev/null || true
 if ! git diff --cached --quiet 2>/dev/null; then
-  PENDING_LEFT=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || echo 0)
+  PENDING_LEFT=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || true)
+  PENDING_LEFT=${PENDING_LEFT:-0}
   git commit -m "$(cat <<COMMIT_EOF
 chore(day$DAY): finalize session state
 

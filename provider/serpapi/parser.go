@@ -25,6 +25,19 @@ func ParseResponse(resp *Response) ([]types.Flight, error) {
 	return flights, nil
 }
 
+// ParsePriceInsights extracts price insights from a SerpAPI response.
+func ParsePriceInsights(resp *Response) search.PriceInsights {
+	var rng [2]float64
+	if len(resp.PriceInsights.TypicalPriceRange) >= 2 {
+		rng = [2]float64{float64(resp.PriceInsights.TypicalPriceRange[0]), float64(resp.PriceInsights.TypicalPriceRange[1])}
+	}
+	return search.PriceInsights{
+		LowestPrice:       float64(resp.PriceInsights.LowestPrice),
+		PriceLevel:        resp.PriceInsights.PriceLevel,
+		TypicalPriceRange: rng,
+	}
+}
+
 func parseFlightGroup(g FlightGroup) (types.Flight, error) {
 	segments, err := parseSegments(g.Flights, g.Layovers)
 	if err != nil {

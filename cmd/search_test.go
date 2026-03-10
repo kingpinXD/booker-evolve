@@ -215,7 +215,73 @@ func TestIsMultiLeg_TwoLegs(t *testing.T) {
 	}
 }
 
+// --- priceSummary ---
+
+func TestPriceSummary_MultipleResults(t *testing.T) {
+	itins := []search.Itinerary{
+		makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)),
+		makeItin(makeLeg("AA", "JFK", "LHR", basetime, 8*time.Hour, 800, nil)),
+		makeItin(makeLeg("VS", "JFK", "LHR", basetime, 7*time.Hour, 600, nil)),
+	}
+	got := priceSummary(itins, "USD")
+	want := "3 results | $450 - $800"
+	if got != want {
+		t.Errorf("priceSummary = %q, want %q", got, want)
+	}
+}
+
+func TestPriceSummary_SingleResult(t *testing.T) {
+	itins := []search.Itinerary{
+		makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)),
+	}
+	got := priceSummary(itins, "USD")
+	want := "1 result | $450"
+	if got != want {
+		t.Errorf("priceSummary = %q, want %q", got, want)
+	}
+}
+
+func TestPriceSummary_Empty(t *testing.T) {
+	got := priceSummary(nil, "USD")
+	if got != "" {
+		t.Errorf("priceSummary = %q, want empty", got)
+	}
+}
+
 // --- printJSON ---
+
+func TestPrintJSON_BookingURL(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.BookingURL = "https://book.example.com/abc123"
+	itins := []search.Itinerary{makeItin(leg)}
+
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := printJSON(itins, "USD")
+
+	_ = w.Close()
+	os.Stdout = old
+
+	if err != nil {
+		t.Fatalf("printJSON error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	_, _ = buf.ReadFrom(r)
+
+	var results []jsonItinerary
+	if err := json.Unmarshal(buf.Bytes(), &results); err != nil {
+		t.Fatalf("invalid JSON output: %v", err)
+	}
+	if len(results[0].Legs) != 1 {
+		t.Fatalf("legs = %d, want 1", len(results[0].Legs))
+	}
+	if results[0].Legs[0].BookingURL != "https://book.example.com/abc123" {
+		t.Errorf("booking_url = %q, want %q", results[0].Legs[0].BookingURL, "https://book.example.com/abc123")
+	}
+}
 
 func TestPrintJSON_SingleLeg(t *testing.T) {
 	itins := []search.Itinerary{
@@ -254,5 +320,76 @@ func TestPrintJSON_SingleLeg(t *testing.T) {
 	}
 	if len(results[0].Legs) != 1 {
 		t.Errorf("legs = %d, want 1", len(results[0].Legs))
+	}
+}
+
+// --- printTable ---
+
+func capturePrintTable(itins []search.Itinerary, cur string) string {
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	printTable(itins, cur)
+
+	_ = w.Close()
+	os.Stdout = old
+
+	var buf bytes.Buffer
+	_, _ = buf.ReadFrom(r)
+	return buf.String()
+}
+
+func TestPrintTable_SingleLeg(t *testing.T) {
+	itins := []search.Itinerary{
+		makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)),
+	}
+	out := capturePrintTable(itins, "USD")
+
+	// Single-leg headers should be present (go-pretty uppercases them).
+	for _, want := range []string{"SCORE", "PRICE", "ROUTE", "AIRLINES", "DEPARTURE", "DURATION"} {
+		if !bytes.Contains([]byte(out), []byte(want)) {
+			t.Errorf("table output missing header %q", want)
+		}
+	}
+	// Multi-leg headers should NOT be present.
+	for _, absent := range []string{"LEG 1 AIRLINES", "LEG 2 AIRLINES", "STOPOVER"} {
+		if bytes.Contains([]byte(out), []byte(absent)) {
+			t.Errorf("single-leg table should not contain %q", absent)
+		}
+	}
+	// Data should be present.
+	if !bytes.Contains([]byte(out), []byte("JFK")) {
+		t.Error("table output missing route JFK")
+	}
+	// Price summary footer should be present.
+	if !bytes.Contains([]byte(out), []byte("1 result")) {
+		t.Error("table output missing price summary footer")
+	}
+}
+
+func TestPrintTable_MultiLeg(t *testing.T) {
+	itins := []search.Itinerary{
+		makeItin(
+			makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+				&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour}),
+			makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil),
+		),
+	}
+	out := capturePrintTable(itins, "CAD")
+
+	// Multi-leg headers should be present (go-pretty uppercases them).
+	for _, want := range []string{"LEG 1 AIRLINES", "LEG 2 AIRLINES", "STOPOVER"} {
+		if !bytes.Contains([]byte(out), []byte(want)) {
+			t.Errorf("multi-leg table output missing header %q", want)
+		}
+	}
+	// Data should be present.
+	if !bytes.Contains([]byte(out), []byte("Hong Kong")) {
+		t.Error("table output missing stopover city Hong Kong")
+	}
+	// Price summary footer should be present.
+	if !bytes.Contains([]byte(out), []byte("1 result")) {
+		t.Error("table output missing price summary footer")
 	}
 }

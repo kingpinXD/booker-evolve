@@ -408,6 +408,41 @@ func TestParseMultiCityResult_InvalidLeg2(t *testing.T) {
 	}
 }
 
+func TestParsePriceInsights(t *testing.T) {
+	resp := &Response{
+		PriceInsights: PriceInsights{
+			LowestPrice:       320,
+			PriceLevel:        "low",
+			TypicalPriceRange: []int{400, 800},
+		},
+	}
+
+	pi := ParsePriceInsights(resp)
+	if pi.LowestPrice != 320 {
+		t.Errorf("LowestPrice = %v, want 320", pi.LowestPrice)
+	}
+	if pi.PriceLevel != "low" {
+		t.Errorf("PriceLevel = %q, want %q", pi.PriceLevel, "low")
+	}
+	if pi.TypicalPriceRange != [2]float64{400, 800} {
+		t.Errorf("TypicalPriceRange = %v, want [400 800]", pi.TypicalPriceRange)
+	}
+}
+
+func TestParsePriceInsights_Empty(t *testing.T) {
+	resp := &Response{}
+	pi := ParsePriceInsights(resp)
+	if pi.LowestPrice != 0 {
+		t.Errorf("LowestPrice = %v, want 0", pi.LowestPrice)
+	}
+	if pi.PriceLevel != "" {
+		t.Errorf("PriceLevel = %q, want empty", pi.PriceLevel)
+	}
+	if pi.TypicalPriceRange != [2]float64{0, 0} {
+		t.Errorf("TypicalPriceRange = %v, want [0 0]", pi.TypicalPriceRange)
+	}
+}
+
 func TestParseResponse(t *testing.T) {
 	resp := &Response{
 		BestFlights: []FlightGroup{{

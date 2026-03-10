@@ -243,7 +243,38 @@ func printTable(itineraries []search.Itinerary, cur string) {
 
 	fmt.Println()
 	t.Render()
+	if s := priceSummary(itineraries, cur); s != "" {
+		fmt.Println(s)
+	}
 	fmt.Println()
+}
+
+// priceSummary returns a one-line summary of price range and result count.
+func priceSummary(itineraries []search.Itinerary, cur string) string {
+	if len(itineraries) == 0 {
+		return ""
+	}
+	sym := currencySymbol(cur)
+	minPrice, maxPrice := itineraries[0].TotalPrice, itineraries[0].TotalPrice
+	for _, itin := range itineraries[1:] {
+		if itin.TotalPrice.Amount < minPrice.Amount {
+			minPrice = itin.TotalPrice
+		}
+		if itin.TotalPrice.Amount > maxPrice.Amount {
+			maxPrice = itin.TotalPrice
+		}
+	}
+	minC, _ := currency.Convert(minPrice, cur)
+	maxC, _ := currency.Convert(maxPrice, cur)
+
+	noun := "results"
+	if len(itineraries) == 1 {
+		noun = "result"
+	}
+	if minC.Amount == maxC.Amount {
+		return fmt.Sprintf("%d %s | %s%.0f", len(itineraries), noun, sym, minC.Amount)
+	}
+	return fmt.Sprintf("%d %s | %s%.0f - %s%.0f", len(itineraries), noun, sym, minC.Amount, sym, maxC.Amount)
 }
 
 func routeString(itin search.Itinerary) string {
@@ -341,11 +372,12 @@ func formatDuration(d time.Duration) string {
 
 // jsonLeg is the JSON representation of a single flight leg.
 type jsonLeg struct {
-	Airlines  string `json:"airlines"`
-	Origin    string `json:"origin"`
-	Dest      string `json:"destination"`
-	Departure string `json:"departure"`
-	Duration  string `json:"duration"`
+	Airlines   string `json:"airlines"`
+	Origin     string `json:"origin"`
+	Dest       string `json:"destination"`
+	Departure  string `json:"departure"`
+	Duration   string `json:"duration"`
+	BookingURL string `json:"booking_url,omitempty"`
 }
 
 // jsonItinerary is the JSON representation of a search result.
@@ -375,11 +407,12 @@ func printJSON(itineraries []search.Itinerary, cur string) error {
 				dep = segs[0].DepartureTime.Format(time.RFC3339)
 			}
 			legs = append(legs, jsonLeg{
-				Airlines:  legAirlines(itin, idx),
-				Origin:    origin,
-				Dest:      dest,
-				Departure: dep,
-				Duration:  formatDuration(leg.Flight.TotalDuration),
+				Airlines:   legAirlines(itin, idx),
+				Origin:     origin,
+				Dest:       dest,
+				Departure:  dep,
+				Duration:   formatDuration(leg.Flight.TotalDuration),
+				BookingURL: leg.Flight.BookingURL,
 			})
 		}
 

@@ -11,13 +11,15 @@ import (
 	"booker/config"
 	"booker/httpclient"
 	"booker/provider"
+	"booker/search"
 	"booker/types"
 )
 
 // Provider implements provider.Provider for SerpAPI Google Flights.
 type Provider struct {
-	cfg  config.ProviderConfig
-	http *httpclient.Client
+	cfg          config.ProviderConfig
+	http         *httpclient.Client
+	lastInsights search.PriceInsights
 }
 
 // New creates a SerpAPI provider.
@@ -28,6 +30,11 @@ func New(cfg config.ProviderConfig, http *httpclient.Client) *Provider {
 // Name returns the provider identifier.
 func (p *Provider) Name() config.ProviderName {
 	return config.ProviderSerpAPI
+}
+
+// LastPriceInsights returns price insights from the most recent Search call.
+func (p *Provider) LastPriceInsights() search.PriceInsights {
+	return p.lastInsights
 }
 
 // Search queries Google Flights via SerpAPI and returns normalized flights.
@@ -67,6 +74,8 @@ func (p *Provider) Search(ctx context.Context, req types.SearchRequest) ([]types
 	if err != nil {
 		return nil, fmt.Errorf("parsing response: %w", err)
 	}
+
+	p.lastInsights = ParsePriceInsights(&resp)
 
 	log.Printf("[serpapi] %s→%s: %d flights (%d best, %d other)",
 		req.Origin, req.Destination, len(flights),

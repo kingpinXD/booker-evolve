@@ -334,12 +334,24 @@ If tests fail, you have 3 attempts to fix. After 3 failures:
 
 Do not modify any protected files (except JOURNAL.md, LEARNINGS.md, and TODO.md which you must update)."
 
-timeout "$SESSION_TIMEOUT" claude -p "$IMPL_PROMPT" \
+# macOS lacks GNU timeout — use background process + kill
+claude -p "$IMPL_PROMPT" \
   --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Task" \
   --output-format text \
-  2>&1 | tee "$LOG_DIR/phase-b.log" || {
-    log "Implementation phase timed out or failed"
-  }
+  2>&1 | tee "$LOG_DIR/phase-b.log" &
+CLAUDE_PID=$!
+
+# Kill after SESSION_TIMEOUT seconds if still running
+(sleep "$SESSION_TIMEOUT" && kill "$CLAUDE_PID" 2>/dev/null) &
+TIMER_PID=$!
+
+wait "$CLAUDE_PID" 2>/dev/null || {
+  log "Implementation phase timed out or failed"
+}
+
+# Clean up timer if claude finished before timeout
+kill "$TIMER_PID" 2>/dev/null
+wait "$TIMER_PID" 2>/dev/null
 
 log "Implementation phase complete"
 

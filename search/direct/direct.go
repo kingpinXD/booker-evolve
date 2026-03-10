@@ -38,57 +38,30 @@ func (s *Searcher) Description() string {
 }
 
 // Search fetches flights from all providers, filters, converts to itineraries,
-// and optionally ranks via LLM.
+// and optionally ranks via LLM. When req.ReturnDate is set, it searches both
+// directions and combines outbound x return into 2-leg itineraries.
 func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Itinerary, error) {
-	depDate, err := time.Parse(DateLayout, req.DepartureDate)
+	outbound, err := s.searchFlights(ctx, req.Origin, req.Destination, req.DepartureDate, req)
 	if err != nil {
-		return nil, fmt.Errorf("parsing departure date %q: %w", req.DepartureDate, err)
+		return nil, err
 	}
 
-	// Build the list of dates to search. When FlexDays > 0, search each
-	// date in the range [dep-flex, dep+flex] to get results across all days.
-	dates := []time.Time{depDate}
-	if req.FlexDays > 0 {
-		dates = make([]time.Time, 0, 2*req.FlexDays+1)
-		for d := -req.FlexDays; d <= req.FlexDays; d++ {
-			dates = append(dates, depDate.AddDate(0, 0, d))
+	var itineraries []search.Itinerary
+
+	switch {
+	case req.ReturnDate != "":
+		// Round-trip: search return flights and combine with outbound.
+		returnFlights, err := s.searchFlights(ctx, req.Destination, req.Origin, req.ReturnDate, req)
+		if err != nil {
+			return nil, err
 		}
-	}
-
-	// Fetch from all providers for each date.
-	var allFlights []types.Flight
-	for _, date := range dates {
-		searchReq := types.SearchRequest{
-			Origin:        req.Origin,
-			Destination:   req.Destination,
-			DepartureDate: date,
-			Passengers:    req.Passengers,
-			CabinClass:    req.CabinClass,
-			MaxStops:      req.MaxStops,
+		itineraries = combineRoundTrip(outbound, returnFlights)
+	default:
+		// One-way: convert each outbound flight to a single-leg itinerary.
+		itineraries = make([]search.Itinerary, 0, len(outbound))
+		for _, f := range outbound {
+			itineraries = append(itineraries, flightToItinerary(f))
 		}
-		for _, p := range s.registry.All() {
-			results, err := p.Search(ctx, searchReq)
-			if err != nil {
-				continue
-			}
-			allFlights = append(allFlights, results...)
-		}
-	}
-
-	// Filter pipeline.
-	allFlights = search.FilterFlights(allFlights)
-	allFlights = search.FilterZeroPrices(allFlights)
-	allFlights = search.FilterByMaxStops(allFlights, req.MaxStops)
-	if req.FlexDays > 0 {
-		earliest := depDate.AddDate(0, 0, -req.FlexDays)
-		latest := depDate.AddDate(0, 0, req.FlexDays).Add(24*time.Hour - time.Nanosecond)
-		allFlights = search.FilterByDateRange(allFlights, earliest, latest)
-	}
-
-	// Convert to itineraries.
-	itineraries := make([]search.Itinerary, 0, len(allFlights))
-	for _, f := range allFlights {
-		itineraries = append(itineraries, flightToItinerary(f))
 	}
 
 	// Sort by price.
@@ -111,6 +84,80 @@ func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Iti
 	}
 
 	return itineraries, nil
+}
+
+// searchFlights handles date expansion, provider fetching, and filtering for
+// a single direction (origin -> dest on the given date string).
+func (s *Searcher) searchFlights(ctx context.Context, origin, dest, dateStr string, req search.Request) ([]types.Flight, error) {
+	baseDate, err := time.Parse(DateLayout, dateStr)
+	if err != nil {
+		return nil, fmt.Errorf("parsing date %q: %w", dateStr, err)
+	}
+
+	// Build the list of dates to search. When FlexDays > 0, search each
+	// date in the range [base-flex, base+flex] to get results across all days.
+	dates := []time.Time{baseDate}
+	if req.FlexDays > 0 {
+		dates = make([]time.Time, 0, 2*req.FlexDays+1)
+		for d := -req.FlexDays; d <= req.FlexDays; d++ {
+			dates = append(dates, baseDate.AddDate(0, 0, d))
+		}
+	}
+
+	// Fetch from all providers for each date.
+	var flights []types.Flight
+	for _, date := range dates {
+		searchReq := types.SearchRequest{
+			Origin:        origin,
+			Destination:   dest,
+			DepartureDate: date,
+			Passengers:    req.Passengers,
+			CabinClass:    req.CabinClass,
+			MaxStops:      req.MaxStops,
+		}
+		for _, p := range s.registry.All() {
+			results, err := p.Search(ctx, searchReq)
+			if err != nil {
+				continue
+			}
+			flights = append(flights, results...)
+		}
+	}
+
+	// Filter pipeline.
+	flights = search.FilterFlights(flights)
+	flights = search.FilterZeroPrices(flights)
+	flights = search.FilterByMaxStops(flights, req.MaxStops)
+	if req.FlexDays > 0 {
+		earliest := baseDate.AddDate(0, 0, -req.FlexDays)
+		latest := baseDate.AddDate(0, 0, req.FlexDays).Add(24*time.Hour - time.Nanosecond)
+		flights = search.FilterByDateRange(flights, earliest, latest)
+	}
+
+	return flights, nil
+}
+
+// combineRoundTrip pairs every outbound flight with every return flight into
+// 2-leg itineraries with summed prices and computed trip durations.
+func combineRoundTrip(outbound, returnFlights []types.Flight) []search.Itinerary {
+	itineraries := make([]search.Itinerary, 0, len(outbound)*len(returnFlights))
+	for _, out := range outbound {
+		for _, ret := range returnFlights {
+			itin := search.Itinerary{
+				Legs:       []search.Leg{{Flight: out}, {Flight: ret}},
+				TotalPrice: types.Money{Amount: out.Price.Amount + ret.Price.Amount, Currency: out.Price.Currency},
+				TotalTravel: out.TotalDuration + ret.TotalDuration,
+			}
+			// TotalTrip = return arrival - outbound departure (wall-clock).
+			if len(out.Outbound) > 0 && len(ret.Outbound) > 0 {
+				firstDep := out.Outbound[0].DepartureTime
+				lastArr := ret.Outbound[len(ret.Outbound)-1].ArrivalTime
+				itin.TotalTrip = lastArr.Sub(firstDep)
+			}
+			itineraries = append(itineraries, itin)
+		}
+	}
+	return itineraries
 }
 
 func flightToItinerary(f types.Flight) search.Itinerary {

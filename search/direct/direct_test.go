@@ -652,6 +652,147 @@ func TestSearch_FlexDaysMultiDate(t *testing.T) {
 	}
 }
 
+// routeProvider returns flights keyed by "origin-dest-date" for round-trip testing.
+type routeProvider struct {
+	name     config.ProviderName
+	flights  map[string][]types.Flight // key: "ORIGIN-DEST-DATE"
+	searched []string                  // routes searched
+}
+
+func (rp *routeProvider) Name() config.ProviderName { return rp.name }
+func (rp *routeProvider) Search(_ context.Context, req types.SearchRequest) ([]types.Flight, error) {
+	key := req.Origin + "-" + req.Destination + "-" + req.DepartureDate.Format(DateLayout)
+	rp.searched = append(rp.searched, key)
+	return rp.flights[key], nil
+}
+
+func TestDirectSearch_RoundTrip(t *testing.T) {
+	outDep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	retDep := time.Date(2026, 3, 31, 10, 0, 0, 0, time.UTC)
+
+	rp := &routeProvider{
+		name: "route-fake",
+		flights: map[string][]types.Flight{
+			"DEL-LHR-2026-03-24": {
+				{
+					Price: types.Money{Amount: 400, Currency: "USD"}, TotalDuration: 10 * time.Hour,
+					Outbound: []types.Segment{{
+						Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+						DepartureTime: outDep, ArrivalTime: outDep.Add(10 * time.Hour), Duration: 10 * time.Hour,
+					}},
+				},
+				{
+					Price: types.Money{Amount: 500, Currency: "USD"}, TotalDuration: 11 * time.Hour,
+					Outbound: []types.Segment{{
+						Airline: "BA", FlightNumber: "BA200", Origin: "DEL", Destination: "LHR",
+						DepartureTime: outDep.Add(2 * time.Hour), ArrivalTime: outDep.Add(13 * time.Hour), Duration: 11 * time.Hour,
+					}},
+				},
+			},
+			"LHR-DEL-2026-03-31": {
+				{
+					Price: types.Money{Amount: 350, Currency: "USD"}, TotalDuration: 9 * time.Hour,
+					Outbound: []types.Segment{{
+						Airline: "AI", FlightNumber: "AI101", Origin: "LHR", Destination: "DEL",
+						DepartureTime: retDep, ArrivalTime: retDep.Add(9 * time.Hour), Duration: 9 * time.Hour,
+					}},
+				},
+			},
+		},
+	}
+
+	r := provider.NewRegistry()
+	_ = r.Register(rp)
+
+	s := NewSearcher(r, nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR",
+		DepartureDate: "2026-03-24",
+		ReturnDate:    "2026-03-31",
+		Passengers:    1, CabinClass: types.CabinEconomy, MaxStops: -1,
+		MaxResults: 10,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// 2 outbound x 1 return = 2 round-trip itineraries.
+	if len(results) != 2 {
+		t.Fatalf("expected 2 round-trip results, got %d", len(results))
+	}
+
+	// Each itinerary must have 2 legs.
+	for i, it := range results {
+		if len(it.Legs) != 2 {
+			t.Errorf("result[%d] has %d legs, want 2", i, len(it.Legs))
+		}
+	}
+
+	// Price sorted: AI($400)+AI($350)=$750 first, BA($500)+AI($350)=$850 second.
+	if results[0].TotalPrice.Amount != 750 {
+		t.Errorf("first result price = %.0f, want 750", results[0].TotalPrice.Amount)
+	}
+	if results[1].TotalPrice.Amount != 850 {
+		t.Errorf("second result price = %.0f, want 850", results[1].TotalPrice.Amount)
+	}
+
+	// TotalTravel = sum of both legs' travel time.
+	// First: outbound 10h + return 9h = 19h.
+	if results[0].TotalTravel != 19*time.Hour {
+		t.Errorf("first result TotalTravel = %v, want 19h", results[0].TotalTravel)
+	}
+
+	// TotalTrip = return arrival - outbound departure (wall-clock).
+	// Outbound departs 2026-03-24 08:00, return arrives 2026-03-31 19:00.
+	expectedTrip := retDep.Add(9 * time.Hour).Sub(outDep) // 7 days + 11h
+	if results[0].TotalTrip != expectedTrip {
+		t.Errorf("first result TotalTrip = %v, want %v", results[0].TotalTrip, expectedTrip)
+	}
+
+	// Verify outbound leg is DEL->LHR and return leg is LHR->DEL.
+	if results[0].Legs[0].Flight.Outbound[0].Origin != "DEL" {
+		t.Errorf("outbound leg origin = %s, want DEL", results[0].Legs[0].Flight.Outbound[0].Origin)
+	}
+	if results[0].Legs[1].Flight.Outbound[0].Origin != "LHR" {
+		t.Errorf("return leg origin = %s, want LHR", results[0].Legs[1].Flight.Outbound[0].Origin)
+	}
+}
+
+func TestDirectSearch_OneWayUnchanged(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	flights := []types.Flight{
+		{
+			Price: types.Money{Amount: 400, Currency: "USD"}, TotalDuration: 10 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(10 * time.Hour), Duration: 10 * time.Hour,
+			}},
+		},
+	}
+
+	s := NewSearcher(newRegistry(flights), nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR",
+		DepartureDate: "2026-03-24",
+		ReturnDate:    "", // one-way
+		Passengers:    1, CabinClass: types.CabinEconomy, MaxStops: -1,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// One-way: single itinerary with 1 leg.
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if len(results[0].Legs) != 1 {
+		t.Errorf("expected 1 leg for one-way, got %d", len(results[0].Legs))
+	}
+	if results[0].TotalPrice.Amount != 400 {
+		t.Errorf("price = %.0f, want 400", results[0].TotalPrice.Amount)
+	}
+}
+
 func TestFlightToItinerary_EmptyOutbound(t *testing.T) {
 	f := types.Flight{
 		Price:         types.Money{Amount: 100, Currency: "USD"},

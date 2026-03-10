@@ -12,11 +12,11 @@ set -euo pipefail
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT"
 
-DAY=$(cat DAY_COUNT 2>/dev/null || echo 0)
+SESSION=$(cat SESSION_NUMBER 2>/dev/null || echo 0)
 START_SHA=$(git rev-parse HEAD)
 TIMESTAMP=$(date -u +%H%M%S)
 TIMESTAMP_PRETTY=$(date -u +%H:%M)
-LOG_DIR="logs/day${DAY}"
+LOG_DIR="logs/session${SESSION}"
 
 MAX_TASKS=5
 TASK_TIMEOUT=900  # 15 minutes
@@ -44,11 +44,11 @@ check_prerequisites() {
   fi
 }
 
-increment_day() {
+increment_session() {
   local current
-  current=$(cat DAY_COUNT 2>/dev/null || echo 0)
-  echo $((current + 1)) > DAY_COUNT
-  log "Day counter incremented to $((current + 1))"
+  current=$(cat SESSION_NUMBER 2>/dev/null || echo 0)
+  echo $((current + 1)) > SESSION_NUMBER
+  log "Session counter incremented to $((current + 1))"
 }
 
 load_skill() {
@@ -105,7 +105,7 @@ if [[ "$NO_PUSH" != "1" ]]; then
   git pull --rebase origin main || log "WARNING: git pull failed, continuing"
 fi
 
-log "=== Evolution Session: Day $DAY ==="
+log "=== Evolution Session: Session $SESSION ==="
 log "Start SHA: $START_SHA"
 log "Timestamp: $TIMESTAMP_PRETTY UTC"
 
@@ -115,7 +115,7 @@ if [[ -f BLOCKED.md ]]; then
   log "Contents:"
   cat BLOCKED.md | while IFS= read -r line; do log "  $line"; done
   log "Remove BLOCKED.md to unblock the agent. Skipping session."
-  increment_day
+  increment_session
   exit 0
 fi
 
@@ -323,7 +323,7 @@ Testing rules (line counts only include .go files — exclude .md files, generat
 
 After completing each task (success OR failure):
 - Set the task status in TODO.md to done or skipped (with reason).
-- Append a brief entry to JOURNAL.md: ### Day $DAY, Task N -- [title] + 1-2 sentences.
+- Append a brief entry to JOURNAL.md: ### Session $SESSION, Task N -- [title] + 1-2 sentences.
 - If you learned something generalizable, append to LEARNINGS.md.
 
 If tests fail, you have 3 attempts to fix. After 3 failures:
@@ -372,7 +372,7 @@ $PERSONALITY
 
 $COMM_SKILL
 
-Session: Day $DAY
+Session: $SESSION
 Changes since session start:
 $CHANGES_SINCE
 
@@ -380,7 +380,7 @@ Tasks planned (read SESSION_PLAN.md for details):
 $(head -50 SESSION_PLAN.md 2>/dev/null || echo "No plan")
 
 Do the following:
-1. Append a journal entry to JOURNAL.md: ## Day $DAY -- $TIMESTAMP_PRETTY -- [title]
+1. Append a journal entry to JOURNAL.md: ## Session $SESSION -- $TIMESTAMP_PRETTY -- [title]
 2. If you learned anything generalizable, append to LEARNINGS.md
 3. If any GitHub issues were addressed, write ISSUE_RESPONSE.md"
 
@@ -428,19 +428,19 @@ fi
 log "Reflection phase complete"
 
 # =============================================================================
-# FINALIZE SESSION STATE (DAY_COUNT + any uncommitted .md files)
+# FINALIZE SESSION STATE (SESSION_NUMBER + any uncommitted .md files)
 # =============================================================================
 
 log "Finalizing session state..."
-increment_day
-git add DAY_COUNT TODO.md SESSION_PLAN.md JOURNAL.md LEARNINGS.md 2>/dev/null || true
+increment_session
+git add SESSION_NUMBER TODO.md SESSION_PLAN.md JOURNAL.md LEARNINGS.md 2>/dev/null || true
 if ! git diff --cached --quiet 2>/dev/null; then
   PENDING_LEFT=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || true)
   PENDING_LEFT=${PENDING_LEFT:-0}
   git commit -m "$(cat <<COMMIT_EOF
-chore(day$DAY): finalize session state
+chore(session$SESSION): finalize session state
 
-Day counter incremented to $(cat DAY_COUNT).
+Session counter incremented to $(cat SESSION_NUMBER).
 Tasks remaining: $PENDING_LEFT (carried to next session in TODO.md).
 COMMIT_EOF
   )" 2>/dev/null || true
@@ -471,7 +471,7 @@ if [[ "$VERIFIED" == "true" ]]; then
   DIFF_LINES=$(git diff --stat "$START_SHA"..HEAD -- '*.go' ':!*_gen.go' ':!*_string.go' ':!*mock*' ':!docs/*' | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
   log "Total non-generated lines changed since session start: $DIFF_LINES"
 
-  TAG="day${DAY}-${TIMESTAMP}"
+  TAG="session${SESSION}-${TIMESTAMP}"
   git tag "$TAG"
 
   if [[ "$NO_PUSH" != "1" ]]; then
@@ -492,7 +492,7 @@ else
   cat > BLOCKED.md <<BLOCKED_EOF
 # BLOCKED — Human Intervention Required
 
-**Session:** Day $DAY
+**Session:** $SESSION
 **Timestamp:** $TIMESTAMP_PRETTY UTC
 **Start SHA:** $START_SHA
 **Current SHA:** $(git rev-parse HEAD)
@@ -535,7 +535,7 @@ BLOCKED_EOF
   git commit -m "$(cat <<'COMMIT_EOF'
 chore(session): blocked — build verification failed, needs human help
 
-Build verification failed after 3 automated fix attempts on Day $DAY.
+Build verification failed after 3 automated fix attempts on Session $SESSION.
 The agent has exhausted its retry budget and cannot resolve the issue.
 
 BLOCKED.md contains the full failure output (build, test, vet, lint).

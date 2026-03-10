@@ -42,7 +42,7 @@ This project includes a self-evolving agent system. The agent (booker-agent) run
 - `PERSONALITY.md` — Agent voice and style (IMMUTABLE)
 - `JOURNAL.md` — Append-only session log
 - `LEARNINGS.md` — Append-only self-reflection insights
-- `DAY_COUNT` — Session counter
+- `SESSION_NUMBER` — Session counter
 
 ### Protected Files (never modify during evolution)
 - `IDENTITY.md`, `PERSONALITY.md`

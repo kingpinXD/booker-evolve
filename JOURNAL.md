@@ -2,7 +2,7 @@
 
 > **APPEND-ONLY** — Only add new entries at the bottom. Never edit or remove existing entries.
 
-Format: `## Day N -- HH:MM -- title` followed by 2-4 sentences.
+Format: `## Session N -- HH:MM -- title` followed by 2-4 sentences.
 
 ---
 

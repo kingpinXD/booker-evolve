@@ -7,12 +7,12 @@ Formats and conventions for session logging, learnings, and issue responses.
 Append one entry per session at the bottom of JOURNAL.md:
 
 ```markdown
-## Day N -- HH:MM -- [descriptive title]
+## Session N -- HH:MM -- [descriptive title]
 
 [2-4 sentences summarizing what was done, what succeeded, what failed, and any decisions made.]
 ```
 
-- Use the current DAY_COUNT for N
+- Use the current SESSION_NUMBER for N
 - Use 24-hour UTC time for HH:MM
 - Be honest about failures — they are more valuable than successes
 - Keep it factual: what happened, not what you hoped would happen

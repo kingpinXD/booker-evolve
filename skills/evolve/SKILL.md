@@ -21,7 +21,7 @@ The file `TODO.md` is the source of truth for session work. Format:
 ```markdown
 # TODO
 
-Carried from: Day N (only if resuming previous work)
+Carried from: Session N (only if resuming previous work)
 
 ## Task 1: [title]
 **Status:** pending | in-progress | done | skipped
@@ -114,7 +114,7 @@ If you encounter a problem that blocks ALL future work (not just one task), crea
 ```markdown
 # BLOCKED — Human Intervention Required
 
-**Session:** Day N
+**Session:** N
 **Task:** [what you were working on]
 
 ## Problem
@@ -190,7 +190,7 @@ After completing each task (success or failure), update the governance logs:
 
 1. **JOURNAL.md** — append a brief entry for the task:
    ```
-   ### Day N, Task M -- [title]
+   ### Session N, Task M -- [title]
    [1-2 sentences: what was done, outcome, any surprises]
    ```
 

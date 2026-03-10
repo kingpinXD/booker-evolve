@@ -14,7 +14,7 @@ import (
 	"booker/types"
 )
 
-const rateURL = "https://open.er-api.com/v6/latest/USD"
+var rateURL = "https://open.er-api.com/v6/latest/USD"
 
 // Converter holds exchange rates and performs currency conversion.
 type Converter struct {

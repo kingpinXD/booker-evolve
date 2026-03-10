@@ -452,6 +452,103 @@ func TestDirectSearch_MaxResults(t *testing.T) {
 	}
 }
 
+func TestDirectSearch_FlexDaysFiltering(t *testing.T) {
+	// Base date: March 24. Flex ±2 days means March 22-26 inclusive.
+	flights := []types.Flight{
+		{
+			Price:         types.Money{Amount: 300, Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+				DepartureTime: time.Date(2026, 3, 22, 8, 0, 0, 0, time.UTC), // within window
+				ArrivalTime:   time.Date(2026, 3, 22, 13, 0, 0, 0, time.UTC),
+				Duration:      5 * time.Hour,
+			}},
+		},
+		{
+			Price:         types.Money{Amount: 250, Currency: "USD"},
+			TotalDuration: 6 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "BA", FlightNumber: "BA200", Origin: "DEL", Destination: "LHR",
+				DepartureTime: time.Date(2026, 3, 20, 10, 0, 0, 0, time.UTC), // outside window
+				ArrivalTime:   time.Date(2026, 3, 20, 16, 0, 0, 0, time.UTC),
+				Duration:      6 * time.Hour,
+			}},
+		},
+		{
+			Price:         types.Money{Amount: 400, Currency: "USD"},
+			TotalDuration: 7 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: "AI300", Origin: "DEL", Destination: "LHR",
+				DepartureTime: time.Date(2026, 3, 26, 14, 0, 0, 0, time.UTC), // within window (last day)
+				ArrivalTime:   time.Date(2026, 3, 26, 21, 0, 0, 0, time.UTC),
+				Duration:      7 * time.Hour,
+			}},
+		},
+	}
+
+	s := NewSearcher(newRegistry(flights), nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		Passengers: 1, CabinClass: types.CabinEconomy, MaxStops: -1,
+		FlexDays: 2,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// March 20 is outside ±2 days from March 24, so only 2 flights remain.
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results with FlexDays=2, got %d", len(results))
+	}
+	// Price sorted: $300 (Mar 22), $400 (Mar 26).
+	if results[0].TotalPrice.Amount != 300 {
+		t.Errorf("first result price = %.0f, want 300", results[0].TotalPrice.Amount)
+	}
+	if results[1].TotalPrice.Amount != 400 {
+		t.Errorf("second result price = %.0f, want 400", results[1].TotalPrice.Amount)
+	}
+}
+
+func TestDirectSearch_FlexDaysZeroMeansExactDate(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	flights := []types.Flight{
+		{
+			Price:         types.Money{Amount: 300, Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(5 * time.Hour), Duration: 5 * time.Hour,
+			}},
+		},
+		{
+			Price:         types.Money{Amount: 250, Currency: "USD"},
+			TotalDuration: 6 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "BA", FlightNumber: "BA200", Origin: "DEL", Destination: "LHR",
+				DepartureTime: time.Date(2026, 3, 25, 10, 0, 0, 0, time.UTC), // next day
+				ArrivalTime:   time.Date(2026, 3, 25, 16, 0, 0, 0, time.UTC),
+				Duration:      6 * time.Hour,
+			}},
+		},
+	}
+
+	s := NewSearcher(newRegistry(flights), nil)
+
+	// FlexDays=0: no date range filter applied, all flights returned.
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		Passengers: 1, CabinClass: types.CabinEconomy, MaxStops: -1,
+		FlexDays: 0,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// With FlexDays=0, no filtering is applied (provider already handles the exact date).
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results with FlexDays=0, got %d", len(results))
+	}
+}
+
 func TestFlightToItinerary_EmptyOutbound(t *testing.T) {
 	f := types.Flight{
 		Price:         types.Money{Amount: 100, Currency: "USD"},

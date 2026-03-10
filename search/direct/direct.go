@@ -68,6 +68,11 @@ func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Iti
 	allFlights = search.FilterFlights(allFlights)
 	allFlights = search.FilterZeroPrices(allFlights)
 	allFlights = search.FilterByMaxStops(allFlights, req.MaxStops)
+	if req.FlexDays > 0 {
+		earliest := depDate.AddDate(0, 0, -req.FlexDays)
+		latest := depDate.AddDate(0, 0, req.FlexDays).Add(24*time.Hour - time.Nanosecond)
+		allFlights = search.FilterByDateRange(allFlights, earliest, latest)
+	}
 
 	// Convert to itineraries.
 	itineraries := make([]search.Itinerary, 0, len(allFlights))

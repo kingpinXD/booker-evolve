@@ -57,3 +57,11 @@ The chat command needs both a conversation loop (LLM calls, input/output) and a 
 ## Lesson: Combine closely related tasks to reduce commit overhead
 
 Tasks 9 (chat command scaffold) and 10 (wire chat to search) were planned as separate tasks, but the chat command's value comes from the full loop -- conversation + search execution. Implementing them as one commit kept the code coherent and avoided an intermediate state where the chat command exists but cannot actually search. Plan for logical units, not arbitrary splits.
+
+## Lesson: FlexDays filtering is useless without multi-date search
+
+The original direct strategy searched one date and filtered results by FlexDays. But SerpAPI returns flights only for the requested date, so the filter never expanded the result set. The fix: when FlexDays > 0, loop over each date in the range and make separate provider calls. This turns FlexDays from cosmetic into functional -- it actually finds cheaper flights on nearby dates. Always verify that filter parameters have upstream data to work with.
+
+## Lesson: Test airport cluster membership bidirectionally
+
+When writing tests for airport cluster data, test both directions: (1) a known code returns the expected siblings, and (2) every code in every cluster maps back to the correct number of siblings. The consistency test (TestNearbyAirports_AllClusters) caught a potential off-by-one before it shipped. Consistency checks on reference data are cheap and high-value.

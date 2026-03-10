@@ -167,31 +167,65 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// isMultiLeg returns true if any itinerary has more than one leg.
+func isMultiLeg(itineraries []search.Itinerary) bool {
+	for _, itin := range itineraries {
+		if len(itin.Legs) > 1 {
+			return true
+		}
+	}
+	return false
+}
+
 func printTable(itineraries []search.Itinerary, cur string) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleRounded)
 
-	t.AppendHeader(table.Row{
-		"#", "Score", "Price", "Route",
-		"Leg 1 Airlines", "Leg 2 Airlines",
-		"Leg 1 Departure", "Leg 2 Departure",
-		"Stopover",
-	})
+	multiLeg := isMultiLeg(itineraries)
+
+	if multiLeg {
+		t.AppendHeader(table.Row{
+			"#", "Score", "Price", "Route",
+			"Leg 1 Airlines", "Leg 2 Airlines",
+			"Leg 1 Departure", "Leg 2 Departure",
+			"Stopover", "Duration",
+		})
+	} else {
+		t.AppendHeader(table.Row{
+			"#", "Score", "Price", "Route",
+			"Airlines", "Departure", "Duration",
+		})
+	}
 
 	for i, itin := range itineraries {
 		converted, _ := currency.Convert(itin.TotalPrice, cur)
-		t.AppendRow(table.Row{
-			i + 1,
-			fmt.Sprintf("%.0f", itin.Score),
-			fmt.Sprintf("%s%.0f", currencySymbol(cur), converted.Amount),
-			routeString(itin),
-			legAirlines(itin, 0),
-			legAirlines(itin, 1),
-			legDeparture(itin, 0),
-			legDeparture(itin, 1),
-			stopoverString(itin),
-		})
+		dur := formatDuration(itin.TotalTravel)
+
+		if multiLeg {
+			t.AppendRow(table.Row{
+				i + 1,
+				fmt.Sprintf("%.0f", itin.Score),
+				fmt.Sprintf("%s%.0f", currencySymbol(cur), converted.Amount),
+				routeString(itin),
+				legAirlines(itin, 0),
+				legAirlines(itin, 1),
+				legDeparture(itin, 0),
+				legDeparture(itin, 1),
+				stopoverString(itin),
+				dur,
+			})
+		} else {
+			t.AppendRow(table.Row{
+				i + 1,
+				fmt.Sprintf("%.0f", itin.Score),
+				fmt.Sprintf("%s%.0f", currencySymbol(cur), converted.Amount),
+				routeString(itin),
+				legAirlines(itin, 0),
+				legDeparture(itin, 0),
+				dur,
+			})
+		}
 	}
 
 	fmt.Println()

@@ -22,17 +22,7 @@ Evaluate the current state of the booker codebase and produce a prioritized list
    ```
    Capture and list any vet warnings.
 
-4. **Coverage analysis:**
-   ```bash
-   go test -coverprofile=cover.out ./... 2>/dev/null
-   go tool cover -func=cover.out
-   ```
-   Identify:
-   - Packages with 0% coverage (no tests at all)
-   - Packages below 50% coverage
-   - Functions with 0% coverage in otherwise-tested packages
-
-5. **Lint check:**
+4. **Lint check:**
    ```bash
    golangci-lint run 2>/dev/null || true
    ```
@@ -44,7 +34,7 @@ Evaluate the current state of the booker codebase and produce a prioritized list
 2. Test failures (existing tests are broken)
 3. Vet warnings (potential bugs)
 4. Lint errors (code quality)
-5. **New features** that make booker more useful (new stopover cities, better ranking, flexible dates, multi-route support, etc.) — with tests for the new code
+5. **GitHub issues** — open issues are the primary source of new work. Implement features and fixes requested in issues, with tests for the new code.
 6. Idiomatic Go refactors (reorganize packages, improve interfaces, simplify code structure)
 7. Coverage for new or recently changed code
 8. Coverage for existing untested code (lowest priority — only if nothing else to do)

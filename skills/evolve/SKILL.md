@@ -134,7 +134,7 @@ Only create BLOCKED.md for systemic issues: broken builds not caused by your cha
 
 ## Protected Files — Never Modify
 
-- `IDENTITY.md`, `PERSONALITY.md`
+- `IDENTITY.md`, `PERSONALITY.md`, `VISION.md`
 - `scripts/*`
 - `.github/workflows/*`
 - `skills/*`
@@ -166,7 +166,7 @@ Format:
 - **Short summary**: imperative mood, under 72 chars (e.g., "add retry logic for transient failures")
 - **Body**: required. Explain the reasoning, not just the diff.
 - **One commit per task.** Each task gets its own commit.
-- **Context usage**: include `Context: ~X%` at the end of every commit message.
+- **Session progress**: include `Session: task N/M` at the end of every commit message (N = current task number, M = total tasks this session).
 - Never commit code that fails `go build` or `golangci-lint run`
 
 Example:
@@ -181,7 +181,7 @@ drop stopover cities that had expired cache entries during API outages.
 - Log a warning so stale usage is visible in session logs
 - Added unit test for stale-fallback path
 
-Context: ~35%
+Session: task 2/4
 ```
 
 ## Journal & Learnings

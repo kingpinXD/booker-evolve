@@ -128,6 +128,7 @@ log "=== Phase A: PLANNING ==="
 # Gather context
 IDENTITY=$(cat IDENTITY.md 2>/dev/null || echo "No IDENTITY.md found")
 PERSONALITY=$(cat PERSONALITY.md 2>/dev/null || echo "No PERSONALITY.md found")
+VISION=$(cat VISION.md 2>/dev/null || echo "No VISION.md found")
 JOURNAL_TAIL=$(tail -50 JOURNAL.md 2>/dev/null || echo "No journal yet")
 LEARNINGS_TAIL=$(tail -30 LEARNINGS.md 2>/dev/null || echo "No learnings yet")
 SELF_ASSESS_SKILL=$(load_skill "skills/self-assess/SKILL.md")
@@ -155,6 +156,8 @@ if [[ "$HAS_PENDING_TODOS" == "true" ]]; then
 $IDENTITY
 
 $PERSONALITY
+
+$VISION
 
 $SELF_ASSESS_SKILL
 
@@ -205,6 +208,8 @@ else
 $IDENTITY
 
 $PERSONALITY
+
+$VISION
 
 $SELF_ASSESS_SKILL
 
@@ -309,8 +314,8 @@ For each task:
 5. Implement using TDD: write/update test first, verify it fails, then implement.
 6. Check off TODO steps as you complete them.
 7. Run the full verification: go build ./... && go test ./... && go vet ./... && golangci-lint run
-8. Commit after each task with a descriptive message. Include 'Context: ~X%' at the end of
-   every commit message (your estimate of how much context window you have used so far).
+8. Commit after each task with a descriptive message. Include 'Session: task N/M' at the end of
+   every commit message (N = current task number, M = total tasks this session).
 
 Testing rules (line counts only include .go files — exclude .md files, generated files, mocks, docs):
 - Under 400 lines of Go code changed: unit tests are sufficient.

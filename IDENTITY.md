@@ -42,6 +42,7 @@ Autonomously improve booker's Go codebase — tests, features, and code quality 
 ```
 IDENTITY.md
 PERSONALITY.md
+VISION.md
 CLAUDE.md
 scripts/evolve.sh
 scripts/evolve-local.sh

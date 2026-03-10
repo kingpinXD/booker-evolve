@@ -186,11 +186,18 @@ Searching for flights now.`,
 
 // chatMockLLM returns pre-set responses in order.
 type chatMockLLM struct {
-	responses []string
-	idx       int
+	responses      []string
+	idx            int
+	captureHistory bool
+	historyLog     [][]llm.Message // recorded history per call
 }
 
-func (m *chatMockLLM) ChatCompletion(_ context.Context, _ []llm.Message) (string, error) {
+func (m *chatMockLLM) ChatCompletion(_ context.Context, msgs []llm.Message) (string, error) {
+	if m.captureHistory {
+		cp := make([]llm.Message, len(msgs))
+		copy(cp, msgs)
+		m.historyLog = append(m.historyLog, cp)
+	}
 	if m.idx >= len(m.responses) {
 		return "I don't understand.", nil
 	}
@@ -208,6 +215,76 @@ func (f *fakeSearchStrategy) Name() string        { return "direct" }
 func (f *fakeSearchStrategy) Description() string { return "fake" }
 func (f *fakeSearchStrategy) Search(_ context.Context, _ search.Request) ([]search.Itinerary, error) {
 	return f.results, nil
+}
+
+func TestChatLoop_ResultSummaryInHistory(t *testing.T) {
+	// After search results are shown, the LLM should receive a result summary
+	// in the conversation history so it can help the user refine.
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+		"The cheapest option is $500 on Air Canada.",
+	}
+	mock := &chatMockLLM{responses: responses, captureHistory: true}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+			},
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 800, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	// First message triggers search, second is a refinement request, third quits.
+	in := strings.NewReader("find flights\nshow me cheaper\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// The second LLM call (for "show me cheaper") should have a result summary in history.
+	if len(mock.historyLog) < 2 {
+		t.Fatalf("expected at least 2 LLM calls, got %d", len(mock.historyLog))
+	}
+	secondCallHistory := mock.historyLog[1]
+	found := false
+	for _, msg := range secondCallHistory {
+		if msg.Role == "assistant" && strings.Contains(msg.Content, "2 results") && strings.Contains(msg.Content, "500") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected result summary in second LLM call history, got messages:\n")
+		for _, msg := range secondCallHistory {
+			t.Errorf("  [%s] %s", msg.Role, msg.Content[:min(len(msg.Content), 100)])
+		}
+	}
+}
+
+func TestResultSummaryForChat(t *testing.T) {
+	itins := []search.Itinerary{
+		{TotalPrice: types.Money{Amount: 500, Currency: "USD"}},
+		{TotalPrice: types.Money{Amount: 800, Currency: "USD"}},
+		{TotalPrice: types.Money{Amount: 1200, Currency: "USD"}},
+	}
+	summary := resultSummaryForChat(itins)
+	if !strings.Contains(summary, "3") {
+		t.Errorf("summary should contain result count, got: %s", summary)
+	}
+	if !strings.Contains(summary, "500") {
+		t.Errorf("summary should contain cheapest price, got: %s", summary)
+	}
+	if !strings.Contains(summary, "1200") {
+		t.Errorf("summary should contain most expensive price, got: %s", summary)
+	}
 }
 
 func TestChatSystemPrompt(t *testing.T) {

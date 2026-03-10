@@ -129,6 +129,25 @@ func buildRequestFromParams(p tripParams) search.Request {
 	}
 }
 
+// resultSummaryForChat builds a brief summary of search results for the
+// conversation history, so the LLM can reference them during refinement.
+func resultSummaryForChat(results []search.Itinerary) string {
+	if len(results) == 0 {
+		return "No results found."
+	}
+	minPrice, maxPrice := results[0].TotalPrice.Amount, results[0].TotalPrice.Amount
+	for _, r := range results[1:] {
+		if r.TotalPrice.Amount < minPrice {
+			minPrice = r.TotalPrice.Amount
+		}
+		if r.TotalPrice.Amount > maxPrice {
+			maxPrice = r.TotalPrice.Amount
+		}
+	}
+	return fmt.Sprintf("I found %d results. Prices range from $%.0f to $%.0f USD.",
+		len(results), minPrice, maxPrice)
+}
+
 func runChat(cmd *cobra.Command, _ []string) error {
 	if !viper.GetBool(keyVerbose) {
 		log.SetOutput(io.Discard)
@@ -227,6 +246,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		default:
 			printTable(results, cur)
 		}
+
+		// Add result summary to conversation history so the LLM can reference
+		// what was shown when the user asks for refinement.
+		summary := resultSummaryForChat(results)
+		history = append(history, llm.Message{Role: llm.RoleAssistant, Content: summary})
 
 		_, _ = fmt.Fprintln(out, "Want to refine? (e.g., 'show cheaper', 'try business class', or 'quit')")
 	}

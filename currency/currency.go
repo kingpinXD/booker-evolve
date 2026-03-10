@@ -49,9 +49,9 @@ func (c *Converter) Convert(m types.Money, target string) (types.Money, error) {
 
 // Package-level default converter, initialized once via fetchRates.
 var (
-	once           sync.Once
-	defaultConv    *Converter
-	fallbackRates  = map[string]float64{"USD": 1.0, "CAD": 1.36, "EUR": 0.92, "GBP": 0.79}
+	once          sync.Once
+	defaultConv   *Converter
+	fallbackRates = map[string]float64{"USD": 1.0, "CAD": 1.36, "EUR": 0.92, "GBP": 0.79}
 )
 
 type apiResponse struct {

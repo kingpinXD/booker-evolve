@@ -164,10 +164,10 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 	}
 
 	scanner := bufio.NewScanner(in)
-	fmt.Fprintln(out, "Where would you like to fly? (type 'quit' to exit)")
+	_, _ = fmt.Fprintln(out, "Where would you like to fly? (type 'quit' to exit)")
 
 	for {
-		fmt.Fprint(out, "\n> ")
+		_, _ = fmt.Fprint(out, "\n> ")
 		if !scanner.Scan() {
 			break
 		}
@@ -176,7 +176,7 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 			continue
 		}
 		if userInput == "quit" || userInput == "exit" {
-			fmt.Fprintln(out, "Goodbye!")
+			_, _ = fmt.Fprintln(out, "Goodbye!")
 			return nil
 		}
 
@@ -184,7 +184,7 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 
 		response, err := llmClient.ChatCompletion(ctx, history)
 		if err != nil {
-			fmt.Fprintf(out, "Error: %v\n", err)
+			_, _ = fmt.Fprintf(out, "Error: %v\n", err)
 			continue
 		}
 
@@ -193,28 +193,28 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		// Check if the LLM extracted search parameters.
 		params, found := parseTripParams(response)
 		if !found {
-			fmt.Fprintln(out, response)
+			_, _ = fmt.Fprintln(out, response)
 			continue
 		}
 
 		// Build and execute the search.
 		req := buildRequestFromParams(params)
-		fmt.Fprintf(out, "Searching %s -> %s on %s...\n", req.Origin, req.Destination, req.DepartureDate)
+		_, _ = fmt.Fprintf(out, "Searching %s -> %s on %s...\n", req.Origin, req.Destination, req.DepartureDate)
 
 		strategy, err := picker.Pick(ctx, req)
 		if err != nil {
-			fmt.Fprintf(out, "Error picking strategy: %v\n", err)
+			_, _ = fmt.Fprintf(out, "Error picking strategy: %v\n", err)
 			continue
 		}
 
 		results, err := strategy.Search(ctx, req)
 		if err != nil {
-			fmt.Fprintf(out, "Search error: %v\n", err)
+			_, _ = fmt.Fprintf(out, "Search error: %v\n", err)
 			continue
 		}
 
 		if len(results) == 0 {
-			fmt.Fprintln(out, "No flights found. Try different dates or airports.")
+			_, _ = fmt.Fprintln(out, "No flights found. Try different dates or airports.")
 			continue
 		}
 
@@ -222,13 +222,13 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		switch viper.GetString(keyFormat) {
 		case "json":
 			if err := printJSON(results, cur); err != nil {
-				fmt.Fprintf(out, "Error: %v\n", err)
+				_, _ = fmt.Fprintf(out, "Error: %v\n", err)
 			}
 		default:
 			printTable(results, cur)
 		}
 
-		fmt.Fprintln(out, "Want to refine? (e.g., 'show cheaper', 'try business class', or 'quit')")
+		_, _ = fmt.Fprintln(out, "Want to refine? (e.g., 'show cheaper', 'try business class', or 'quit')")
 	}
 
 	return scanner.Err()

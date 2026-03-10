@@ -9,15 +9,8 @@ import (
 	"os"
 	"time"
 
-	"booker/config"
 	"booker/currency"
-	"booker/httpclient"
-	"booker/llm"
-	"booker/provider"
-	"booker/provider/cache"
-	"booker/provider/serpapi"
 	"booker/search"
-	"booker/search/direct"
 	"booker/search/multicity"
 	"booker/types"
 
@@ -111,18 +104,10 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		log.SetOutput(io.Discard)
 	}
 
-	cfg := config.Default()
-	httpClient := httpclient.New(cfg.HTTP)
-
-	registry := provider.NewRegistry()
-	raw := serpapi.New(cfg.Providers[config.ProviderSerpAPI], httpClient)
-	cached := cache.Wrap(raw, ".cache/flights", 0)
-	if err := registry.Register(cached); err != nil {
-		return fmt.Errorf("registering serpapi: %w", err)
+	picker, _, err := buildPicker(weights, viper.GetString(keyLeg2Date))
+	if err != nil {
+		return err
 	}
-
-	llmClient := llm.New(cfg.LLM, httpClient)
-	ranker := multicity.NewRanker(llmClient, weights)
 
 	// Build common request.
 	req := search.Request{
@@ -136,14 +121,6 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		MaxResults:    viper.GetInt(keyMaxResults),
 		Context:       viper.GetString(keyContext),
 	}
-
-	// Create strategies.
-	directStrategy := direct.NewSearcher(registry, ranker)
-	mcSearcher := multicity.NewSearcher(registry, llmClient, weights)
-	mcStrategy := multicity.NewStrategy(mcSearcher, viper.GetString(keyLeg2Date))
-
-	// Pick strategy.
-	picker := search.NewPicker(llmClient, directStrategy, mcStrategy)
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), defaultTimeout)
 	defer cancel()

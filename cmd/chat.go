@@ -10,14 +10,8 @@ import (
 	"os"
 	"strings"
 
-	"booker/config"
-	"booker/httpclient"
 	"booker/llm"
-	"booker/provider"
-	"booker/provider/cache"
-	"booker/provider/serpapi"
 	"booker/search"
-	"booker/search/direct"
 	"booker/search/multicity"
 	"booker/types"
 
@@ -173,22 +167,10 @@ func runChat(cmd *cobra.Command, _ []string) error {
 		log.SetOutput(io.Discard)
 	}
 
-	cfg := config.Default()
-	httpClient := httpclient.New(cfg.HTTP)
-	llmClient := llm.New(cfg.LLM, httpClient)
-
-	// Build search infrastructure.
-	registry := provider.NewRegistry()
-	raw := serpapi.New(cfg.Providers[config.ProviderSerpAPI], httpClient)
-	cached := cache.Wrap(raw, ".cache/flights", 0)
-	if err := registry.Register(cached); err != nil {
-		return fmt.Errorf("registering serpapi: %w", err)
+	picker, llmClient, err := buildPicker(multicity.WeightsBudget, "")
+	if err != nil {
+		return err
 	}
-	ranker := multicity.NewRanker(llmClient, multicity.WeightsBudget)
-	directStrategy := direct.NewSearcher(registry, ranker)
-	mcSearcher := multicity.NewSearcher(registry, llmClient, multicity.WeightsBudget)
-	mcStrategy := multicity.NewStrategy(mcSearcher, "")
-	picker := search.NewPicker(llmClient, directStrategy, mcStrategy)
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), defaultTimeout)
 	defer cancel()

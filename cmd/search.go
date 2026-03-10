@@ -39,6 +39,7 @@ const (
 	keyCurrency   = "currency"
 	keyContext    = "context"
 	keyFormat     = "format"
+	keyVerbose    = "verbose"
 )
 
 // Default values.
@@ -81,6 +82,7 @@ func init() {
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
 	f.String(keyContext, "", "search context/preferences (e.g. 'cheapest option' or 'want to explore a city on the way')")
 	f.String(keyFormat, "table", "output format: table or json")
+	f.BoolP(keyVerbose, "v", false, "show debug output from providers, cache, and LLM")
 
 	_ = searchCmd.MarkFlagRequired(keyDate)
 
@@ -104,8 +106,10 @@ func runSearch(cmd *cobra.Command, args []string) error {
 
 	cabin := types.CabinClass(viper.GetString(keyCabin))
 
-	// Suppress verbose logs from providers/cache/llm; only print the table.
-	log.SetOutput(io.Discard)
+	// Suppress logs unless --verbose is set.
+	if !viper.GetBool(keyVerbose) {
+		log.SetOutput(io.Discard)
+	}
 
 	cfg := config.Default()
 	httpClient := httpclient.New(cfg.HTTP)

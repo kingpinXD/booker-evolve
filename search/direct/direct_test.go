@@ -17,7 +17,7 @@ type fakeProvider struct {
 	flights []types.Flight
 }
 
-func (f *fakeProvider) Name() config.ProviderName          { return f.name }
+func (f *fakeProvider) Name() config.ProviderName { return f.name }
 func (f *fakeProvider) Search(_ context.Context, _ types.SearchRequest) ([]types.Flight, error) {
 	return f.flights, nil
 }

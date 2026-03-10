@@ -36,7 +36,7 @@ const (
 	keyMaxResults = "max-results"
 	keyProfile    = "profile"
 	keyCurrency   = "currency"
-	keyContext     = "context"
+	keyContext    = "context"
 )
 
 // Default values.

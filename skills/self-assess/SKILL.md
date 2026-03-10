@@ -22,7 +22,13 @@ Evaluate the current state of the booker codebase and produce a prioritized list
    ```
    Capture and list any vet warnings.
 
-4. **Lint check:**
+4. **Format:**
+   ```bash
+   gofmt -w .
+   ```
+   Format all Go code before any other checks.
+
+5. **Lint check:**
    ```bash
    golangci-lint run 2>/dev/null || true
    ```

@@ -1,55 +1,60 @@
 # TODO
 
-Carried from: Day 16 (all completed)
-
-## Task 1: Surface PriceInsights from SerpAPI
-**Status:** completed (Day 12)
-
-## Task 2: Expand stopover route corridors
-**Status:** completed (Day 12)
-
-## Task 3: Show booking URL in JSON output
-**Status:** completed (Day 12)
-
-## Task 4: Add price summary footer to table output
-**Status:** completed (Day 12)
-
-## Task 5: cmd printTable stdout capture tests
-**Status:** completed (Day 12)
-
-## Task 6: Fix gofmt issue in search/search.go
-**Status:** completed (Day 16)
-
-## Task 7: Add CompositeStrategy for running multiple strategies in parallel
-**Status:** completed (Day 16)
-
-## Task 8: Extend Picker to support composite strategy selection
-**Status:** completed (Day 16)
-
-## Task 9: Add chat command with conversational LLM loop
-**Status:** completed (Day 16)
-
-## Task 10: Wire chat command to execute searches
-**Status:** completed (Day 16)
-
----
+Carried from: Day 17 (all completed)
 
 ## Task 11: Fix errcheck lint in cmd/chat.go
 **Status:** completed (Day 17)
-**Notes:** Discarded return values on 7 fmt.Fprint* calls. golangci-lint now reports 0 issues.
 
 ## Task 12: Add result summary to chat conversation history
 **Status:** completed (Day 17)
-**Notes:** Added resultSummaryForChat helper. After displaying results, summary (count + price range) is appended to conversation history as assistant message. 2 new tests.
 
 ## Task 13: Add airport cluster data
 **Status:** completed (Day 17)
-**Notes:** search/airports.go with 14 metro-area clusters, NearbyAirports function with O(1) lookup via reverse index. 4 tests.
 
 ## Task 14: Flex-date multi-search in direct strategy
 **Status:** completed (Day 17)
-**Notes:** direct.Search now loops over [dep-flex, dep+flex] dates when FlexDays > 0, making 2*flex+1 provider calls and merging results. 2 new tests with dateTrackingProvider mock.
 
 ## Task 15: Surface airport suggestions in chat system prompt
 **Status:** completed (Day 17)
-**Notes:** Chat system prompt now mentions nearby airports. nearbyAirportHint shows tips after param extraction. 2 new tests.
+
+---
+
+## Task 16: Nearby-airport search strategy
+**Status:** done (Day 18)
+**Plan:** Created search/nearby/ package with Searcher that expands origin/dest via airport clusters, fans out delegate calls, merges/deduplicates, sorts by price. 9 tests.
+- [x] Write tests: mock delegate strategy, verify fan-out to cluster airports
+- [x] Write tests: deduplication of results from multiple airport pairs
+- [x] Write tests: MaxResults cap, no-cluster fallback (delegate as-is)
+- [x] Implement search/nearby/nearby.go with Strategy that expands clusters
+- [x] Verify: `go test ./search/nearby/... -race`
+
+## Task 17: Round-trip support in direct strategy
+**Status:** done (Day 18)
+**Plan:** Extracted searchFlights helper, added combineRoundTrip for 2-leg itineraries with summed prices. One-way path unchanged. 2 new tests.
+- [x] Write tests: round-trip produces 2-leg itinerary with combined price
+- [x] Write tests: one-way behavior unchanged when ReturnDate is empty
+- [x] Implement return-leg search and itinerary combination in direct.go
+- [x] Verify: `go test ./search/direct/... -race`
+
+## Task 18: Extract shared cmd infrastructure
+**Status:** done (Day 18)
+**Plan:** Created cmd/infra.go with buildPicker(weights, leg2Date) helper. Reduced ~30 duplicated lines across runSearch and runChat.
+- [x] Create cmd/infra.go with buildPicker helper
+- [x] Refactor runSearch to use buildPicker
+- [x] Refactor runChat to use buildPicker
+- [x] Verify: `go test ./cmd/... -race` (all existing tests pass)
+
+## Task 19: Structured refinement guidance in chat
+**Status:** done (Day 18)
+**Plan:** Added refinementHint() returning available levers; appended as system message to history after results. 2 new tests.
+- [x] Write test: refinement hint with specific levers appears in history after results
+- [x] Add refinementHint function returning available levers
+- [x] Append hint to conversation history after result summary
+- [x] Verify: `go test ./cmd/... -race`
+
+## Task 20: Lint and gofmt sweep
+**Status:** done (Day 18)
+**Plan:** Fixed 1 gofmt violation in direct.go (worktree agent output). Zero lint issues.
+- [x] Run gofmt -l . and fix any violations
+- [x] Run golangci-lint run and fix any issues
+- [x] Verify: zero issues reported

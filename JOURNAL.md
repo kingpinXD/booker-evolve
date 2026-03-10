@@ -78,6 +78,21 @@ Completed all 5 planned tasks in 2 commits with zero reverts and zero API calls.
 
 Completed all 5 tasks in 4 commits with zero reverts and zero API calls. (1) Fixed gofmt alignment in PriceInsights struct. (2) Added CompositeStrategy in search/composite.go -- runs multiple strategies concurrently via sync.WaitGroup, merges results, deduplicates by route+price, optionally re-ranks. 10 tests with race detector. (3) Extended Picker to support "both" strategy: when LLM returns {"strategy":"both"}, Picker wraps all strategies in a CompositeStrategy. System prompt updated, 3 new tests. (4-5) Added `booker chat` command implementing VISION.md's top priority: conversational flight search. Multi-turn LLM loop gathers trip parameters through dialogue, parses extracted JSON into search.Request, runs Picker + strategy, displays results. 10 new tests covering param parsing, defaults, system prompt, and full conversation-to-search flow. Zero SerpAPI or LLM calls -- all tests use mocks. This is the first step toward booker as a booking agent rather than a search tool.
 
+## Day 18 -- Session 18, Task 1 -- Nearby-airport search strategy
+Created search/nearby/ package with NearbySearcher strategy. Wraps a delegate strategy, expands origin/destination via airport clusters, fans out concurrent searches for all airport-pair combinations, merges and deduplicates by route+price, sorts by price. 9 tests covering fan-out, dedup, MaxResults cap, no-cluster fallback, partial errors. Ran as parallel worktree agent.
+
+### Session 18, Task 2 -- Round-trip support in direct strategy
+Added round-trip support to direct.Search(). Extracted searchFlights helper to avoid duplicating the date-expansion/fetch/filter pipeline. When ReturnDate is non-empty, searches return flights (dest->origin) and combines all outbound x return pairs into 2-leg itineraries with summed prices and computed TotalTrip. One-way behavior unchanged. 2 new tests with routeProvider mock. Ran as parallel worktree agent.
+
+### Session 18, Task 3 -- Extract shared cmd infrastructure
+Created cmd/infra.go with buildPicker(weights, leg2Date) helper. Both runSearch and runChat now call this instead of repeating ~20 lines of provider/strategy/picker wiring. Net -2 lines. All existing cmd tests pass unchanged.
+
+### Session 18, Task 4 -- Structured refinement guidance in chat
+Added refinementHint() function listing available levers (dates, nearby airports, cabin class, direct-only, passengers, round-trip). Appended as a system message to conversation history after search results, so the LLM knows what refinement options to suggest. 2 new tests.
+
+### Session 18, Task 5 -- Lint and gofmt sweep
+Fixed 1 gofmt violation in search/direct/direct.go (tab alignment from worktree agent). Zero lint issues after fix. All build gates pass.
+
 ## Day 17 -- 04:30 -- Lint fix, chat refinement, airport clusters, flex-date multi-search
 
 Completed all 5 tasks in 5 commits with zero reverts and zero API calls. (1) Fixed 7 errcheck lint violations in cmd/chat.go. (2) Added result summary to chat conversation history -- after displaying search results, a summary (count + price range) is appended as an assistant message so the LLM has context for refinement requests. 2 new tests. (3) Added airport cluster data in search/airports.go -- 14 metro-area clusters with NearbyAirports O(1) lookup via reverse index, 4 tests. (4) Enhanced direct strategy to search multiple dates when FlexDays > 0, making 2*flex+1 provider calls instead of 1, genuinely finding cheaper options on adjacent dates. 2 new tests with dateTrackingProvider mock. Tasks 3 and 4 ran as parallel worktree agents. (5) Surfaced nearby-airport suggestions in chat -- system prompt now mentions alternatives, and nearbyAirportHint displays tips after param extraction. 2 new tests.

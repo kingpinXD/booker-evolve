@@ -62,6 +62,14 @@ Tasks 9 (chat command scaffold) and 10 (wire chat to search) were planned as sep
 
 The original direct strategy searched one date and filtered results by FlexDays. But SerpAPI returns flights only for the requested date, so the filter never expanded the result set. The fix: when FlexDays > 0, loop over each date in the range and make separate provider calls. This turns FlexDays from cosmetic into functional -- it actually finds cheaper flights on nearby dates. Always verify that filter parameters have upstream data to work with.
 
+## Lesson: Worktree agents need gofmt verification on merge
+
+Worktree agents produce correct, passing code, but may have minor gofmt violations (tab alignment, spacing). Always run `gofmt -l .` after rebasing worktree branches into main. This is cheap to fix but easy to miss if you only run `go test` and `go vet` without the lint pass.
+
+## Lesson: Refactoring shared infrastructure unlocks simpler feature additions
+
+Extracting buildPicker into cmd/infra.go reduced both runSearch and runChat by ~20 lines each, but the bigger win is that adding new strategies (like nearby-airport) to the picker now requires editing one function instead of two. When duplicate infrastructure accumulates across commands, consolidate early -- it compounds.
+
 ## Lesson: Test airport cluster membership bidirectionally
 
 When writing tests for airport cluster data, test both directions: (1) a known code returns the expected siblings, and (2) every code in every cluster maps back to the correct number of siblings. The consistency test (TestNearbyAirports_AllClusters) caught a potential off-by-one before it shipped. Consistency checks on reference data are cheap and high-value.

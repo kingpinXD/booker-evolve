@@ -41,3 +41,11 @@ When running 3 test-writing agents in parallel worktrees for the same package (m
 ## Lesson: Worktree agents may write to the main tree instead of the worktree
 
 When using isolation: "worktree", the agent may still write files to the main working directory instead of the worktree. After agent completion, always check `git status` in the main tree for uncommitted changes and copy any missing files from the worktree path before committing. Do not assume agents committed their work in the worktree branch.
+
+## Lesson: Avoid threading per-search data through per-result interfaces
+
+PriceInsights from SerpAPI is per-search (one value for the whole response), not per-flight. Attempting to thread it through provider.Provider, cache.Provider, and search.Strategy interfaces -- which all return per-flight/per-itinerary slices -- leads to over-engineering. The pragmatic approach: store it on the concrete provider with a getter and access it directly from the CLI. Keep per-search metadata separate from per-result data.
+
+## Lesson: go-pretty table writer uppercases all header text
+
+When capturing table output in tests via os.Pipe, remember that go-pretty's table.Writer renders all header strings in uppercase (e.g. "Score" becomes "SCORE"). Test assertions for header presence must match the uppercased form.

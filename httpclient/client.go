@@ -48,7 +48,6 @@ func (c *Client) GetJSON(ctx context.Context, rawURL string, headers map[string]
 	return c.doJSON(req, dest)
 }
 
-
 // PostJSON performs a POST with a JSON body and decodes the JSON response into dest.
 func (c *Client) PostJSON(ctx context.Context, rawURL string, body any, headers map[string]string, dest any) error {
 	jsonBody, err := json.Marshal(body)
@@ -80,7 +79,7 @@ func (c *Client) doJSON(req *http.Request, dest any) error {
 		}
 
 		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			lastErr = fmt.Errorf("reading response: %w", err)
 			continue

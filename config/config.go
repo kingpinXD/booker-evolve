@@ -31,11 +31,11 @@ type Config struct {
 // LLMConfig holds settings for the LLM backend.
 // Primary is tried first; Fallback is used if Primary fails.
 type LLMConfig struct {
-	Provider  LLMProvider
-	APIKey    string
-	Model     string
-	BaseURL   string
-	MaxTokens int
+	Provider   LLMProvider
+	APIKey     string
+	Model      string
+	BaseURL    string
+	MaxTokens  int
 	AuthHeader string // "Authorization" for OpenAI, "X-API-Key" for Anuma
 
 	Fallback *LLMConfig // optional fallback provider
@@ -61,10 +61,10 @@ type HTTPConfig struct {
 
 // Environment variable names for API keys.
 const (
-	EnvKiwiAPIKey    = "BOOKER_KIWI_API_KEY"
-	EnvSerpAPIKey    = "BOOKER_SERPAPI_KEY"
-	EnvOpenAIAPIKey  = "BOOKER_OPENAI_API_KEY"
-	EnvAnumaAPIKey   = "BOOKER_ANUMA_API_KEY"
+	EnvKiwiAPIKey   = "BOOKER_KIWI_API_KEY"
+	EnvSerpAPIKey   = "BOOKER_SERPAPI_KEY"
+	EnvOpenAIAPIKey = "BOOKER_OPENAI_API_KEY"
+	EnvAnumaAPIKey  = "BOOKER_ANUMA_API_KEY"
 )
 
 // Default returns the default configuration.

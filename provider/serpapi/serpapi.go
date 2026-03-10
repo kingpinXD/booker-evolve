@@ -125,7 +125,9 @@ func (p *Provider) searchMultiCityInternal(ctx context.Context, req MultiCityReq
 		return nil, fmt.Errorf("step1 request: %w", err)
 	}
 
-	leg1Options := append(step1Resp.BestFlights, step1Resp.OtherFlights...)
+	var leg1Options []FlightGroup
+	leg1Options = append(leg1Options, step1Resp.BestFlights...)
+	leg1Options = append(leg1Options, step1Resp.OtherFlights...)
 	log.Printf("[serpapi] step1: %d leg1 options", len(leg1Options))
 
 	if len(leg1Options) == 0 {
@@ -160,7 +162,9 @@ func (p *Provider) searchMultiCityInternal(ctx context.Context, req MultiCityReq
 			continue
 		}
 
-		leg2Options := append(step2Resp.BestFlights, step2Resp.OtherFlights...)
+		var leg2Options []FlightGroup
+		leg2Options = append(leg2Options, step2Resp.BestFlights...)
+		leg2Options = append(leg2Options, step2Resp.OtherFlights...)
 		log.Printf("[serpapi] step2 for leg1 $%d: %d leg2 options", leg1.Price, len(leg2Options))
 
 		for _, leg2 := range leg2Options {

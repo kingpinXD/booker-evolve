@@ -91,7 +91,7 @@ func (p *Provider) cachePath(req types.SearchRequest) string {
 
 // cacheEntry wraps flights with a timestamp for TTL checks.
 type cacheEntry struct {
-	CachedAt time.Time     `json:"cached_at"`
+	CachedAt time.Time      `json:"cached_at"`
 	Flights  []types.Flight `json:"flights"`
 }
 
@@ -156,7 +156,7 @@ func (p *Provider) multiCityCachePath(req provider.MultiCityRequest) string {
 }
 
 type multiCityCacheEntry struct {
-	CachedAt time.Time              `json:"cached_at"`
+	CachedAt time.Time                  `json:"cached_at"`
 	Results  []provider.MultiCityResult `json:"results"`
 }
 

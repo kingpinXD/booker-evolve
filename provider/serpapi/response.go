@@ -43,7 +43,7 @@ type FlightSegment struct {
 // Airport holds departure or arrival airport info.
 type Airport struct {
 	Name string `json:"name"`
-	ID   string `json:"id"` // IATA code
+	ID   string `json:"id"`   // IATA code
 	Time string `json:"time"` // "2026-03-24 03:30"
 }
 

@@ -34,7 +34,6 @@ import (
 // TODO(iterate): Add time-of-day preferences (avoid red-eye on long legs).
 // TODO(iterate): Weight stopover city attractiveness into the combination.
 
-
 // CombineParams controls how legs are paired.
 type CombineParams struct {
 	Stopover StopoverCity

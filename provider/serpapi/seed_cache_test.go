@@ -90,7 +90,7 @@ func TestSeedCache(t *testing.T) {
 		var entry struct {
 			Flights []json.RawMessage `json:"flights"`
 		}
-		json.Unmarshal(data, &entry)
+		_ = json.Unmarshal(data, &entry)
 		t.Logf("  %s (%d flights)", e.Name(), len(entry.Flights))
 	}
 }

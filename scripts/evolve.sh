@@ -83,6 +83,13 @@ build_verify() {
     return 1
   fi
 
+  if command -v golangci-lint >/dev/null 2>&1; then
+    if ! golangci-lint run; then
+      log "FAIL: golangci-lint"
+      return 1
+    fi
+  fi
+
   log "Build verification passed"
   return 0
 }
@@ -198,10 +205,31 @@ $EVOLVE_SKILL
 
 Read SESSION_PLAN.md and implement Task $i.
 Follow TDD: write/update test first, verify it fails, then implement.
-After changes, run: go build ./... && go test ./... && go vet ./...
-If all pass, commit with a descriptive message (format: type: description).
+After changes, run the full verification:
+  go build ./... && go test ./... && go vet ./... && golangci-lint run
+
+Testing rules (line counts exclude generated files: docs, mocks, *_gen.go, *_string.go):
+- Under 400 lines changed: unit tests are sufficient.
+- 400-1000 lines changed: include at least one integration test.
+
+Commit size rules:
+- Keep each commit under 300 lines of non-generated code.
+- If a task is larger, split into multiple small commits.
+- Check your diff size before committing:
+  git diff --cached --stat -- '*.go' ':!*_gen.go' ':!*_string.go' ':!*mock*' ':!docs/*'
+
+Commit message rules:
+- Format: type(scope): short summary, followed by a body paragraph.
+- The body must explain WHY the change was made, the reasoning, and any trade-offs.
+- Never write a one-liner commit message. Always include a body.
+
+After completing each task (success OR failure):
+- Append a brief entry to JOURNAL.md: ### Day $DAY, Task \$i -- [title] + 1-2 sentences.
+- If you learned something generalizable, append to LEARNINGS.md.
+- These updates are part of the task, not optional.
+
 If tests fail, you have 3 attempts to fix. After 3 failures, revert with git checkout.
-Do not modify any protected files."
+Do not modify any protected files (except JOURNAL.md and LEARNINGS.md which you must update)."
 
   timeout "$TASK_TIMEOUT" claude -p "$TASK_PROMPT" \
     --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
@@ -309,6 +337,10 @@ for attempt in 1 2 3; do
 done
 
 if [[ "$VERIFIED" == "true" ]]; then
+  # Check total diff size (non-generated .go files only)
+  DIFF_LINES=$(git diff --stat "$START_SHA"..HEAD -- '*.go' ':!*_gen.go' ':!*_string.go' ':!*mock*' ':!docs/*' | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+  log "Total non-generated lines changed since session start: $DIFF_LINES"
+
   TAG="day${DAY}-${TIMESTAMP}"
   git tag "$TAG"
 

@@ -44,12 +44,12 @@ import (
 // Unlike types.Flight which is a single provider result, an Itinerary may
 // combine results from different searches and includes stopover information.
 type Itinerary struct {
-	Legs         []Leg
-	TotalPrice   types.Money
-	TotalTravel  time.Duration // sum of in-air time across all legs
-	TotalTrip    time.Duration // wall-clock time from first departure to last arrival
-	Score        float64       // LLM-assigned score (0-100), 0 means unscored
-	Reasoning    string        // LLM explanation of the score
+	Legs        []Leg
+	TotalPrice  types.Money
+	TotalTravel time.Duration // sum of in-air time across all legs
+	TotalTrip   time.Duration // wall-clock time from first departure to last arrival
+	Score       float64       // LLM-assigned score (0-100), 0 means unscored
+	Reasoning   string        // LLM explanation of the score
 }
 
 // Leg is one bookable segment of the itinerary (e.g. Delhi → Hong Kong).

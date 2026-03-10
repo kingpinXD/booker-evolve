@@ -35,7 +35,7 @@ func fetchRates() {
 			rates = map[string]float64{"USD": 1.0, "CAD": 1.36, "EUR": 0.92, "GBP": 0.79}
 			return
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		var data apiResponse
 		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil || data.Result != "success" {

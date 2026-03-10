@@ -1,7 +1,7 @@
 APP_NAME := booker
 GO       := go
 
-.PHONY: install build test clean lint vet fmt cover evolve evolve-local cron-install cron-uninstall cron-status
+.PHONY: install build test clean lint vet fmt cover verify evolve evolve-local cron-install cron-uninstall cron-status
 
 install:
 	$(GO) install .
@@ -23,6 +23,10 @@ vet:
 
 fmt:
 	gofmt -w .
+
+verify: build test vet lint
+	@gofmt -l . | grep . && { echo "gofmt: unformatted files found"; exit 1; } || true
+	@echo "All checks passed."
 
 cover:
 	$(GO) test -coverprofile=cover.out ./... && $(GO) tool cover -func=cover.out

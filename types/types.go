@@ -32,10 +32,10 @@ const (
 
 // SearchRequest is the normalized input for any flight search.
 type SearchRequest struct {
-	Origin        string     // IATA airport code, e.g. "JFK"
-	Destination   string     // IATA airport code, e.g. "LHR"
+	Origin        string // IATA airport code, e.g. "JFK"
+	Destination   string // IATA airport code, e.g. "LHR"
 	DepartureDate time.Time
-	ReturnDate    time.Time  // zero value means one-way
+	ReturnDate    time.Time // zero value means one-way
 	Passengers    int
 	CabinClass    CabinClass
 	MaxStops      int // MaxStopsAny means no preference
@@ -64,7 +64,7 @@ type Flight struct {
 	Return        []Segment // return leg segments (empty for one-way)
 	TotalDuration time.Duration
 	BookingURL    string
-	SeatsLeft     int          // 0 means unknown
+	SeatsLeft     int // 0 means unknown
 	BagsIncluded  BagsIncluded
 }
 
@@ -97,7 +97,7 @@ type Segment struct {
 	ArrivalTime      time.Time
 	Duration         time.Duration
 	CabinClass       CabinClass
-	OperatingCarrier string // if different from marketing carrier
+	OperatingCarrier string        // if different from marketing carrier
 	LayoverDuration  time.Duration // time until next segment (0 if last)
 }
 

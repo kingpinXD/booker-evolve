@@ -13,7 +13,7 @@ import (
 
 // fakeProvider returns a fixed set of flights.
 type fakeProvider struct {
-	calls  int
+	calls   int
 	flights []types.Flight
 }
 
@@ -101,9 +101,9 @@ func TestCacheTTLExpiry(t *testing.T) {
 		CabinClass:    types.CabinEconomy,
 	}
 
-	cached.Search(context.Background(), req)
+	_, _ = cached.Search(context.Background(), req)
 	time.Sleep(5 * time.Millisecond)
-	cached.Search(context.Background(), req)
+	_, _ = cached.Search(context.Background(), req)
 
 	if fake.calls != 2 {
 		t.Fatalf("expected 2 calls after TTL expiry, got %d", fake.calls)

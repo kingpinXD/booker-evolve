@@ -9,15 +9,21 @@ import (
 	"booker/llm"
 )
 
+// ChatCompleter abstracts the LLM chat completion call so Picker can be tested
+// with a mock. The concrete implementation is *llm.Client.
+type ChatCompleter interface {
+	ChatCompletion(ctx context.Context, messages []llm.Message) (string, error)
+}
+
 // Picker uses an LLM to select the best search strategy based on user context.
 // Falls back to heuristics when no context is provided or the LLM is unavailable.
 type Picker struct {
-	llm        *llm.Client
+	llm        ChatCompleter
 	strategies []Strategy
 }
 
 // NewPicker creates a strategy picker. Pass all available strategies.
-func NewPicker(llmClient *llm.Client, strategies ...Strategy) *Picker {
+func NewPicker(llmClient ChatCompleter, strategies ...Strategy) *Picker {
 	return &Picker{llm: llmClient, strategies: strategies}
 }
 

@@ -9,10 +9,42 @@ func TestStopoversForRoute_DELtoYYZ(t *testing.T) {
 	}
 }
 
-func TestStopoversForRoute_UnknownFallback(t *testing.T) {
+func TestStopoversForRoute_UnknownReturnsNil(t *testing.T) {
 	stopovers := StopoversForRoute("SFO", "NRT")
-	if len(stopovers) != len(DELToYYZStopovers) {
-		t.Fatalf("unknown route should fallback to DELToYYZ, got %d stopovers", len(stopovers))
+	if stopovers != nil {
+		t.Fatalf("unknown route should return nil, got %d stopovers", len(stopovers))
+	}
+}
+
+func TestStopoversForRoute_BOMtoYYZ(t *testing.T) {
+	stopovers := StopoversForRoute("BOM", "YYZ")
+	if len(stopovers) == 0 {
+		t.Fatal("BOM→YYZ should have stopover cities")
+	}
+	// BOM→YYZ should have geographically appropriate stopovers (SE Asia, East Asia, Europe)
+	// and NOT include cities that only make sense for DEL corridors.
+	airports := map[string]bool{}
+	for _, s := range stopovers {
+		airports[s.Airport] = true
+	}
+	// Bangkok and Singapore are geographically close to Mumbai.
+	if !airports["BKK"] && !airports["SIN"] {
+		t.Error("BOM→YYZ should include at least BKK or SIN")
+	}
+}
+
+func TestStopoversForRoute_DELtoYVR(t *testing.T) {
+	stopovers := StopoversForRoute("DEL", "YVR")
+	if len(stopovers) == 0 {
+		t.Fatal("DEL→YVR should have stopover cities")
+	}
+	airports := map[string]bool{}
+	for _, s := range stopovers {
+		airports[s.Airport] = true
+	}
+	// Tokyo/Seoul are natural Pacific stopovers for DEL→YVR.
+	if !airports["NRT"] && !airports["ICN"] {
+		t.Error("DEL→YVR should include at least NRT or ICN")
 	}
 }
 
@@ -51,6 +83,35 @@ func TestStopoverCityFields(t *testing.T) {
 				t.Error("Notes is empty")
 			}
 		})
+	}
+}
+
+func TestAllRouteStopoversValid(t *testing.T) {
+	routes := []struct {
+		origin, dest string
+	}{
+		{"DEL", "YYZ"},
+		{"BOM", "YYZ"},
+		{"DEL", "YVR"},
+	}
+	for _, r := range routes {
+		stopovers := StopoversForRoute(r.origin, r.dest)
+		for _, sc := range stopovers {
+			t.Run(r.origin+"→"+r.dest+"/"+sc.City, func(t *testing.T) {
+				if sc.City == "" {
+					t.Error("City is empty")
+				}
+				if len(sc.Airport) != 3 {
+					t.Errorf("Airport %q is not a 3-letter IATA code", sc.Airport)
+				}
+				if sc.Region == "" {
+					t.Error("Region is empty")
+				}
+				if sc.MinStay <= 0 || sc.MaxStay <= 0 || sc.MaxStay < sc.MinStay {
+					t.Errorf("invalid stay range: %v-%v", sc.MinStay, sc.MaxStay)
+				}
+			})
+		}
 	}
 }
 

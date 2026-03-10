@@ -209,24 +209,20 @@ func TestSearch_InvalidLeg2Date(t *testing.T) {
 	}
 }
 
-func TestSearch_EmptyStopoversUseFallback(t *testing.T) {
-	// When params.Stopovers is empty, StopoversForRoute provides the fallback list.
-	// The provider returns no flights, so the result is nil (no matching itineraries).
+func TestSearch_EmptyStopoversUnknownRoute(t *testing.T) {
+	// When params.Stopovers is empty and route is unknown, StopoversForRoute
+	// returns nil, which causes Search to return an error.
 	searcher := newTestSearcher(t, nil, llmErrorHandler())
 
-	results, err := searcher.Search(context.Background(), SearchParams{
+	_, err := searcher.Search(context.Background(), SearchParams{
 		Origin:        "XXX",
 		Destination:   "YYY",
 		DepartureDate: basetime.Format(DateLayout),
 		Passengers:    1,
 		Stopovers:     []StopoverCity{}, // triggers fallback
 	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	// No flights from provider => no itineraries.
-	if results != nil {
-		t.Errorf("expected nil results, got %d", len(results))
+	if err == nil {
+		t.Fatal("expected error for unknown route with no stopovers")
 	}
 }
 

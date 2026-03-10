@@ -179,17 +179,151 @@ var DELToYYZStopovers = []StopoverCity{
 	},
 }
 
-// StopoversForRoute returns the candidate stopover cities for a given
-// origin-destination pair.
+// BOMToYYZStopovers are the candidate stopover cities for Mumbai → Toronto.
 //
-// TODO(iterate): Currently returns a hardcoded list for DEL→YYZ. Future
-// versions should dynamically compute stopovers based on the route.
+// Route geometry: BOM is at ~19°N, 73°E. YYZ is at ~43°N, 79°W.
+// Similar corridor to DEL→YYZ but BOM has different hub connectivity.
+var BOMToYYZStopovers = []StopoverCity{
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		KiwiID:  "Airport:BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-YYZ via connection.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		KiwiID:  "Airport:SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Singapore Airlines hub. Strong BOM-SIN frequency. Clean, safe city.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		KiwiID:  "Airport:HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-YYZ on Cathay.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		KiwiID:  "Airport:KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "AirAsia/MAS hub. Very cheap BOM-KUL. KUL-YYZ needs connection.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		KiwiID:  "Airport:NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-YYZ direct on Air Canada.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		KiwiID:  "Airport:IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-YYZ direct.",
+	},
+	{
+		City:    "London",
+		Airport: "LHR",
+		KiwiID:  "Airport:LHR",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "BA hub. BOM-LHR on BA/Air India/Virgin. LHR-YYZ very frequent.",
+	},
+}
+
+// DELToYVRStopovers are the candidate stopover cities for Delhi → Vancouver.
+//
+// Route geometry: DEL is at ~28°N, 77°E. YVR is at ~49°N, 123°W.
+// Pacific routing via East Asia is the primary corridor.
+var DELToYVRStopovers = []StopoverCity{
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		KiwiID:  "Airport:NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-YVR direct on Air Canada/ANA. Natural Pacific waypoint.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		KiwiID:  "Airport:ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. ICN-YVR direct on Korean Air. DEL-ICN on Korean Air.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		KiwiID:  "Airport:HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-YVR on Cathay. DEL-HKG frequent.",
+	},
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		KiwiID:  "Airport:BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BKK-YVR via connection (NRT/ICN). DEL-BKK frequent and cheap.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		KiwiID:  "Airport:SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-YVR via connection. Strong DEL-SIN frequency.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		KiwiID:  "Airport:IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. IST-YVR via connection. DEL-IST on Turkish.",
+	},
+}
+
+// routeKey creates a lookup key for origin-destination pairs.
+func routeKey(origin, destination string) string {
+	return origin + "→" + destination
+}
+
+// stopoversMap maps origin→destination to their stopover lists.
+var stopoversMap = map[string][]StopoverCity{
+	routeKey("DEL", "YYZ"): DELToYYZStopovers,
+	routeKey("BOM", "YYZ"): BOMToYYZStopovers,
+	routeKey("DEL", "YVR"): DELToYVRStopovers,
+}
+
+// StopoversForRoute returns the candidate stopover cities for a given
+// origin-destination pair. Returns nil for unknown routes.
 func StopoversForRoute(origin, destination string) []StopoverCity {
-	// For now, we only have one route defined.
-	// As we add more origin-destination pairs, this becomes a lookup.
-	if origin == "DEL" && destination == "YYZ" {
-		return DELToYYZStopovers
-	}
-	// Fallback: return all known stopovers.
-	return DELToYYZStopovers
+	return stopoversMap[routeKey(origin, destination)]
 }

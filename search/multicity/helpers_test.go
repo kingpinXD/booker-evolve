@@ -407,7 +407,9 @@ func TestStopoversForRoute(t *testing.T) {
 		wantMin     int
 	}{
 		{"DEL to YYZ returns known stopovers", "DEL", "YYZ", 5},
-		{"unknown route falls back to DEL-YYZ list", "JFK", "LHR", 5},
+		{"BOM to YYZ returns known stopovers", "BOM", "YYZ", 5},
+		{"DEL to YVR returns known stopovers", "DEL", "YVR", 5},
+		{"unknown route returns nil", "JFK", "LHR", 0},
 	}
 
 	for _, tt := range tests {

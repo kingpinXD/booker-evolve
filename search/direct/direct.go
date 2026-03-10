@@ -144,8 +144,8 @@ func combineRoundTrip(outbound, returnFlights []types.Flight) []search.Itinerary
 	for _, out := range outbound {
 		for _, ret := range returnFlights {
 			itin := search.Itinerary{
-				Legs:       []search.Leg{{Flight: out}, {Flight: ret}},
-				TotalPrice: types.Money{Amount: out.Price.Amount + ret.Price.Amount, Currency: out.Price.Currency},
+				Legs:        []search.Leg{{Flight: out}, {Flight: ret}},
+				TotalPrice:  types.Money{Amount: out.Price.Amount + ret.Price.Amount, Currency: out.Price.Currency},
 				TotalTravel: out.TotalDuration + ret.TotalDuration,
 			}
 			// TotalTrip = return arrival - outbound departure (wall-clock).

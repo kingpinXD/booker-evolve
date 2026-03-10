@@ -14,8 +14,10 @@ type mockProvider struct {
 	name config.ProviderName
 }
 
-func (m *mockProvider) Name() config.ProviderName                                          { return m.name }
-func (m *mockProvider) Search(context.Context, types.SearchRequest) ([]types.Flight, error) { return nil, nil }
+func (m *mockProvider) Name() config.ProviderName { return m.name }
+func (m *mockProvider) Search(context.Context, types.SearchRequest) ([]types.Flight, error) {
+	return nil, nil
+}
 
 func TestRegister(t *testing.T) {
 	r := NewRegistry()
@@ -34,7 +36,9 @@ func TestRegister(t *testing.T) {
 func TestGet(t *testing.T) {
 	r := NewRegistry()
 	p := &mockProvider{name: "test"}
-	r.Register(p)
+	if err := r.Register(p); err != nil {
+		t.Fatalf("Register failed: %v", err)
+	}
 
 	got, ok := r.Get("test")
 	if !ok || got != p {
@@ -53,8 +57,12 @@ func TestAll(t *testing.T) {
 		t.Fatalf("empty registry All() returned %d providers", len(all))
 	}
 
-	r.Register(&mockProvider{name: "a"})
-	r.Register(&mockProvider{name: "b"})
+	if err := r.Register(&mockProvider{name: "a"}); err != nil {
+		t.Fatalf("Register a failed: %v", err)
+	}
+	if err := r.Register(&mockProvider{name: "b"}); err != nil {
+		t.Fatalf("Register b failed: %v", err)
+	}
 
 	all := r.All()
 	if len(all) != 2 {
@@ -71,7 +79,7 @@ func TestConcurrentAccess(t *testing.T) {
 		go func(n int) {
 			defer wg.Done()
 			p := &mockProvider{name: config.ProviderName(string(rune('A' + n%26)))}
-			r.Register(p) // some will fail with duplicate — that's fine
+			_ = r.Register(p) // some will fail with duplicate — that's fine
 			r.Get(p.Name())
 			r.All()
 		}(i)

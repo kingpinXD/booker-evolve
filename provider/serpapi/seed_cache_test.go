@@ -19,6 +19,9 @@ import (
 //
 // Calls: 4 stopover cities × 2 legs = 8 searches, 1 already cached = 7 new.
 func TestSeedCache(t *testing.T) {
+	if os.Getenv("SERPAPI_KEY") == "" {
+		t.Skip("skipping: SERPAPI_KEY not set (integration test)")
+	}
 	cacheDir := "../../.cache/flights"
 
 	searches := []struct {

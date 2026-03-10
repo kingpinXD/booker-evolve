@@ -12,6 +12,23 @@ set -euo pipefail
 
 LOCK_FILE="/tmp/booker-evolve.lock"
 REPO_DIR="${BOOKER_EVOLVE_DIR:-/Users/tanmay/IdeaProjects/kingpinXD/booker-evolve}"
+NETWORK_WAIT_INTERVAL=30   # seconds between retries
+NETWORK_WAIT_MAX=20        # max retries (20 × 30s = 10 minutes)
+
+# --- Network Check ---
+
+wait_for_network() {
+  for attempt in $(seq 1 "$NETWORK_WAIT_MAX"); do
+    if curl -sfm 5 https://github.com > /dev/null 2>&1; then
+      echo "[$(date -u +%H:%M:%S)] Network available."
+      return 0
+    fi
+    echo "[$(date -u +%H:%M:%S)] No network (attempt $attempt/$NETWORK_WAIT_MAX). Retrying in ${NETWORK_WAIT_INTERVAL}s..."
+    sleep "$NETWORK_WAIT_INTERVAL"
+  done
+  echo "[$(date -u +%H:%M:%S)] Network unavailable after $((NETWORK_WAIT_MAX * NETWORK_WAIT_INTERVAL))s. Skipping session."
+  return 1
+}
 
 # --- Lock Management ---
 
@@ -41,6 +58,10 @@ if [[ ! -d "$REPO_DIR" ]]; then
 fi
 
 cd "$REPO_DIR"
+
+# --- Wait for Network ---
+
+wait_for_network || exit 0
 
 # --- Sync ---
 

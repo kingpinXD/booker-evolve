@@ -3,6 +3,7 @@ package multicity
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -17,6 +18,9 @@ import (
 // what dates, which airlines, which hubs. This helps diagnose why the full
 // pipeline returns 0 results.
 func TestDiagnostic_RawData(t *testing.T) {
+	if os.Getenv("KIWI_API_KEY") == "" {
+		t.Skip("skipping: KIWI_API_KEY not set (integration test)")
+	}
 	cfg := config.Default()
 	httpClient := httpclient.New(cfg.HTTP)
 	kiwiCfg := cfg.Providers[config.ProviderKiwi]

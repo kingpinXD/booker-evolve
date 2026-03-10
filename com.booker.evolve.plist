@@ -18,7 +18,7 @@
 	<integer>10</integer>
 
 	<key>RunAtLoad</key>
-	<false/>
+	<true/>
 
 	<key>EnvironmentVariables</key>
 	<dict>

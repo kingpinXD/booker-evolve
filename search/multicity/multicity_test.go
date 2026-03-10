@@ -3,6 +3,7 @@ package multicity
 import (
 	"context"
 	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -20,6 +21,9 @@ import (
 // cached SerpAPI data: DEL → (stopover) → YYZ, departing March 24,
 // leg2 on March 30, with 4 stopover cities.
 func TestDELToYYZ_March24(t *testing.T) {
+	if os.Getenv("SERPAPI_KEY") == "" {
+		t.Skip("skipping: SERPAPI_KEY not set (integration test)")
+	}
 	cfg := config.Default()
 	httpClient := httpclient.New(cfg.HTTP)
 

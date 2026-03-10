@@ -18,9 +18,6 @@ TIMESTAMP=$(date -u +%H%M%S)
 TIMESTAMP_PRETTY=$(date -u +%H:%M)
 LOG_DIR="logs/day${DAY}"
 
-PLAN_BUDGET=4
-TASK_BUDGET=6
-REFLECT_BUDGET=1
 MAX_TASKS=5
 TASK_TIMEOUT=900  # 15 minutes
 
@@ -185,7 +182,6 @@ Do NOT discard previous work. Continuity matters."
 
   claude -p "$RESUME_PROMPT" \
     --allowedTools "Bash(read-only:*),Read,Write,Edit,Glob,Grep" \
-    --max-budget-usd "$PLAN_BUDGET" \
     --output-format text \
     2>&1 | tee "$LOG_DIR/phase-a.log"
 
@@ -243,7 +239,7 @@ Every task in SESSION_PLAN.md must have a corresponding entry in TODO.md."
 
   claude -p "$PLAN_PROMPT" \
     --allowedTools "Bash(read-only:*),Read,Write,Edit,Glob,Grep" \
-    --max-budget-usd "$PLAN_BUDGET" \
+
     --output-format text \
     2>&1 | tee "$LOG_DIR/phase-a.log"
 
@@ -277,8 +273,6 @@ log "Tasks found: $TASK_COUNT"
 
 EVOLVE_SKILL=$(load_skill "skills/evolve/SKILL.md")
 SESSION_TIMEOUT=1500  # 25 minutes
-IMPL_BUDGET=$((TASK_BUDGET * TASK_COUNT > TASK_BUDGET * 3 ? TASK_BUDGET * 3 : TASK_BUDGET * TASK_COUNT))
-
 IMPL_SHA=$(git rev-parse HEAD)
 
 IMPL_PROMPT="You are booker-agent, a self-evolving agent for the booker Go project.
@@ -336,7 +330,7 @@ Do not modify any protected files (except JOURNAL.md, LEARNINGS.md, and TODO.md 
 
 timeout "$SESSION_TIMEOUT" claude -p "$IMPL_PROMPT" \
   --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Task" \
-  --max-budget-usd "$IMPL_BUDGET" \
+
   --output-format text \
   2>&1 | tee "$LOG_DIR/phase-b.log" || {
     log "Implementation phase timed out or failed"
@@ -375,7 +369,7 @@ Do the following:
 
 claude -p "$REFLECT_PROMPT" \
   --allowedTools "Bash(read-only:*),Read,Write,Edit,Glob,Grep" \
-  --max-budget-usd "$REFLECT_BUDGET" \
+
   --output-format text \
   2>&1 | tee "$LOG_DIR/phase-c.log"
 

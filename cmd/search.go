@@ -16,6 +16,7 @@ import (
 	"booker/provider/cache"
 	"booker/provider/serpapi"
 	"booker/search"
+	"booker/search/direct"
 	"booker/search/multicity"
 	"booker/types"
 
@@ -35,6 +36,7 @@ const (
 	keyMaxResults = "max-results"
 	keyProfile    = "profile"
 	keyCurrency   = "currency"
+	keyContext     = "context"
 )
 
 // Default values.
@@ -56,8 +58,8 @@ const (
 
 var searchCmd = &cobra.Command{
 	Use:   "search <origin> <destination>",
-	Short: "Search for multi-city flights with a stopover",
-	Long:  `Search for flights from origin to destination with an intermediate stopover city.`,
+	Short: "Search for flights (direct or multi-city with stopover)",
+	Long:  `Search for flights from origin to destination. Uses an LLM to pick the best strategy (direct or multi-city) based on context.`,
 	Args:  cobra.ExactArgs(2),
 	RunE:  runSearch,
 }
@@ -75,9 +77,9 @@ func init() {
 	f.Int(keyMaxResults, defaultMaxResults, "number of results to show")
 	f.String(keyProfile, defaultProfile, "ranking profile (budget, comfort, balanced)")
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
+	f.String(keyContext, "", "search context/preferences (e.g. 'cheapest option' or 'want to explore a city on the way')")
 
 	_ = searchCmd.MarkFlagRequired(keyDate)
-	_ = searchCmd.MarkFlagRequired(keyLeg2Date)
 
 	_ = viper.BindPFlags(f)
 }
@@ -113,32 +115,45 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	}
 
 	llmClient := llm.New(cfg.LLM, httpClient)
-	searcher := multicity.NewSearcher(registry, llmClient, weights)
+	ranker := multicity.NewRanker(llmClient, weights)
+
+	// Build common request.
+	req := search.Request{
+		Origin:        origin,
+		Destination:   destination,
+		DepartureDate: viper.GetString(keyDate),
+		Passengers:    viper.GetInt(keyPassengers),
+		CabinClass:    cabin,
+		FlexDays:      viper.GetInt(keyFlexDays),
+		MaxStops:      viper.GetInt(keyMaxStops),
+		MaxResults:    viper.GetInt(keyMaxResults),
+		Context:       viper.GetString(keyContext),
+	}
+
+	// Create strategies.
+	directStrategy := direct.NewSearcher(registry, ranker)
+	mcSearcher := multicity.NewSearcher(registry, llmClient, weights)
+	mcStrategy := multicity.NewStrategy(mcSearcher, viper.GetString(keyLeg2Date))
+
+	// Pick strategy.
+	picker := search.NewPicker(llmClient, directStrategy, mcStrategy)
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), defaultTimeout)
 	defer cancel()
 
-	maxStops := viper.GetInt(keyMaxStops)
-	params := multicity.SearchParams{
-		Origin:          origin,
-		Destination:     destination,
-		DepartureDate:   viper.GetString(keyDate),
-		Leg2Date:        viper.GetString(keyLeg2Date),
-		Passengers:      viper.GetInt(keyPassengers),
-		CabinClass:      cabin,
-		FlexDays:        viper.GetInt(keyFlexDays),
-		MaxLayoversLeg1: maxStops,
-		MaxLayoversLeg2: maxStops,
-		MaxResults:      viper.GetInt(keyMaxResults),
+	strategy, err := picker.Pick(ctx, req)
+	if err != nil {
+		return fmt.Errorf("picking strategy: %w", err)
 	}
 
-	log.Printf("=== Booker: %s → %s ===", origin, destination)
-	log.Printf("Leg 1: %s | Leg 2: %s | Flex: ±%d days",
-		params.DepartureDate, params.Leg2Date, params.FlexDays)
-	log.Printf("Cabin: %s | Profile: %s | Passengers: %d",
-		cabin, viper.GetString(keyProfile), params.Passengers)
+	// Multicity requires leg2-date.
+	if strategy.Name() == "multicity" && viper.GetString(keyLeg2Date) == "" {
+		return fmt.Errorf("multicity strategy requires --leg2-date flag")
+	}
 
-	results, err := searcher.Search(ctx, params)
+	fmt.Printf("Strategy: %s\n", strategy.Name())
+
+	results, err := strategy.Search(ctx, req)
 	if err != nil {
 		return fmt.Errorf("search failed: %w", err)
 	}
@@ -185,7 +200,7 @@ func printTable(itineraries []search.Itinerary, cur string) {
 }
 
 func routeString(itin search.Itinerary) string {
-	if len(itin.Legs) < 2 {
+	if len(itin.Legs) == 0 {
 		return ""
 	}
 	route := ""

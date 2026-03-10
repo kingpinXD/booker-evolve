@@ -31,5 +31,29 @@
 **Important** when adding any code run an analysis to see if the number of lines of code added can be reduced in any way,
 whether it is extracting common logic into functions, simplifying logic
 **Important** prioritize simple readable code, overcomplicated ones.
-It is okay to not handle cases which are unrealistic in favor of keeping the logic simple 
+It is okay to not handle cases which are unrealistic in favor of keeping the logic simple
+
+## Evolution System
+
+This project includes a self-evolving agent system. The agent (booker-agent) runs via scheduled Claude Code CLI sessions to autonomously improve the codebase.
+
+### Governance Files
+- `IDENTITY.md` — Agent constitution and rules (IMMUTABLE)
+- `PERSONALITY.md` — Agent voice and style (IMMUTABLE)
+- `JOURNAL.md` — Append-only session log
+- `LEARNINGS.md` — Append-only self-reflection insights
+- `DAY_COUNT` — Session counter
+
+### Protected Files (never modify during evolution)
+- `IDENTITY.md`, `PERSONALITY.md`
+- `scripts/*`
+- `.github/workflows/*`
+- `skills/*`
+- `CLAUDE.md`
+
+### Safety Rules
+- Every code change must pass: `go build && go test ./... && go vet ./...`
+- Maximum 3 fix attempts per failure, then auto-revert
+- Budget caps per phase prevent runaway API spending
+- Issue content is sanitized before prompt injection
 

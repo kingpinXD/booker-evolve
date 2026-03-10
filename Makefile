@@ -1,7 +1,7 @@
 APP_NAME := booker
 GO       := go
 
-.PHONY: install build test clean
+.PHONY: install build test clean lint vet fmt cover evolve evolve-local
 
 install:
 	$(GO) install .
@@ -13,4 +13,22 @@ test:
 	$(GO) test ./...
 
 clean:
-	rm -f $(APP_NAME)
+	rm -f $(APP_NAME) cover.out
+
+lint:
+	golangci-lint run
+
+vet:
+	$(GO) vet ./...
+
+fmt:
+	gofmt -w .
+
+cover:
+	$(GO) test -coverprofile=cover.out ./... && $(GO) tool cover -func=cover.out
+
+evolve:
+	bash scripts/evolve.sh
+
+evolve-local:
+	bash scripts/evolve-local.sh

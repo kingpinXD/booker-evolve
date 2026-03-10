@@ -20,3 +20,11 @@ Thumbs.db
 
 # Claude
 .claude/
+
+# Evolution system (ephemeral session files)
+SESSION_PLAN.md
+ISSUES_TODAY.md
+ISSUE_RESPONSE.md
+.worktrees/
+cover.out
+logs/

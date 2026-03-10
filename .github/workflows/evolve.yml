@@ -1,0 +1,60 @@
+name: Evolve
+
+on:
+  schedule:
+    - cron: "0 */8 * * *"  # Every 8 hours
+  workflow_dispatch:
+
+concurrency:
+  group: evolve
+  cancel-in-progress: false
+
+jobs:
+  evolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BOT_PAT }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b "$(go env GOPATH)/bin" v1.62.2
+
+      - name: Configure git
+        run: |
+          git config user.name "booker-agent[bot]"
+          git config user.email "booker-agent[bot]@users.noreply.github.com"
+
+      - name: Run evolution
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.BOT_PAT }}
+        run: |
+          for attempt in 1 2 3; do
+            echo "=== Attempt $attempt/3 ==="
+            if bash scripts/evolve.sh; then
+              echo "Evolution succeeded on attempt $attempt"
+              exit 0
+            fi
+            echo "Attempt $attempt failed"
+            case $attempt in
+              1) echo "Retrying in 15 minutes..."; sleep 900 ;;
+              2) echo "Retrying in 45 minutes..."; sleep 2700 ;;
+            esac
+          done
+          echo "All 3 attempts failed"
+          exit 1

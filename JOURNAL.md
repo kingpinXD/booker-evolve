@@ -25,3 +25,7 @@ All 5 planned tasks completed with zero reverts. Coverage rose from 6.0% to 11.2
 ## Day 3 -- 13:30 -- Session planning and self-assessment
 
 Ran self-assessment: build, tests, vet, and lint all pass. Coverage unchanged at 11.2%. Reverted a stale whitespace-only diff in search/strategy.go. Planned four tasks: unit tests for provider/kiwi/parser.go (Task 6), unit tests for search/multicity/combiner.go (Task 7), direct search Strategy implementation (Task 8, deferred), and Strategy picker wiring (Task 9, deferred). No code changes this session -- planning only.
+
+## Day 4 -- 00:00 -- Execute combiner tests, skip kiwi, fix lint
+
+Self-assessment found 1 gofmt lint issue in search/strategy.go (extra whitespace alignment). Fixed and committed. Skipped Task 6 (kiwi parser tests) per CLAUDE.md directive to ignore the Kiwi provider entirely. Completed Task 7: added 28 table-driven tests for combiner.go covering CombineLegs, hasLongLayover, lastArrival, firstDeparture, buildItinerary, PrimaryAirline, and SameAirline. combiner.go functions at 96-100% coverage. Total project coverage rose from 11.2% to 17.2%. Zero reverts, zero API calls.

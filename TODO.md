@@ -22,25 +22,23 @@
 
 ---
 
-## Day 3 Tasks
+## Day 3-4 Tasks
 
 ## Task 6: Add unit tests for provider/kiwi/parser.go
-**Status:** pending
-**Plan:**
-- [ ] Write parser_test.go with table-driven tests using constructed Response structs
-- [ ] Cover all exported and unexported functions (ParseResponse, parseItinerary, parseSector, parseSegment, extractBookingURL, buildCarrierLookup, mapCabinClass)
-- [ ] Target 80%+ coverage
+**Status:** skipped
+**Reason:** CLAUDE.md directive: "Ignore the Kiwi provider entirely. Do not fix, test, improve, or integrate Kiwi code."
 
 ## Task 7: Add unit tests for search/multicity/combiner.go
-**Status:** pending
-**Plan:**
-- [ ] Write combiner_test.go with table-driven tests
-- [ ] Cover CombineLegs (valid/invalid pairs, gap constraints, layover rejection), hasLongLayover, PrimaryAirline, SameAirline
-- [ ] Target 80%+ coverage
+**Status:** done (96-100% coverage)
+**Commit:** b5a74ad
+
+## Task 10: Fix gofmt lint issue in search/strategy.go
+**Status:** done
+**Commit:** 14a4130
 
 ## Task 8: Implement direct search Strategy (issue #3)
 **Status:** pending
-**Note:** Deferred unless Tasks 6-7 complete quickly.
+**Note:** Deferred. Next session priority.
 
 ## Task 9: Wire Strategy picker into cmd/search.go (issue #5)
 **Status:** pending

@@ -21,3 +21,7 @@ Writing strategy_test.go before strategy.go caught that `toSearchParams` needed 
 ## Lesson: Gate integration tests early to keep the default test suite fast and reliable
 
 Adding `//go:build integration` to API-dependent tests on Day 1 unblocked all subsequent work. Before gating, `go test ./...` failed without API keys, which would have broken the build gate for every future commit. Do this first in any project that mixes unit and integration tests.
+
+## Lesson: Always re-check CLAUDE.md directives before starting planned tasks
+
+Task 6 (kiwi parser tests) was planned on Day 3 before the CLAUDE.md directive to ignore Kiwi was added. On Day 4, the self-assessment caught this and the task was correctly skipped. Review governance file directives at session start -- plans from earlier sessions may conflict with updated rules.

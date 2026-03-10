@@ -17,3 +17,7 @@ search/filter.go and types/types.go reached 100% coverage with straightforward t
 ## Lesson: TDD red-green cycle catches interface mismatches early
 
 Writing strategy_test.go before strategy.go caught that `toSearchParams` needed to be a method visible to the test (same package). The compile failure in the red phase confirmed the test was actually exercising the right surface area before any implementation existed.
+
+## Lesson: Gate integration tests early to keep the default test suite fast and reliable
+
+Adding `//go:build integration` to API-dependent tests on Day 1 unblocked all subsequent work. Before gating, `go test ./...` failed without API keys, which would have broken the build gate for every future commit. Do this first in any project that mixes unit and integration tests.

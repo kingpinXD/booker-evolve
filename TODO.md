@@ -1,21 +1,21 @@
 # TODO
 
-## Task 1: Fix gofmt and lint issues
+## Task 1: Add llm package unit tests
 **Status:** done
-**Result:** gofmt applied to 2 files, 3 errcheck violations fixed. Lint reports 0 issues.
+**Result:** 11 tests, coverage 0% to 100%
 
-## Task 2: Add FlexDays support to direct search
+## Task 2: Add currency fetchRates HTTP mock tests
 **Status:** done
-**Result:** Added date window filtering via FilterByDateRange when FlexDays > 0. TDD: 2 tests written (flex window, zero-day). direct coverage 94.1% to 94.7%.
+**Result:** 6 tests, coverage 36.7% to 90.0%
 
-## Task 3: Add httpclient unit tests with httptest
+## Task 3: Add serpapi provider unit tests
 **Status:** done
-**Result:** 13 tests covering GET/POST, retry logic, 4xx no-retry, BuildURL, connection errors. httpclient coverage 0% to 89.4%.
+**Result:** 12 tests, coverage 37.7% to 92.5%
 
-## Task 4: Add SerpAPI parser unit tests
+## Task 4: Add multicity Search orchestrator tests
 **Status:** done
-**Result:** 11 tests covering all parser functions. parser.go at 100%, package-wide 17.8% to 37.7%.
+**Result:** 12 tests, coverage 48.6% to 94.6%
 
-## Task 5: Add multicity helper unit tests
+## Task 5: Add provider/cache edge case tests
 **Status:** done
-**Result:** 22 tests covering deduplicateFlights, buildMultiCityItinerary, fetchFromAllProviders, fetchWithDualSort, NewSearcher, StopoversForRoute. multicity coverage 33.2% to 48.6%.
+**Result:** 8 tests, coverage 77.5% to 91.5%

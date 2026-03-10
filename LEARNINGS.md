@@ -37,3 +37,7 @@ Picker depended on *llm.Client directly. Defining ChatCompleter (a one-method in
 ## Lesson: Parallel worktree agents need duplicate-aware merging
 
 When running 3 test-writing agents in parallel worktrees for the same package (multicity), one agent duplicated test functions already present in ranker_test.go (TestFormatDuration, TestBuildSystemPrompt, contains helper). The fix was trivial -- remove duplicates after merge -- but the issue is predictable. When parallelizing test work within a single Go package, either split by file explicitly or plan for dedup during merge.
+
+## Lesson: Worktree agents may write to the main tree instead of the worktree
+
+When using isolation: "worktree", the agent may still write files to the main working directory instead of the worktree. After agent completion, always check `git status` in the main tree for uncommitted changes and copy any missing files from the worktree path before committing. Do not assume agents committed their work in the worktree branch.

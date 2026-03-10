@@ -1,21 +1,21 @@
 # TODO
 
-## Task 1: Add llm package unit tests
+## Task 1: Fix lint issues and code cleanup
 **Status:** done
-**Result:** 11 tests, coverage 0% to 100%
+**Commit:** 29a0253
 
-## Task 2: Add currency fetchRates HTTP mock tests
+## Task 2: Adaptive table columns for direct searches
 **Status:** done
-**Result:** 6 tests, coverage 36.7% to 90.0%
+**Commit:** 841a4d0
 
-## Task 3: Add serpapi provider unit tests
+## Task 3: Add --format json output mode
 **Status:** done
-**Result:** 12 tests, coverage 37.7% to 92.5%
+**Commit:** 5813dc4
 
-## Task 4: Add multicity Search orchestrator tests
+## Task 4: Add cmd helper function tests
 **Status:** done
-**Result:** 12 tests, coverage 48.6% to 94.6%
+**Commit:** bdf4443
 
-## Task 5: Add provider/cache edge case tests
+## Task 5: Add --verbose flag for debug output
 **Status:** done
-**Result:** 8 tests, coverage 77.5% to 91.5%
+**Commit:** a7a8da6

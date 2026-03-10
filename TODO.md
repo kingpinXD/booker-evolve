@@ -1,21 +1,25 @@
 # TODO
 
-## Task 1: Extract ChatCompleter interface and test picker.go LLM paths
-**Status:** done
-**Commit:** f922596
+## Task 1: Fix gofmt lint in currency.go
+**Status:** completed
+**Commit:** 7f08265
 
-## Task 2: Test aggregator.go with mock providers
-**Status:** done
-**Commit:** e21eb93
+## Task 2: Add provider.Registry unit tests
+**Status:** completed
+**Commit:** b3563e2
+**Coverage:** provider 100%
 
-## Task 3: Refactor currency.go for testability and add tests
-**Status:** done
-**Commit:** 85c0f88
+## Task 3: Add ranker pure-function tests
+**Status:** completed
+**Commit:** da61c45
+**Coverage:** search/multicity 20.4% -> 32.1%
 
-## Task 4: Expand cache tests for multi-city paths
-**Status:** done
-**Commit:** 215b29c
+## Task 4: Expand search/direct test coverage
+**Status:** completed
+**Commit:** ec15770
+**Coverage:** search/direct 76.5% -> 94.1%
 
-## Task 5: Test config.go Default()
-**Status:** done
-**Commit:** 229a625
+## Task 5: Add stopovers unit tests
+**Status:** completed
+**Commit:** 241f616
+**Coverage:** search/multicity 32.1% -> 33.2%

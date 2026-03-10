@@ -298,6 +298,33 @@ func TestChatSystemPrompt(t *testing.T) {
 			t.Errorf("system prompt missing required field %q", field)
 		}
 	}
+	// Must mention nearby airports so the LLM can suggest alternatives.
+	if !strings.Contains(prompt, "nearby") {
+		t.Error("system prompt should mention nearby airports")
+	}
+}
+
+func TestNearbyAirportHint(t *testing.T) {
+	// JFK has nearby airports (EWR, LGA).
+	hint := nearbyAirportHint("JFK", "YYZ")
+	if hint == "" {
+		t.Fatal("expected hint for JFK (NYC metro)")
+	}
+	if !strings.Contains(hint, "EWR") || !strings.Contains(hint, "LGA") {
+		t.Errorf("hint should mention EWR and LGA, got: %s", hint)
+	}
+
+	// DEL and BOM have no nearby airports -- hint should be empty.
+	hint = nearbyAirportHint("DEL", "BOM")
+	if hint != "" {
+		t.Errorf("expected empty hint for DEL->BOM (single airports), got: %s", hint)
+	}
+
+	// Both have nearby airports.
+	hint = nearbyAirportHint("JFK", "LHR")
+	if !strings.Contains(hint, "EWR") || !strings.Contains(hint, "LGW") {
+		t.Errorf("hint should mention nearby airports for both origin and destination, got: %s", hint)
+	}
 }
 
 func contains(s, substr string) bool {

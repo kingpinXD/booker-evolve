@@ -73,7 +73,27 @@ Ask clarifying questions to gather missing information. Be conversational but co
 When you have at least the origin, destination, and departure_date, output the parameters as a JSON object on its own line. You may include optional fields if the user mentioned them. Example:
 {"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15","passengers":2,"cabin":"economy","context":"budget trip"}
 
+If the user mentions a city served by multiple airports, suggest nearby alternatives (e.g., for New York: JFK, EWR, LGA). Searching nearby airports can reveal cheaper fares.
+
 After outputting the JSON, briefly explain what you're searching for.`
+}
+
+// nearbyAirportHint returns a message mentioning nearby airports for the
+// origin and/or destination, or empty string if neither has alternatives.
+func nearbyAirportHint(origin, destination string) string {
+	originNearby := search.NearbyAirports(origin)
+	destNearby := search.NearbyAirports(destination)
+	if len(originNearby) == 0 && len(destNearby) == 0 {
+		return ""
+	}
+	var parts []string
+	if len(originNearby) > 0 {
+		parts = append(parts, fmt.Sprintf("Nearby origin airports: %s", strings.Join(originNearby, ", ")))
+	}
+	if len(destNearby) > 0 {
+		parts = append(parts, fmt.Sprintf("Nearby destination airports: %s", strings.Join(destNearby, ", ")))
+	}
+	return strings.Join(parts, ". ") + "."
 }
 
 // parseTripParams extracts trip parameters from an LLM response.
@@ -219,6 +239,9 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		// Build and execute the search.
 		req := buildRequestFromParams(params)
 		_, _ = fmt.Fprintf(out, "Searching %s -> %s on %s...\n", req.Origin, req.Destination, req.DepartureDate)
+		if hint := nearbyAirportHint(req.Origin, req.Destination); hint != "" {
+			_, _ = fmt.Fprintf(out, "Tip: %s\n", hint)
+		}
 
 		strategy, err := picker.Pick(ctx, req)
 		if err != nil {

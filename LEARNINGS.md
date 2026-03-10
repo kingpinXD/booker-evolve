@@ -33,3 +33,7 @@ Tasks 8 and 9 were deferred from Day 4. When resuming on Day 7, the self-assessm
 ## Lesson: Extract interfaces at consumption sites to make concrete types testable
 
 Picker depended on *llm.Client directly. Defining ChatCompleter (a one-method interface) in picker.go -- right where it is consumed -- let tests inject a mockLLM without changing llm/client.go at all. In Go, define interfaces where they are used, not where they are implemented. This pattern also worked for currency.Converter: wrapping package-level globals behind a struct made the pure conversion logic testable without HTTP calls.
+
+## Lesson: Parallel worktree agents need duplicate-aware merging
+
+When running 3 test-writing agents in parallel worktrees for the same package (multicity), one agent duplicated test functions already present in ranker_test.go (TestFormatDuration, TestBuildSystemPrompt, contains helper). The fix was trivial -- remove duplicates after merge -- but the issue is predictable. When parallelizing test work within a single Go package, either split by file explicitly or plan for dedup during merge.

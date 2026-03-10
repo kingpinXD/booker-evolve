@@ -453,41 +453,58 @@ func TestDirectSearch_MaxResults(t *testing.T) {
 }
 
 func TestDirectSearch_FlexDaysFiltering(t *testing.T) {
-	// Base date: March 24. Flex ±2 days means March 22-26 inclusive.
-	flights := []types.Flight{
-		{
-			Price:         types.Money{Amount: 300, Currency: "USD"},
-			TotalDuration: 5 * time.Hour,
-			Outbound: []types.Segment{{
-				Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
-				DepartureTime: time.Date(2026, 3, 22, 8, 0, 0, 0, time.UTC), // within window
-				ArrivalTime:   time.Date(2026, 3, 22, 13, 0, 0, 0, time.UTC),
-				Duration:      5 * time.Hour,
+	// Base date: March 24. Flex ±2 days means 5 searches (March 22-26).
+	// Each date returns one flight. Date-range filter keeps all 5.
+	dp := &dateTrackingProvider{
+		name: "tracking",
+		flightsByDate: map[string][]types.Flight{
+			"2026-03-22": {{
+				Price: types.Money{Amount: 300, Currency: "USD"}, TotalDuration: 5 * time.Hour,
+				Outbound: []types.Segment{{
+					Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+					DepartureTime: time.Date(2026, 3, 22, 8, 0, 0, 0, time.UTC),
+					ArrivalTime:   time.Date(2026, 3, 22, 13, 0, 0, 0, time.UTC), Duration: 5 * time.Hour,
+				}},
 			}},
-		},
-		{
-			Price:         types.Money{Amount: 250, Currency: "USD"},
-			TotalDuration: 6 * time.Hour,
-			Outbound: []types.Segment{{
-				Airline: "BA", FlightNumber: "BA200", Origin: "DEL", Destination: "LHR",
-				DepartureTime: time.Date(2026, 3, 20, 10, 0, 0, 0, time.UTC), // outside window
-				ArrivalTime:   time.Date(2026, 3, 20, 16, 0, 0, 0, time.UTC),
-				Duration:      6 * time.Hour,
+			"2026-03-23": {{
+				Price: types.Money{Amount: 280, Currency: "USD"}, TotalDuration: 5 * time.Hour,
+				Outbound: []types.Segment{{
+					Airline: "BA", FlightNumber: "BA150", Origin: "DEL", Destination: "LHR",
+					DepartureTime: time.Date(2026, 3, 23, 9, 0, 0, 0, time.UTC),
+					ArrivalTime:   time.Date(2026, 3, 23, 14, 0, 0, 0, time.UTC), Duration: 5 * time.Hour,
+				}},
 			}},
-		},
-		{
-			Price:         types.Money{Amount: 400, Currency: "USD"},
-			TotalDuration: 7 * time.Hour,
-			Outbound: []types.Segment{{
-				Airline: "AI", FlightNumber: "AI300", Origin: "DEL", Destination: "LHR",
-				DepartureTime: time.Date(2026, 3, 26, 14, 0, 0, 0, time.UTC), // within window (last day)
-				ArrivalTime:   time.Date(2026, 3, 26, 21, 0, 0, 0, time.UTC),
-				Duration:      7 * time.Hour,
+			"2026-03-24": {{
+				Price: types.Money{Amount: 500, Currency: "USD"}, TotalDuration: 6 * time.Hour,
+				Outbound: []types.Segment{{
+					Airline: "AI", FlightNumber: "AI200", Origin: "DEL", Destination: "LHR",
+					DepartureTime: time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC),
+					ArrivalTime:   time.Date(2026, 3, 24, 16, 0, 0, 0, time.UTC), Duration: 6 * time.Hour,
+				}},
+			}},
+			"2026-03-25": {{
+				Price: types.Money{Amount: 350, Currency: "USD"}, TotalDuration: 5 * time.Hour,
+				Outbound: []types.Segment{{
+					Airline: "AC", FlightNumber: "AC300", Origin: "DEL", Destination: "LHR",
+					DepartureTime: time.Date(2026, 3, 25, 8, 0, 0, 0, time.UTC),
+					ArrivalTime:   time.Date(2026, 3, 25, 13, 0, 0, 0, time.UTC), Duration: 5 * time.Hour,
+				}},
+			}},
+			"2026-03-26": {{
+				Price: types.Money{Amount: 400, Currency: "USD"}, TotalDuration: 7 * time.Hour,
+				Outbound: []types.Segment{{
+					Airline: "AI", FlightNumber: "AI300", Origin: "DEL", Destination: "LHR",
+					DepartureTime: time.Date(2026, 3, 26, 14, 0, 0, 0, time.UTC),
+					ArrivalTime:   time.Date(2026, 3, 26, 21, 0, 0, 0, time.UTC), Duration: 7 * time.Hour,
+				}},
 			}},
 		},
 	}
 
-	s := NewSearcher(newRegistry(flights), nil)
+	r := provider.NewRegistry()
+	_ = r.Register(dp)
+
+	s := NewSearcher(r, nil)
 	results, err := s.Search(context.Background(), search.Request{
 		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
 		Passengers: 1, CabinClass: types.CabinEconomy, MaxStops: -1,
@@ -496,16 +513,17 @@ func TestDirectSearch_FlexDaysFiltering(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// March 20 is outside ±2 days from March 24, so only 2 flights remain.
-	if len(results) != 2 {
-		t.Fatalf("expected 2 results with FlexDays=2, got %d", len(results))
+
+	// 5 dates searched, 1 flight per date, all within range.
+	if len(results) != 5 {
+		t.Fatalf("expected 5 results with FlexDays=2, got %d", len(results))
 	}
-	// Price sorted: $300 (Mar 22), $400 (Mar 26).
-	if results[0].TotalPrice.Amount != 300 {
-		t.Errorf("first result price = %.0f, want 300", results[0].TotalPrice.Amount)
+	// Price sorted: $280, $300, $350, $400, $500.
+	if results[0].TotalPrice.Amount != 280 {
+		t.Errorf("first result price = %.0f, want 280", results[0].TotalPrice.Amount)
 	}
-	if results[1].TotalPrice.Amount != 400 {
-		t.Errorf("second result price = %.0f, want 400", results[1].TotalPrice.Amount)
+	if results[4].TotalPrice.Amount != 500 {
+		t.Errorf("last result price = %.0f, want 500", results[4].TotalPrice.Amount)
 	}
 }
 
@@ -546,6 +564,91 @@ func TestDirectSearch_FlexDaysZeroMeansExactDate(t *testing.T) {
 	// With FlexDays=0, no filtering is applied (provider already handles the exact date).
 	if len(results) != 2 {
 		t.Fatalf("expected 2 results with FlexDays=0, got %d", len(results))
+	}
+}
+
+// dateTrackingProvider records searched dates and returns per-date flights.
+type dateTrackingProvider struct {
+	name          config.ProviderName
+	dates         []string // dates searched (YYYY-MM-DD)
+	flightsByDate map[string][]types.Flight
+}
+
+func (d *dateTrackingProvider) Name() config.ProviderName { return d.name }
+func (d *dateTrackingProvider) Search(_ context.Context, req types.SearchRequest) ([]types.Flight, error) {
+	dateStr := req.DepartureDate.Format(DateLayout)
+	d.dates = append(d.dates, dateStr)
+	return d.flightsByDate[dateStr], nil
+}
+
+func TestSearch_FlexDaysMultiDate(t *testing.T) {
+	base := time.Date(2026, 3, 24, 0, 0, 0, 0, time.UTC)
+
+	makeFlights := func(date time.Time, price float64, airline, fn string) []types.Flight {
+		dep := date.Add(8 * time.Hour)
+		return []types.Flight{{
+			Price:         types.Money{Amount: price, Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: airline, FlightNumber: fn, Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(5 * time.Hour), Duration: 5 * time.Hour,
+			}},
+		}}
+	}
+
+	dp := &dateTrackingProvider{
+		name: "tracking",
+		flightsByDate: map[string][]types.Flight{
+			"2026-03-23": makeFlights(base.AddDate(0, 0, -1), 350, "AI", "AI101"),
+			"2026-03-24": makeFlights(base, 500, "BA", "BA200"),
+			"2026-03-25": makeFlights(base.AddDate(0, 0, 1), 400, "AC", "AC300"),
+		},
+	}
+
+	r := provider.NewRegistry()
+	_ = r.Register(dp)
+
+	s := NewSearcher(r, nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		Passengers: 1, CabinClass: types.CabinEconomy, MaxStops: -1,
+		FlexDays: 1,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Provider should have been called 3 times (day-1, day, day+1).
+	if len(dp.dates) != 3 {
+		t.Fatalf("expected 3 provider calls, got %d: %v", len(dp.dates), dp.dates)
+	}
+
+	// Verify all 3 dates were searched.
+	wantDates := map[string]bool{"2026-03-23": true, "2026-03-24": true, "2026-03-25": true}
+	for _, d := range dp.dates {
+		if !wantDates[d] {
+			t.Errorf("unexpected date searched: %s", d)
+		}
+		delete(wantDates, d)
+	}
+	if len(wantDates) > 0 {
+		t.Errorf("dates not searched: %v", wantDates)
+	}
+
+	// All 3 flights should be merged (one per date).
+	if len(results) != 3 {
+		t.Fatalf("expected 3 merged results, got %d", len(results))
+	}
+
+	// Price-sorted: $350, $400, $500.
+	if results[0].TotalPrice.Amount != 350 {
+		t.Errorf("first result price = %.0f, want 350", results[0].TotalPrice.Amount)
+	}
+	if results[1].TotalPrice.Amount != 400 {
+		t.Errorf("second result price = %.0f, want 400", results[1].TotalPrice.Amount)
+	}
+	if results[2].TotalPrice.Amount != 500 {
+		t.Errorf("third result price = %.0f, want 500", results[2].TotalPrice.Amount)
 	}
 }
 

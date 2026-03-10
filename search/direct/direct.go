@@ -45,23 +45,34 @@ func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Iti
 		return nil, fmt.Errorf("parsing departure date %q: %w", req.DepartureDate, err)
 	}
 
-	searchReq := types.SearchRequest{
-		Origin:        req.Origin,
-		Destination:   req.Destination,
-		DepartureDate: depDate,
-		Passengers:    req.Passengers,
-		CabinClass:    req.CabinClass,
-		MaxStops:      req.MaxStops,
+	// Build the list of dates to search. When FlexDays > 0, search each
+	// date in the range [dep-flex, dep+flex] to get results across all days.
+	dates := []time.Time{depDate}
+	if req.FlexDays > 0 {
+		dates = make([]time.Time, 0, 2*req.FlexDays+1)
+		for d := -req.FlexDays; d <= req.FlexDays; d++ {
+			dates = append(dates, depDate.AddDate(0, 0, d))
+		}
 	}
 
-	// Fetch from all providers.
+	// Fetch from all providers for each date.
 	var allFlights []types.Flight
-	for _, p := range s.registry.All() {
-		results, err := p.Search(ctx, searchReq)
-		if err != nil {
-			continue
+	for _, date := range dates {
+		searchReq := types.SearchRequest{
+			Origin:        req.Origin,
+			Destination:   req.Destination,
+			DepartureDate: date,
+			Passengers:    req.Passengers,
+			CabinClass:    req.CabinClass,
+			MaxStops:      req.MaxStops,
 		}
-		allFlights = append(allFlights, results...)
+		for _, p := range s.registry.All() {
+			results, err := p.Search(ctx, searchReq)
+			if err != nil {
+				continue
+			}
+			allFlights = append(allFlights, results...)
+		}
 	}
 
 	// Filter pipeline.

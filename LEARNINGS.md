@@ -49,3 +49,11 @@ PriceInsights from SerpAPI is per-search (one value for the whole response), not
 ## Lesson: go-pretty table writer uppercases all header text
 
 When capturing table output in tests via os.Pipe, remember that go-pretty's table.Writer renders all header strings in uppercase (e.g. "Score" becomes "SCORE"). Test assertions for header presence must match the uppercased form.
+
+## Lesson: Separate testable logic from CLI wiring in chat commands
+
+The chat command needs both a conversation loop (LLM calls, input/output) and a search pipeline (Picker, strategies, providers). By extracting chatLoop as a function that takes io.Reader/io.Writer and search.ChatCompleter, the entire conversation-to-search flow is testable with mocks. The cobra RunE function only wires up real dependencies. This separation also reuses ChatCompleter -- the same interface defined for Picker tests works for chat tests too.
+
+## Lesson: Combine closely related tasks to reduce commit overhead
+
+Tasks 9 (chat command scaffold) and 10 (wire chat to search) were planned as separate tasks, but the chat command's value comes from the full loop -- conversation + search execution. Implementing them as one commit kept the code coherent and avoided an intermediate state where the chat command exists but cannot actually search. Plan for logical units, not arbitrary splits.

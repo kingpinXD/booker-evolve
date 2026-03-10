@@ -97,6 +97,10 @@ safe_rollback() {
 mkdir -p "$LOG_DIR"
 check_prerequisites
 
+if [[ "$NO_PUSH" != "1" ]]; then
+  git pull --rebase origin main || log "WARNING: git pull failed, continuing"
+fi
+
 log "=== Evolution Session: Day $DAY ==="
 log "Start SHA: $START_SHA"
 log "Timestamp: $TIMESTAMP_PRETTY UTC"

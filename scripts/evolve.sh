@@ -555,4 +555,8 @@ fi
 
 # --- Finalize ---
 increment_day
+git add DAY_COUNT && git commit -m "chore: increment day count to $(cat DAY_COUNT)" 2>/dev/null || true
+if [[ "$NO_PUSH" != "1" ]]; then
+  git push origin main 2>/dev/null || log "WARNING: failed to push DAY_COUNT"
+fi
 log "=== Session complete ==="

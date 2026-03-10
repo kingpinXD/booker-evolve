@@ -28,3 +28,4 @@ ISSUE_RESPONSE.md
 .worktrees/
 cover.out
 logs/
+__pycache__/

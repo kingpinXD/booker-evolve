@@ -2,6 +2,7 @@ package direct
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -154,5 +155,310 @@ func TestDirectSearch_FiltersBlockedAirlines(t *testing.T) {
 	}
 	if results[0].Legs[0].Flight.Outbound[0].Airline != "AI" {
 		t.Errorf("expected Air India, got %s", results[0].Legs[0].Flight.Outbound[0].Airline)
+	}
+}
+
+func TestDirectSearch_InvalidDate(t *testing.T) {
+	s := NewSearcher(newRegistry(nil), nil)
+	_, err := s.Search(context.Background(), search.Request{
+		Origin:        "DEL",
+		Destination:   "LHR",
+		DepartureDate: "not-a-date",
+		MaxStops:      -1,
+	})
+	if err == nil {
+		t.Fatal("expected error for invalid date")
+	}
+}
+
+func TestDirectSearch_ZeroPriceFiltered(t *testing.T) {
+	flights := []types.Flight{
+		{
+			Price:         types.Money{Amount: 0, Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", AirlineName: "Air India", FlightNumber: "AI100",
+				Origin: "DEL", Destination: "LHR",
+				DepartureTime: time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC),
+				ArrivalTime:   time.Date(2026, 3, 24, 13, 0, 0, 0, time.UTC),
+				Duration:      5 * time.Hour,
+			}},
+		},
+		{
+			Price:         types.Money{Amount: 400, Currency: "USD"},
+			TotalDuration: 6 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "BA", AirlineName: "British Airways", FlightNumber: "BA200",
+				Origin: "DEL", Destination: "LHR",
+				DepartureTime: time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC),
+				ArrivalTime:   time.Date(2026, 3, 24, 16, 0, 0, 0, time.UTC),
+				Duration:      6 * time.Hour,
+			}},
+		},
+	}
+
+	s := NewSearcher(newRegistry(flights), nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		Passengers: 1, CabinClass: types.CabinEconomy, MaxStops: -1,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result (zero-price filtered), got %d", len(results))
+	}
+	if results[0].TotalPrice.Amount != 400 {
+		t.Errorf("expected $400, got $%.0f", results[0].TotalPrice.Amount)
+	}
+}
+
+func TestDirectSearch_MaxStopsFiltering(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	flights := []types.Flight{
+		{
+			Price:         types.Money{Amount: 300, Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(5 * time.Hour), Duration: 5 * time.Hour,
+			}},
+		},
+		{
+			Price:         types.Money{Amount: 250, Currency: "USD"},
+			TotalDuration: 10 * time.Hour,
+			Outbound: []types.Segment{
+				{
+					Airline: "TG", FlightNumber: "TG300", Origin: "DEL", Destination: "BKK",
+					DepartureTime: dep, ArrivalTime: dep.Add(4 * time.Hour), Duration: 4 * time.Hour,
+				},
+				{
+					Airline: "TG", FlightNumber: "TG400", Origin: "BKK", Destination: "LHR",
+					DepartureTime: dep.Add(6 * time.Hour), ArrivalTime: dep.Add(10 * time.Hour), Duration: 4 * time.Hour,
+				},
+			},
+		},
+	}
+
+	s := NewSearcher(newRegistry(flights), nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		Passengers: 1, CabinClass: types.CabinEconomy, MaxStops: 0, // direct only
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 direct flight, got %d", len(results))
+	}
+	if results[0].TotalPrice.Amount != 300 {
+		t.Errorf("expected $300, got $%.0f", results[0].TotalPrice.Amount)
+	}
+}
+
+func TestDirectSearch_EmptyProviderResults(t *testing.T) {
+	s := NewSearcher(newRegistry(nil), nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		MaxStops: -1,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 0 {
+		t.Fatalf("expected 0 results, got %d", len(results))
+	}
+}
+
+// mockRanker implements search.Ranker for testing.
+type mockRanker struct {
+	err error
+}
+
+func (m *mockRanker) Rank(_ context.Context, itins []search.Itinerary) ([]search.Itinerary, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	// Reverse the order to prove ranker was called.
+	reversed := make([]search.Itinerary, len(itins))
+	for i, it := range itins {
+		reversed[len(itins)-1-i] = it
+	}
+	return reversed, nil
+}
+
+func TestDirectSearch_RankerSuccess(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	flights := []types.Flight{
+		{
+			Price:         types.Money{Amount: 300, Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(5 * time.Hour), Duration: 5 * time.Hour,
+			}},
+		},
+		{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 6 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "BA", FlightNumber: "BA200", Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour), Duration: 6 * time.Hour,
+			}},
+		},
+	}
+
+	s := NewSearcher(newRegistry(flights), &mockRanker{})
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		Passengers: 1, CabinClass: types.CabinEconomy, MaxStops: -1,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// mockRanker reverses: price-sorted [300, 500] becomes [500, 300].
+	if results[0].TotalPrice.Amount != 500 {
+		t.Errorf("expected ranker-reversed order: first=$500, got $%.0f", results[0].TotalPrice.Amount)
+	}
+}
+
+func TestDirectSearch_RankerFailureFallsBack(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	flights := []types.Flight{
+		{
+			Price:         types.Money{Amount: 300, Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(5 * time.Hour), Duration: 5 * time.Hour,
+			}},
+		},
+		{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 6 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "BA", FlightNumber: "BA200", Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour), Duration: 6 * time.Hour,
+			}},
+		},
+	}
+
+	s := NewSearcher(newRegistry(flights), &mockRanker{err: fmt.Errorf("LLM down")})
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		Passengers: 1, CabinClass: types.CabinEconomy, MaxStops: -1,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Should fall back to price-sorted order.
+	if results[0].TotalPrice.Amount != 300 {
+		t.Errorf("expected price-sorted fallback: first=$300, got $%.0f", results[0].TotalPrice.Amount)
+	}
+}
+
+func TestFlightToItinerary_TotalTrip(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	f := types.Flight{
+		Price:         types.Money{Amount: 400, Currency: "USD"},
+		TotalDuration: 12 * time.Hour,
+		Outbound: []types.Segment{
+			{
+				DepartureTime: dep,
+				ArrivalTime:   dep.Add(5 * time.Hour),
+			},
+			{
+				DepartureTime: dep.Add(7 * time.Hour),
+				ArrivalTime:   dep.Add(12 * time.Hour),
+			},
+		},
+	}
+
+	itin := flightToItinerary(f)
+	// TotalTrip = last arrival - first departure = 12h.
+	if itin.TotalTrip != 12*time.Hour {
+		t.Errorf("TotalTrip = %v, want 12h", itin.TotalTrip)
+	}
+	if itin.TotalTravel != 12*time.Hour {
+		t.Errorf("TotalTravel = %v, want 12h", itin.TotalTravel)
+	}
+	if itin.TotalPrice.Amount != 400 {
+		t.Errorf("TotalPrice = %.0f, want 400", itin.TotalPrice.Amount)
+	}
+}
+
+// errorProvider always returns an error from Search.
+type errorProvider struct {
+	name config.ProviderName
+}
+
+func (e *errorProvider) Name() config.ProviderName { return e.name }
+func (e *errorProvider) Search(_ context.Context, _ types.SearchRequest) ([]types.Flight, error) {
+	return nil, fmt.Errorf("provider down")
+}
+
+func TestDirectSearch_ProviderErrorSkipped(t *testing.T) {
+	r := provider.NewRegistry()
+	_ = r.Register(&errorProvider{name: "broken"})
+	dep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	_ = r.Register(&fakeProvider{name: "working", flights: []types.Flight{
+		{
+			Price:         types.Money{Amount: 300, Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(5 * time.Hour), Duration: 5 * time.Hour,
+			}},
+		},
+	}})
+
+	s := NewSearcher(r, nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		MaxStops: -1,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result from working provider, got %d", len(results))
+	}
+}
+
+func TestDirectSearch_MaxResults(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	flights := make([]types.Flight, 5)
+	for i := range flights {
+		flights[i] = types.Flight{
+			Price:         types.Money{Amount: float64(100 + i*50), Currency: "USD"},
+			TotalDuration: 5 * time.Hour,
+			Outbound: []types.Segment{{
+				Airline: "AI", FlightNumber: fmt.Sprintf("AI%d", i), Origin: "DEL", Destination: "LHR",
+				DepartureTime: dep, ArrivalTime: dep.Add(5 * time.Hour), Duration: 5 * time.Hour,
+			}},
+		}
+	}
+
+	s := NewSearcher(newRegistry(flights), nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR", DepartureDate: "2026-03-24",
+		MaxStops: -1, MaxResults: 2,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results (MaxResults cap), got %d", len(results))
+	}
+}
+
+func TestFlightToItinerary_EmptyOutbound(t *testing.T) {
+	f := types.Flight{
+		Price:         types.Money{Amount: 100, Currency: "USD"},
+		TotalDuration: 5 * time.Hour,
+	}
+	itin := flightToItinerary(f)
+	if itin.TotalTrip != 0 {
+		t.Errorf("TotalTrip = %v, want 0 for empty outbound", itin.TotalTrip)
 	}
 }

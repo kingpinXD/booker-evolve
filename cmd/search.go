@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -37,6 +38,7 @@ const (
 	keyProfile    = "profile"
 	keyCurrency   = "currency"
 	keyContext    = "context"
+	keyFormat     = "format"
 )
 
 // Default values.
@@ -78,6 +80,7 @@ func init() {
 	f.String(keyProfile, defaultProfile, "ranking profile (budget, comfort, balanced)")
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
 	f.String(keyContext, "", "search context/preferences (e.g. 'cheapest option' or 'want to explore a city on the way')")
+	f.String(keyFormat, "table", "output format: table or json")
 
 	_ = searchCmd.MarkFlagRequired(keyDate)
 
@@ -163,8 +166,14 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	printTable(results, viper.GetString(keyCurrency))
-	return nil
+	cur := viper.GetString(keyCurrency)
+	switch viper.GetString(keyFormat) {
+	case "json":
+		return printJSON(results, cur)
+	default:
+		printTable(results, cur)
+		return nil
+	}
 }
 
 // isMultiLeg returns true if any itinerary has more than one leg.
@@ -324,4 +333,65 @@ func formatDuration(d time.Duration) string {
 	default:
 		return fmt.Sprintf("%dh %dm", hours, mins)
 	}
+}
+
+// jsonLeg is the JSON representation of a single flight leg.
+type jsonLeg struct {
+	Airlines  string `json:"airlines"`
+	Origin    string `json:"origin"`
+	Dest      string `json:"destination"`
+	Departure string `json:"departure"`
+	Duration  string `json:"duration"`
+}
+
+// jsonItinerary is the JSON representation of a search result.
+type jsonItinerary struct {
+	Rank     int       `json:"rank"`
+	Score    float64   `json:"score"`
+	Price    float64   `json:"price"`
+	Currency string    `json:"currency"`
+	Route    string    `json:"route"`
+	Duration string    `json:"duration"`
+	Legs     []jsonLeg `json:"legs"`
+	Stopover string    `json:"stopover,omitempty"`
+}
+
+func printJSON(itineraries []search.Itinerary, cur string) error {
+	out := make([]jsonItinerary, len(itineraries))
+	for i, itin := range itineraries {
+		converted, _ := currency.Convert(itin.TotalPrice, cur)
+
+		var legs []jsonLeg
+		for idx, leg := range itin.Legs {
+			segs := leg.Flight.Outbound
+			origin, dest, dep := "", "", ""
+			if len(segs) > 0 {
+				origin = segs[0].Origin
+				dest = segs[len(segs)-1].Destination
+				dep = segs[0].DepartureTime.Format(time.RFC3339)
+			}
+			legs = append(legs, jsonLeg{
+				Airlines:  legAirlines(itin, idx),
+				Origin:    origin,
+				Dest:      dest,
+				Departure: dep,
+				Duration:  formatDuration(leg.Flight.TotalDuration),
+			})
+		}
+
+		out[i] = jsonItinerary{
+			Rank:     i + 1,
+			Score:    itin.Score,
+			Price:    converted.Amount,
+			Currency: cur,
+			Route:    routeString(itin),
+			Duration: formatDuration(itin.TotalTravel),
+			Legs:     legs,
+			Stopover: stopoverString(itin),
+		}
+	}
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(out)
 }

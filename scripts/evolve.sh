@@ -314,8 +314,9 @@ For each task:
 5. Implement using TDD: write/update test first, verify it fails, then implement.
 6. Check off TODO steps as you complete them.
 7. Run the full verification: go build ./... && go test ./... && go vet ./... && golangci-lint run
-8. Commit after each task with a descriptive message. Include 'Session: task N/M' at the end of
-   every commit message (N = current task number, M = total tasks this session).
+8. Commit after each task with a descriptive message. Always include TODO.md, JOURNAL.md, and
+   LEARNINGS.md in the commit (git add TODO.md JOURNAL.md LEARNINGS.md before committing).
+   Include 'Session: task N/M' at the end of every commit message (N = current task, M = total).
 
 Testing rules (line counts only include .go files — exclude .md files, generated files, mocks, docs):
 - Under 400 lines of Go code changed: unit tests are sufficient.
@@ -334,11 +335,12 @@ If tests fail, you have 3 attempts to fix. After 3 failures:
 
 Do not modify any protected files (except JOURNAL.md, LEARNINGS.md, and TODO.md which you must update)."
 
-# macOS lacks GNU timeout — use background process + kill
+# macOS lacks GNU timeout — use background process + kill.
+# Run claude directly (no pipe) so $! captures the real PID.
 claude -p "$IMPL_PROMPT" \
   --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Task" \
   --output-format text \
-  2>&1 | tee "$LOG_DIR/phase-b.log" &
+  > "$LOG_DIR/phase-b.log" 2>&1 &
 CLAUDE_PID=$!
 
 # Kill after SESSION_TIMEOUT seconds if still running

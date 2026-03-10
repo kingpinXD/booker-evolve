@@ -29,3 +29,7 @@ Task 6 (kiwi parser tests) was planned on Day 3 before the CLAUDE.md directive t
 ## Lesson: Check the full dependency graph before starting deferred work
 
 Tasks 8 and 9 were deferred from Day 4. When resuming on Day 7, the self-assessment revealed that issue #3 (LLM Picker) was a missing dependency for Task 9 (CLI wiring) that had never been added to TODO.md. Scanning all open GitHub issues at session start catches these gaps before they become blockers mid-session.
+
+## Lesson: Extract interfaces at consumption sites to make concrete types testable
+
+Picker depended on *llm.Client directly. Defining ChatCompleter (a one-method interface) in picker.go -- right where it is consumed -- let tests inject a mockLLM without changing llm/client.go at all. In Go, define interfaces where they are used, not where they are implemented. This pattern also worked for currency.Converter: wrapping package-level globals behind a struct made the pure conversion logic testable without HTTP calls.

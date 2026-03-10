@@ -49,3 +49,7 @@ Ran self-assessment: build, tests, vet, and lint all pass. Coverage at 19.4% wit
 ## Day 9 -- 15:15 -- Evolution system refactor, no codebase tasks
 
 Session focused on improving the evolution process itself rather than codebase tasks. One commit (950b592) refactored scripts/evolve.sh and skills/evolve/SKILL.md to support parallel agents via git worktrees, 25-minute/70%-context session limits, and one commit per task. No planned codebase tasks (ChatCompleter interface, picker tests, cache tests, etc.) were executed. Coverage unchanged at 19.4%.
+
+## Day 10 -- 21:30 -- Execute all 5 deferred tasks, coverage 19.4% to 28.3%
+
+Completed all 5 tasks from SESSION_PLAN.md in 5 commits with zero reverts and zero API calls. (1) Extracted ChatCompleter interface in picker.go and added 6 LLM-path tests — picker coverage at 97.4%. (2) Added 5 aggregator tests with mock providers and race detector — aggregator at 100%. (3) Refactored currency.go to Converter struct for testability, added 5 tests — currency at 36.7%. (4) Added 4 multi-city cache tests — cache coverage rose from 38% to 77.5%. (5) Added 3 config.Default() tests — config at 100%. Total project coverage rose from 19.4% to 28.3%. Nine packages now have tests (up from 6).

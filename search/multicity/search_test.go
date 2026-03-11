@@ -491,6 +491,49 @@ func TestSearch_PreferredAllianceFilter(t *testing.T) {
 	}
 }
 
+func TestSearch_MaxPriceFilter(t *testing.T) {
+	// Leg1 = $300, Leg2 = $500, total = $800.
+	flights := []types.Flight{validLeg1(), validLeg2()}
+
+	// MaxPrice=700 should filter out the $800 combined itinerary.
+	searcher := newTestSearcher(t, flights, llmRankingHandler(15))
+	results, err := searcher.Search(context.Background(), SearchParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: basetime.Format(DateLayout),
+		Passengers:    1,
+		CabinClass:    types.CabinEconomy,
+		Stopovers:     []StopoverCity{testStopover()},
+		FlexDays:      3,
+		MaxPrice:      700,
+	})
+	if err != nil {
+		t.Fatalf("Search() error: %v", err)
+	}
+	if len(results) != 0 {
+		t.Errorf("MaxPrice=700: got %d results, want 0 (combined price is $800)", len(results))
+	}
+
+	// MaxPrice=900 should keep the $800 combined itinerary.
+	searcher2 := newTestSearcher(t, flights, llmRankingHandler(15))
+	results2, err := searcher2.Search(context.Background(), SearchParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: basetime.Format(DateLayout),
+		Passengers:    1,
+		CabinClass:    types.CabinEconomy,
+		Stopovers:     []StopoverCity{testStopover()},
+		FlexDays:      3,
+		MaxPrice:      900,
+	})
+	if err != nil {
+		t.Fatalf("Search() error: %v", err)
+	}
+	if len(results2) == 0 {
+		t.Fatal("MaxPrice=900: got 0 results, expected at least 1 (combined price is $800)")
+	}
+}
+
 func TestSearch_ZeroPriceFiltered(t *testing.T) {
 	// Flights with $0 price should be filtered out.
 	flights := []types.Flight{

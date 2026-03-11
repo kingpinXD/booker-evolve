@@ -131,6 +131,10 @@ type SearchParams struct {
 	// PreferredAlliance filters flights to those from the given alliance
 	// ("Star Alliance", "OneWorld", "SkyTeam"). Empty means no filter.
 	PreferredAlliance string
+
+	// MaxPrice filters combined itineraries whose total price exceeds this
+	// amount (USD). 0 means no limit.
+	MaxPrice float64
 }
 
 // Searcher orchestrates the multi-city halt search pipeline.
@@ -403,12 +407,27 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 				continue
 			}
 		}
+		if params.MaxPrice > 0 && itin.TotalPrice.Amount > params.MaxPrice {
+			continue
+		}
 
 		allItineraries = append(allItineraries, itin)
 		filteredMC++
 	}
 
 	log.Printf("[multicity] multi-city itineraries after filter: %d/%d", filteredMC, len(mcItineraries))
+
+	// Filter combined itineraries by max total price.
+	if params.MaxPrice > 0 {
+		filtered := allItineraries[:0]
+		for _, itin := range allItineraries {
+			if itin.TotalPrice.Amount <= params.MaxPrice {
+				filtered = append(filtered, itin)
+			}
+		}
+		allItineraries = filtered
+	}
+
 	log.Printf("[multicity] total candidate itineraries: %d", len(allItineraries))
 
 	if len(allItineraries) == 0 {

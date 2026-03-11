@@ -46,5 +46,6 @@ func (s *Strategy) toSearchParams(req search.Request) SearchParams {
 		MaxLayoversLeg2:   req.MaxStops,
 		MaxResults:        req.MaxResults,
 		PreferredAlliance: req.PreferredAlliance,
+		MaxPrice:          req.MaxPrice,
 	}
 }

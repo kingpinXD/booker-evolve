@@ -104,6 +104,24 @@ func TestStrategy_RequestMapping_PreferredAlliance(t *testing.T) {
 	}
 }
 
+// TestStrategy_RequestMapping_MaxPrice verifies MaxPrice maps from Request.
+func TestStrategy_RequestMapping_MaxPrice(t *testing.T) {
+	req := search.Request{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2026-03-24",
+		Passengers:    1,
+		MaxPrice:      1500,
+	}
+
+	s := &Strategy{leg2Date: "2026-03-30"}
+	params := s.toSearchParams(req)
+
+	if params.MaxPrice != 1500 {
+		t.Errorf("MaxPrice = %f, want 1500", params.MaxPrice)
+	}
+}
+
 // TestStrategy_Search verifies the full delegation: Strategy.Search maps the
 // search.Request to SearchParams via toSearchParams, then calls Searcher.Search,
 // returning itineraries from the underlying pipeline.

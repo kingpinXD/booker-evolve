@@ -390,6 +390,42 @@ func TestPrimaryAirline(t *testing.T) {
 	}
 }
 
+func TestCombineLegs_RedEyeLeg2Rejected(t *testing.T) {
+	// leg1: DEL -> HKG, departs Mar 24 10:00, arrives 18:00
+	leg1Dep := basetime
+	leg1Arr := basetime.Add(8 * time.Hour)
+	leg1 := []types.Flight{makeFlight("CX", "DEL", "HKG", leg1Dep, leg1Arr, 300)}
+
+	// All leg2 departures are 2+ days after leg1 arrival (valid stopover gap).
+	// We vary only the departure hour to test the red-eye filter.
+	mar27 := time.Date(2026, 3, 27, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name      string
+		leg2Hour  int
+		leg2Min   int
+		wantCount int
+	}{
+		{"red-eye 02:00 rejected", 2, 0, 0},
+		{"normal 10:00 passes", 10, 0, 1},
+		{"midnight 00:00 rejected", 0, 0, 0},
+		{"boundary 04:59 rejected", 4, 59, 0},
+		{"boundary 05:00 passes", 5, 0, 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dep := time.Date(mar27.Year(), mar27.Month(), mar27.Day(), tt.leg2Hour, tt.leg2Min, 0, 0, time.UTC)
+			leg2 := []types.Flight{makeFlight("AC", "HKG", "YYZ", dep, dep.Add(16*time.Hour), 500)}
+			got := CombineLegs(leg1, leg2, defaultParams())
+			if len(got) != tt.wantCount {
+				t.Errorf("CombineLegs() with leg2 at %02d:%02d returned %d itineraries, want %d",
+					tt.leg2Hour, tt.leg2Min, len(got), tt.wantCount)
+			}
+		})
+	}
+}
+
 func TestSameAirline(t *testing.T) {
 	cx := makeFlight("CX", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 300)
 	ai := makeFlight("AI", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 280)

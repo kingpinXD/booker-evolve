@@ -30,7 +30,8 @@ import (
 //     exceeds MaxAirportLayover. A 2-hour connection is fine. An 8-hour
 //     airport wait is miserable.
 //
-// TODO(iterate): Add time-of-day preferences (avoid red-eye on long legs).
+// Red-eye leg2 departures (00:00-04:59) are hard-rejected.
+// TODO(iterate): Add broader time-of-day preferences beyond red-eye.
 
 // CombineParams controls how legs are paired.
 type CombineParams struct {
@@ -72,6 +73,11 @@ func CombineLegs(leg1, leg2 []types.Flight, params CombineParams) []search.Itine
 
 			leg2Departure := firstDeparture(f2.Outbound)
 			if leg2Departure.IsZero() {
+				continue
+			}
+
+			// Reject leg2 red-eye departures (00:00-04:59).
+			if isRedEye(leg2Departure) {
 				continue
 			}
 

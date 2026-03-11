@@ -570,6 +570,46 @@ type weightsUpdater interface {
 	SetWeights(multicity.RankingWeights)
 }
 
+// looksLikeHelp returns true if the user input is a help request.
+func looksLikeHelp(input string) bool {
+	lower := strings.ToLower(input)
+	return lower == "help" || lower == "?" ||
+		strings.HasPrefix(lower, "what can") ||
+		strings.HasPrefix(lower, "how do") ||
+		strings.HasPrefix(lower, "how does")
+}
+
+// chatHelpText returns a summary of available chat capabilities.
+func chatHelpText() string {
+	return `I can help you find flights. Here's what I can do:
+
+  Search: Tell me where and when you want to fly
+    Example: "I want to fly from Delhi to Toronto on June 15"
+
+  Refine: After results, ask me to adjust
+    Example: "show business class" or "try a later date"
+
+  Compare: Compare results side by side
+    Example: "compare 1 and 3"
+
+  Details: Get full details on a result
+    Example: "details on option 2"
+
+  Available filters:
+    - cabin (economy/business/first)
+    - max_price, direct_only, flex_days
+    - departure_after/before, arrival_after/before (HH:MM)
+    - preferred_alliance (Star Alliance/OneWorld/SkyTeam)
+    - avoid_airlines, preferred_airlines (IATA codes)
+    - sort_by (price/duration/departure/score)
+    - profile (budget/comfort/balanced/eco)
+    - leg2_date for multi-city trips
+
+  Reset filters: "clear my price limit" or clear_fields
+
+  Type 'quit' to exit.`
+}
+
 // looksLikeComparison returns true if the user input looks like a request
 // to compare search results (e.g. "compare 1 and 3").
 func looksLikeComparison(input string) bool {
@@ -735,6 +775,12 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		if userInput == "quit" || userInput == "exit" {
 			_, _ = fmt.Fprintln(out, "Goodbye!")
 			return nil
+		}
+
+		// Intercept help requests before the LLM call.
+		if looksLikeHelp(userInput) {
+			_, _ = fmt.Fprintln(out, chatHelpText())
+			continue
 		}
 
 		// Intercept comparison/detail requests using cached results.

@@ -2465,6 +2465,58 @@ func TestMergeParams_ClearFieldsMultiple(t *testing.T) {
 	}
 }
 
+func TestLooksLikeHelp(t *testing.T) {
+	cases := []struct {
+		input string
+		want  bool
+	}{
+		{"help", true},
+		{"Help", true},
+		{"HELP", true},
+		{"?", true},
+		{"what can you do", true},
+		{"What can I search for?", true},
+		{"how do I search", true},
+		{"how does this work", true},
+		{"find flights to Paris", false},
+		{"show cheaper", false},
+		{"compare 1 and 2", false},
+		{"", false},
+	}
+	for _, tc := range cases {
+		if got := looksLikeHelp(tc.input); got != tc.want {
+			t.Errorf("looksLikeHelp(%q) = %v, want %v", tc.input, got, tc.want)
+		}
+	}
+}
+
+func TestChatLoop_Help(t *testing.T) {
+	// When user types "help", the chatLoop should return help text
+	// without making any LLM calls.
+	mock := &chatMockLLM{responses: []string{}}
+	fakeStrat := &fakeSearchStrategy{results: nil}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("help\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	output := out.String()
+	if !strings.Contains(output, "I can help you find flights") {
+		t.Errorf("expected help text in output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "Available filters") {
+		t.Errorf("expected filter list in output, got:\n%s", output)
+	}
+	// No LLM calls should have been made.
+	if mock.idx > 0 {
+		t.Errorf("expected 0 LLM calls, got %d", mock.idx)
+	}
+}
+
 func TestChatSearch(t *testing.T) {
 	mock := &chatMockLLM{responses: []string{""}}
 	fakeStrat := &fakeSearchStrategy{

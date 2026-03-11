@@ -456,3 +456,31 @@ Key outcomes:
 5. Chat now suggests relaxing filters when search returns zero results.
 
 Net lines: ~-100 Go code removed via cleanup, ~+200 added for new features. 12 new tests.
+
+### Session 40, Task 1 -- Consolidate time-of-day filter functions
+Extracted shared filterByTimeOfDay helper from FilterByDepartureTime and FilterByArrivalTime. Both functions shared identical parse/validate/iterate logic, differing only in which segment time they extracted. Net reduction: ~25 lines. All existing time filter tests pass unchanged.
+
+### Session 40, Task 2 -- Single-flight filter predicates for passesAllFilters
+Added 7 exported single-flight predicate functions (FlightPassesBlocked, FlightPassesAlliance, FlightPassesDepartureTime, FlightPassesArrivalTime, FlightPassesMaxDuration, FlightPassesAvoidAirlines, FlightPassesPreferredAirlines). Rewrote passesAllFilters to use early-return predicates instead of wrapping each flight in []Flight{f}. Also extracted parseAirlineCodes helper from FilterByAvoidAirlines/FilterByPreferredAirlines. 7 new predicate tests.
+
+### Session 40, Task 3 -- Add India-UK route stopovers (DEL/BOM to LHR)
+Added DELToLHRStopovers (6 cities) and BOMToLHRStopovers (6 cities): BKK, SIN, KUL, HKG, CMB, IST. All avoid Middle East blocked airspace. Total route-specific corridors: 7 (was 5). 2 new tests. Implemented in parallel worktree.
+
+### Session 40, Task 4 -- Ranker cache hit/miss counters
+Added hits/misses int fields to Ranker, CacheStats() method returning (hits, misses int). Incremented on each Rank() call. 3 new tests. Implemented in parallel worktree.
+
+### Session 40, Task 5 -- Chat system prompt agent personality
+Enhanced chatSystemPrompt to position booker as a proactive travel planning agent per VISION.md. Added guidance for suggesting stopovers, recommending nearby airports, explaining tradeoffs, and asking about flexibility. JSON extraction format unchanged. All 11 system prompt tests pass.
+
+## Session 40 -- Filter refactoring, route expansion, observability, agent personality
+
+Completed all 5 planned tasks in 4 commits with zero reverts and zero API calls. Used parallel worktrees for tasks 3 (stopovers) and 4 (ranker) while working sequentially on tasks 1-2 on main, then task 5.
+
+Key outcomes:
+1. Consolidated duplicate time-of-day filter logic into shared filterByTimeOfDay helper.
+2. Added 7 single-flight predicates, eliminating slice-wrapping antipattern in passesAllFilters.
+3. Added India-UK route stopovers: DEL/BOM->LHR (6 cities each) with curated hubs.
+4. Ranker now tracks cache hit/miss stats for observability.
+5. Chat system prompt now positions booker as a proactive travel agent per VISION.md.
+
+12 new tests total. All build gates pass.

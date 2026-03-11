@@ -135,3 +135,6 @@ The Kiwi provider (provider/kiwi/kiwi.go) directly references config.KiwiSortByQ
 
 ## Lesson: Worktree merges with struct changes need manual KiwiID stripping
 When a worktree branch adds stopover entries that include KiwiID fields, but main has already removed KiwiID from the struct, cherry-picking causes compile errors. The safest approach is to manually apply the worktree's Go changes to main, stripping the removed fields, rather than trying git rebase/cherry-pick.
+
+## Lesson: Existing internal predicates make exported wrappers trivial
+The search/filter.go package already had unexported single-flight predicates (isFlightBlocked, flightMatchesAlliance, flightMatchesAvoid, flightMatchesPreferred). Adding exported wrappers (FlightPasses*) is a thin layer over these -- the real refactoring value is in the consumer site (passesAllFilters) where slice-wrapping is eliminated. Check for existing internal helpers before designing new predicate APIs.

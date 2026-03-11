@@ -141,3 +141,6 @@ The search/filter.go package already had unexported single-flight predicates (is
 
 ## Lesson: Adding optional struct fields with zero-value backward compat
 When extending a struct used across multiple presets (e.g., RankingWeights), adding a new field with a zero value preserves all existing behavior. The system prompt conditionally includes the new criterion only when the field is non-zero, so existing profiles (budget/comfort/balanced) produce identical output. This pattern avoids migrating every call site.
+
+## Lesson: Large file splits succeed cleanly when no logic changes
+Extracting 25 functions and 4 types from cmd/search.go (768 lines) into cmd/display.go required zero test changes -- all existing tests continued passing because the functions stayed in the same package with identical signatures. The key is moving only display/formatting code with no behavioral changes. This kind of pure-mechanical refactor is safe to run in a parallel worktree alongside feature work in disjoint files.

@@ -513,6 +513,10 @@ Key outcomes:
 
 12 new tests total. All build gates pass.
 
+## Session 43 -- 16:31 -- India-Australia stopovers, eco ranking, Indian clusters, display extraction
+
+Completed all 5 planned tasks with zero reverts and zero API calls. (1) Replaced 5 stale Kiwi references in multicity.go docs with SerpAPI descriptions. (2) Added India-Australia stopover routes (DEL/BOM to SYD) via Southeast Asia corridor -- 11 cities across 2 route sets. (3) Added eco ranking profile (Carbon 30%, Cost 20%, FlightDuration 20%) with conditional CARBON criterion in buildSystemPrompt, preserving existing profile behavior via zero-value backward compat. (4) Added Delhi (DEL+JAI) and Mumbai (BOM+PNQ) airport clusters enabling NearbySearcher expansion from primary Indian origins. (5) Extracted 25 display functions and 4 JSON types from cmd/search.go (768 lines) into cmd/display.go (580 lines), reducing search.go to 197 lines. Three-way worktree parallelism used for tasks 2, 4, and 5. All build gates pass.
+
 ## Day 43, Task 1 -- Update stale Kiwi references in multicity pipeline docs
 Replaced 5 "Kiwi" references in multicity.go package-level doc comments with accurate SerpAPI descriptions. Removed the stale TODO about Kiwi's 20-result limit (no longer applicable). Pure documentation change, build+vet clean.
 

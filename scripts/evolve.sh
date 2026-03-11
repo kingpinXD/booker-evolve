@@ -437,7 +437,7 @@ log "Reflection phase complete"
 
 log "Finalizing session state..."
 increment_session
-git add SESSION_NUMBER TODO.md SESSION_PLAN.md JOURNAL.md LEARNINGS.md 2>/dev/null || true
+git add -A 2>/dev/null || true
 if ! git diff --cached --quiet 2>/dev/null; then
   PENDING_LEFT=$(grep -c '^\*\*Status:\*\* \(pending\|in-progress\)' TODO.md 2>/dev/null || true)
   PENDING_LEFT=${PENDING_LEFT:-0}

@@ -643,6 +643,112 @@ var BOMToSFOStopovers = []StopoverCity{
 	},
 }
 
+// DELToSYDStopovers are the candidate stopover cities for Delhi → Sydney.
+//
+// Route geometry: DEL is at ~28°N, 77°E. SYD is at ~33°S, 151°E.
+// Southeast Asia is the primary corridor — these cities are directly
+// on the route and have strong connectivity to both India and Australia.
+var DELToSYDStopovers = []StopoverCity{
+	// === SOUTHEAST ASIA — Primary corridor ===
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-SYD very frequent on SQ/Qantas. Strong DEL-SIN frequency. Clean, safe, great food.",
+	},
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BKK-SYD direct on Thai. DEL-BKK frequent and cheap. Temples, street food.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines/AirAsia hub. KUL-SYD direct on MAS. Cheap DEL-KUL. Petronas Towers, Batu Caves.",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-SYD direct on Cathay/Qantas. DEL-HKG frequent. Victoria Peak, dim sum.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-SYD direct on ANA/JAL/Qantas. DEL-NRT on JAL. Slight detour but great city.",
+	},
+	{
+		City:    "Osaka",
+		Airport: "KIX",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Peach/JAL hub. KIX-SYD on Jetstar/JAL. Less crowded than Tokyo. Dotonbori, Osaka Castle.",
+	},
+}
+
+// BOMToSYDStopovers are the candidate stopover cities for Mumbai → Sydney.
+//
+// Route geometry: BOM is at ~19°N, 73°E. SYD is at ~33°S, 151°E.
+// Southeast Asia is the natural corridor with strong BOM connectivity.
+var BOMToSYDStopovers = []StopoverCity{
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-SYD very frequent on SQ/Qantas. Strong BOM-SIN frequency.",
+	},
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-SYD direct on Thai.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines/AirAsia hub. KUL-SYD direct on MAS. Cheap BOM-KUL.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-SYD direct on Cathay/Qantas. BOM-HKG on Cathay/Air India.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-SYD direct on ANA/JAL/Qantas. BOM-NRT on ANA.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -659,6 +765,8 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "LHR"): BOMToLHRStopovers,
 	routeKey("DEL", "SFO"): DELToSFOStopovers,
 	routeKey("BOM", "SFO"): BOMToSFOStopovers,
+	routeKey("DEL", "SYD"): DELToSYDStopovers,
+	routeKey("BOM", "SYD"): BOMToSYDStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

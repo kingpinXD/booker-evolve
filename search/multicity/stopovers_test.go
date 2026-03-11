@@ -297,6 +297,113 @@ func TestStopoversForRoute_BOMToSFO(t *testing.T) {
 	}
 }
 
+func TestStopoversForRoute_DELToSYD(t *testing.T) {
+	got := StopoversForRoute("DEL", "SYD")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for DEL->SYD, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &DELToSYDStopovers[0] {
+		t.Error("DEL->SYD should return the route-specific slice, not a copy")
+	}
+
+	// Verify expected cities: Southeast Asia corridor.
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"SIN", "BKK", "KUL", "HKG", "NRT", "KIX"} {
+		if !airports[want] {
+			t.Errorf("DEL->SYD stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["DEL"] {
+		t.Error("origin DEL should not be in stopover list")
+	}
+	if airports["SYD"] {
+		t.Error("destination SYD should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_BOMToSYD(t *testing.T) {
+	got := StopoversForRoute("BOM", "SYD")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for BOM->SYD, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &BOMToSYDStopovers[0] {
+		t.Error("BOM->SYD should return the route-specific slice, not a copy")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"SIN", "BKK", "KUL", "HKG", "NRT"} {
+		if !airports[want] {
+			t.Errorf("BOM->SYD stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["BOM"] {
+		t.Error("origin BOM should not be in stopover list")
+	}
+	if airports["SYD"] {
+		t.Error("destination SYD should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_ReverseSYDToDEL(t *testing.T) {
+	got := StopoversForRoute("SYD", "DEL")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for reverse route SYD->DEL, got none")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	// KIX is in DEL->SYD route-specific list but NOT in GlobalFallbackHubs.
+	// Its presence proves reverse lookup uses route-specific data.
+	if !airports["KIX"] {
+		t.Error("reverse SYD->DEL missing route-specific airport KIX (would not be in fallback)")
+	}
+
+	if airports["SYD"] {
+		t.Error("origin SYD should not be in stopover list")
+	}
+	if airports["DEL"] {
+		t.Error("destination DEL should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_ReverseSYDToBOM(t *testing.T) {
+	got := StopoversForRoute("SYD", "BOM")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for reverse route SYD->BOM, got none")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	// KUL is in BOM->SYD route-specific list but NOT in GlobalFallbackHubs.
+	// Its presence proves reverse lookup uses route-specific data.
+	if !airports["KUL"] {
+		t.Error("reverse SYD->BOM missing route-specific airport KUL (would not be in fallback)")
+	}
+
+	if airports["SYD"] {
+		t.Error("origin SYD should not be in stopover list")
+	}
+	if airports["BOM"] {
+		t.Error("destination BOM should not be in stopover list")
+	}
+}
+
 // TestStopoverDataConsistency validates all stopover data for correctness.
 func TestStopoverDataConsistency(t *testing.T) {
 	iataRe := regexp.MustCompile(`^[A-Z]{3}$`)

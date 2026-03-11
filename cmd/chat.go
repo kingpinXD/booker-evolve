@@ -375,6 +375,18 @@ func mergeParams(prev, partial tripParams) tripParams {
 	return merged
 }
 
+// anyFieldSet returns true if any field in a tripParams struct is non-zero.
+// Uses reflection so new fields are automatically supported.
+func anyFieldSet(p tripParams) bool {
+	v := reflect.ValueOf(p)
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsZero() {
+			return true
+		}
+	}
+	return false
+}
+
 // parsePartialParams extracts trip parameters from an LLM response,
 // accepting partial JSON (at least one recognized field set). Used for
 // follow-up refinements where the LLM only emits changed fields.
@@ -390,17 +402,7 @@ func parsePartialParams(response string) (tripParams, bool) {
 		if err := json.Unmarshal([]byte(line), &p); err != nil {
 			continue
 		}
-		// At least one field must be set.
-		if p.Origin != "" || p.Destination != "" || p.DepartureDate != "" ||
-			p.ReturnDate != "" || p.Leg2Date != "" || p.Passengers != 0 || p.Cabin != "" ||
-			p.MaxPrice != 0 || p.DirectOnly || p.FlexDays != 0 ||
-			p.Profile != "" || p.PreferredAlliance != "" ||
-			p.DepartureAfter != "" || p.DepartureBefore != "" ||
-			p.ArrivalAfter != "" || p.ArrivalBefore != "" ||
-			p.MaxDurationHours != 0 ||
-			p.SortBy != "" || p.AvoidAirlines != "" || p.PreferredAirlines != "" ||
-			p.MinStopoverHours != 0 || p.MaxStopoverHours != 0 || p.Context != "" ||
-			len(p.ClearFields) > 0 {
+		if anyFieldSet(p) {
 			return p, true
 		}
 	}

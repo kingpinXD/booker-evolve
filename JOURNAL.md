@@ -219,3 +219,14 @@ All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test a
 ## Session 24 -- 05:22 -- Ranker enrichment and table output polish
 
 Completed all 4 planned tasks from the Day 25 session plan in 4 commits with zero reverts and zero API calls. (1) Parsed SerpAPI Overnight bool into types.Segment and added [Overnight] tag to buildRankingPrompt, giving the LLM explicit signal about overnight connections alongside the existing [Red-eye] tag. (2) Parsed aircraft type (Airplane field) from SerpAPI into types.Segment.Aircraft and surfaced it in JSON output as "aircraft" (omitempty). (3) Added hasScores helper to conditionally hide Score/Reason columns when no ranker is used, reducing table noise for direct search output; also fixed carbon emissions integer division bug by switching grams/1000 to (grams+500)/1000. (4) All lint/gofmt/vet gates clean. Coverage at ~84% across 15 packages. All tasks used mocks and existing cached data -- zero SerpAPI or LLM calls.
+
+## Session 26 -- Data enrichment and output completeness
+
+### Session 26, Task 1 -- Parse legroom from SerpAPI and annotate in ranker
+Added Legroom string field to types.Segment, wired from SerpAPI FlightSegment.Legroom in parser.go, added legroom to JSON output (omitempty), and added [Legroom: X] tag to buildRankingPrompt. All tests pass.
+
+### Session 26, Task 2 -- Enrich JSON output with arrival time, stops, omit zero score
+Added Arrival (RFC3339) and Stops fields to jsonLeg in JSON output. Added omitempty to Score in jsonItinerary so unranked results produce cleaner JSON. Four new tests cover arrival, stops with connections, and score omitempty behavior.
+
+### Session 26, Task 3 -- Wire PriceInsights into chat output
+Threaded priceInsighter interface through chatLoop so chat mode displays price level context after results (table and JSON). Previously discarded rawProvider is now captured and passed through. Updated all existing chat tests for new signature.

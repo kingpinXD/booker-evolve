@@ -834,3 +834,72 @@ func TestFormatPriceInsights_Empty(t *testing.T) {
 		t.Errorf("formatPriceInsights(empty) = %q, want empty", got)
 	}
 }
+
+// --- JSON arrival and stops ---
+
+func TestBuildJSONItineraries_ArrivalAndStops(t *testing.T) {
+	// Single segment: arrival = segment arrival time, stops = 0.
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatal("unexpected results structure")
+	}
+	wantArrival := basetime.Add(7 * time.Hour).Format(time.RFC3339)
+	if results[0].Legs[0].Arrival != wantArrival {
+		t.Errorf("arrival = %q, want %q", results[0].Legs[0].Arrival, wantArrival)
+	}
+	if results[0].Legs[0].Stops != 0 {
+		t.Errorf("stops = %d, want 0", results[0].Legs[0].Stops)
+	}
+}
+
+func TestBuildJSONItineraries_StopsWithConnection(t *testing.T) {
+	// Two segments = 1 stop.
+	leg := search.Leg{
+		Flight: types.Flight{
+			Outbound: []types.Segment{
+				{Airline: "LH", Origin: "DEL", Destination: "FRA", DepartureTime: basetime, ArrivalTime: basetime.Add(8 * time.Hour)},
+				{Airline: "LH", Origin: "FRA", Destination: "YYZ", DepartureTime: basetime.Add(10 * time.Hour), ArrivalTime: basetime.Add(20 * time.Hour)},
+			},
+			TotalDuration: 20 * time.Hour,
+			Price:         types.Money{Amount: 600, Currency: "USD"},
+		},
+	}
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if results[0].Legs[0].Stops != 1 {
+		t.Errorf("stops = %d, want 1", results[0].Legs[0].Stops)
+	}
+	// Arrival should be last segment's arrival.
+	wantArrival := basetime.Add(20 * time.Hour).Format(time.RFC3339)
+	if results[0].Legs[0].Arrival != wantArrival {
+		t.Errorf("arrival = %q, want %q", results[0].Legs[0].Arrival, wantArrival)
+	}
+}
+
+// --- JSON score omitempty ---
+
+func TestBuildJSONItineraries_ScoreOmitEmpty(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 0
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	data, err := json.Marshal(results[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(data, []byte(`"score"`)) {
+		t.Error("zero score should be omitted from JSON with omitempty")
+	}
+}
+
+func TestBuildJSONItineraries_ScorePresent(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 85
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	if results[0].Score != 85 {
+		t.Errorf("score = %f, want 85", results[0].Score)
+	}
+}

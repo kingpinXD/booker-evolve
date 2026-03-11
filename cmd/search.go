@@ -503,7 +503,9 @@ type jsonLeg struct {
 	Origin     string `json:"origin"`
 	Dest       string `json:"destination"`
 	Departure  string `json:"departure"`
+	Arrival    string `json:"arrival,omitempty"`
 	Duration   string `json:"duration"`
+	Stops      int    `json:"stops"`
 	CarbonKg   int    `json:"carbon_kg,omitempty"`
 	BookingURL string `json:"booking_url,omitempty"`
 	Aircraft   string `json:"aircraft,omitempty"`
@@ -513,7 +515,7 @@ type jsonLeg struct {
 // jsonItinerary is the JSON representation of a search result.
 type jsonItinerary struct {
 	Rank      int       `json:"rank"`
-	Score     float64   `json:"score"`
+	Score     float64   `json:"score,omitempty"`
 	Reasoning string    `json:"reasoning,omitempty"`
 	Price     float64   `json:"price"`
 	Currency  string    `json:"currency"`
@@ -572,11 +574,12 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 		var legs []jsonLeg
 		for idx, leg := range itin.Legs {
 			segs := leg.Flight.Outbound
-			origin, dest, dep := "", "", ""
+			origin, dest, dep, arr := "", "", "", ""
 			if len(segs) > 0 {
 				origin = segs[0].Origin
 				dest = segs[len(segs)-1].Destination
 				dep = segs[0].DepartureTime.Format(time.RFC3339)
+				arr = segs[len(segs)-1].ArrivalTime.Format(time.RFC3339)
 			}
 			legs = append(legs, jsonLeg{
 				Airlines:   legAirlines(itin, idx),
@@ -584,7 +587,9 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				Origin:     origin,
 				Dest:       dest,
 				Departure:  dep,
+				Arrival:    arr,
 				Duration:   formatDuration(leg.Flight.TotalDuration),
+				Stops:      leg.Flight.Stops(),
 				CarbonKg:   leg.Flight.CarbonKg,
 				BookingURL: leg.Flight.BookingURL,
 				Aircraft:   legAircraft(itin, idx),

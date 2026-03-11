@@ -1,48 +1,60 @@
 # TODO
 
-Carried from: Day 24 (all completed)
+Carried from: Day 25 (all completed)
 
-## Tasks 46-49: Day 24 tasks
-**Status:** completed (Day 24) -- cabin class display, carbon emissions, red-eye detection, lint sweep
+## Tasks 50-53: Day 25 tasks
+**Status:** completed (Day 25) -- overnight flag, aircraft type, conditional Score/Reason, carbon rounding, lint sweep
 
 ---
 
-## Task 50: Parse overnight flag and annotate in ranker prompt
+## Task 54: Parse legroom from SerpAPI and annotate in ranker
 **Status:** done
-**Plan:** Parse Overnight bool from SerpAPI FlightSegment into types.Segment.Overnight. Add [Overnight] tag in buildRankingPrompt for overnight connections (similar to [Red-eye] tag). Improves ranking quality for itineraries with overnight layovers.
-- [x] Add Overnight bool to types.Segment
-- [x] Parse Overnight from SerpAPI FlightSegment in parser.go
-- [x] Write test: parser extracts Overnight flag
-- [x] Write test: buildRankingPrompt includes [Overnight] tag
-- [x] Add [Overnight] annotation in buildRankingPrompt
+**Plan:**
+- [ ] Add Legroom string to types.Segment
+- [ ] Parse Legroom from SerpAPI FlightSegment.Legroom in parser.go
+- [ ] Write test: parser extracts legroom string
+- [ ] Add legroom field to jsonLeg struct in cmd/search.go
+- [ ] Wire legroom into buildJSONItineraries via new legLegroom helper
+- [ ] Write test: JSON output includes legroom field
+- [ ] Write test: JSON omits legroom when empty
+- [ ] Add [Legroom: Xin] annotation in buildRankingPrompt
+- [ ] Write test: buildRankingPrompt includes legroom tag
+- [ ] Verify: `go build && go test ./... && go vet ./...`
+
+## Task 55: Enrich JSON output with arrival time, stops, and omit zero score
+**Status:** done
+**Plan:** Added Arrival (RFC3339) and Stops fields to jsonLeg, added omitempty to Score in jsonItinerary, wired into buildJSONItineraries.
+- [x] Add Arrival string field to jsonLeg struct
+- [x] Wire arrival time into buildJSONItineraries (last segment ArrivalTime, RFC3339)
+- [x] Add Stops int field to jsonLeg struct
+- [x] Wire stops into buildJSONItineraries using Flight.Stops()
+- [x] Add omitempty to Score field in jsonItinerary
+- [x] Write test: JSON output includes arrival and stops fields
+- [x] Write test: JSON Score omitted when 0
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 51: Parse aircraft type from SerpAPI and display in JSON output
+## Task 56: Wire PriceInsights into chat output
 **Status:** done
-**Plan:** Parse Airplane field from SerpAPI FlightSegment into types.Segment.Aircraft. Display in JSON output as aircraft field. Helps users compare aircraft comfort on long-haul flights.
-- [x] Add Aircraft string to types.Segment
-- [x] Parse Airplane from SerpAPI in parser.go
-- [x] Write test: parser extracts aircraft type
-- [x] Add aircraft field to jsonLeg struct in cmd/search.go
-- [x] Write test: JSON output includes aircraft field
-- [x] Write test: JSON omits aircraft when empty
-- [x] Verify: `go build && go test ./... && go vet ./...`
+**Plan:**
+- [ ] Update chatLoop signature to accept a PriceInsightsProvider interface or callback
+- [ ] Thread rawProvider from runChat into chatLoop
+- [ ] After printing results in chatLoop, call formatPriceInsights and display if non-empty
+- [ ] Write test: chat output includes price insights after results
+- [ ] Update existing chat tests for new chatLoop signature
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 52: Conditional Score/Reason columns in table output
-**Status:** done
-**Plan:** When all scores are 0 (no ranker), hide Score and Reason columns to reduce noise in direct search output. Also fix carbon emissions integer division bug (grams/1000 truncates small values).
-- [x] Write test: table output hides Score/Reason when all scores 0
-- [x] Write test: table output shows Score/Reason when scores exist
-- [x] Add hasScores helper function
-- [x] Conditionally include Score/Reason in table headers and rows
-- [x] Fix carbon emissions integer division: use rounding
-- [x] Write test: carbon emissions correctly converts small gram values
-- [x] Verify: `go build && go test ./... && go vet ./...`
+## Task 57: Fix multi-leg CO2 display
+**Status:** pending
+**Plan:**
+- [ ] Replace single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in multi-leg table header
+- [ ] Wire legCarbon(itin, 0) and legCarbon(itin, 1) into multi-leg table rows
+- [ ] Write test: multi-leg table output shows CO2 for both legs
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 53: Lint, gofmt sweep, and build gate verification
-**Status:** done
-**Plan:** Final validation pass.
-- [x] Run gofmt -l . and fix any violations -- clean
-- [x] Run go vet ./... and fix any warnings -- clean
-- [x] Run golangci-lint run and fix any issues -- 0 issues
-- [x] Run go test ./... and verify all pass -- 15 packages pass
+## Task 58: Lint, gofmt sweep, and build gate verification
+**Status:** pending
+**Plan:**
+- [ ] Run gofmt -l . and fix any violations
+- [ ] Run go vet ./... and fix any warnings
+- [ ] Run golangci-lint run and fix any issues
+- [ ] Run go test ./... and verify all pass

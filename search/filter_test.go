@@ -224,6 +224,83 @@ func TestFilterByAlliance(t *testing.T) {
 	}
 }
 
+func TestFilterByDepartureTime_MorningOnly(t *testing.T) {
+	morning := types.Flight{
+		Price:    types.Money{Amount: 500, Currency: "USD"},
+		Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 8, 30, 0, 0, time.UTC)}},
+	}
+	afternoon := types.Flight{
+		Price:    types.Money{Amount: 600, Currency: "USD"},
+		Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 14, 0, 0, 0, time.UTC)}},
+	}
+	evening := types.Flight{
+		Price:    types.Money{Amount: 400, Currency: "USD"},
+		Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 20, 0, 0, 0, time.UTC)}},
+	}
+	flights := []types.Flight{morning, afternoon, evening}
+
+	result := FilterByDepartureTime(flights, "06:00", "12:00")
+	if len(result) != 1 {
+		t.Fatalf("FilterByDepartureTime(morning only): got %d, want 1", len(result))
+	}
+	if result[0].Price.Amount != 500 {
+		t.Errorf("FilterByDepartureTime: kept wrong flight, price=%v", result[0].Price.Amount)
+	}
+}
+
+func TestFilterByDepartureTime_NoRedEyes(t *testing.T) {
+	redEye := types.Flight{
+		Price:    types.Money{Amount: 300, Currency: "USD"},
+		Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 2, 0, 0, 0, time.UTC)}},
+	}
+	morning := types.Flight{
+		Price:    types.Money{Amount: 500, Currency: "USD"},
+		Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 7, 0, 0, 0, time.UTC)}},
+	}
+	evening := types.Flight{
+		Price:    types.Money{Amount: 600, Currency: "USD"},
+		Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 21, 0, 0, 0, time.UTC)}},
+	}
+	flights := []types.Flight{redEye, morning, evening}
+
+	// after="05:00", before="" — keep flights departing at/after 5am, no upper bound.
+	result := FilterByDepartureTime(flights, "05:00", "")
+	if len(result) != 2 {
+		t.Fatalf("FilterByDepartureTime(no red-eyes): got %d, want 2", len(result))
+	}
+}
+
+func TestFilterByDepartureTime_EmptyBounds(t *testing.T) {
+	flights := []types.Flight{
+		{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 3, 0, 0, 0, time.UTC)}}},
+		{Price: types.Money{Amount: 600, Currency: "USD"}, Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 12, 0, 0, 0, time.UTC)}}},
+		{Price: types.Money{Amount: 700, Currency: "USD"}, Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 23, 0, 0, 0, time.UTC)}}},
+	}
+
+	result := FilterByDepartureTime(flights, "", "")
+	if len(result) != 3 {
+		t.Fatalf("FilterByDepartureTime(empty bounds): got %d, want 3", len(result))
+	}
+}
+
+func TestFilterByDepartureTime_InvalidFormat(t *testing.T) {
+	flights := []types.Flight{
+		{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 8, 0, 0, 0, time.UTC)}}},
+		{Price: types.Money{Amount: 600, Currency: "USD"}, Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 14, 0, 0, 0, time.UTC)}}},
+	}
+
+	// Invalid format should gracefully return all flights.
+	result := FilterByDepartureTime(flights, "invalid", "12:00")
+	if len(result) != 2 {
+		t.Fatalf("FilterByDepartureTime(invalid after): got %d, want 2", len(result))
+	}
+
+	result = FilterByDepartureTime(flights, "06:00", "not-a-time")
+	if len(result) != 2 {
+		t.Fatalf("FilterByDepartureTime(invalid before): got %d, want 2", len(result))
+	}
+}
+
 func TestFilterZeroPrices(t *testing.T) {
 	zero := types.Flight{Price: types.Money{Amount: 0, Currency: "USD"}}
 	valid := types.Flight{Price: types.Money{Amount: 100, Currency: "USD"}}

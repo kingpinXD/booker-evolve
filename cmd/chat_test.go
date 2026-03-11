@@ -913,6 +913,80 @@ func TestRefinementHint_FlexDays(t *testing.T) {
 	}
 }
 
+func TestParsePartialParams_DepartureTime(t *testing.T) {
+	p, ok := parsePartialParams(`{"departure_after":"06:00"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with departure_after to parse")
+	}
+	if p.DepartureAfter != "06:00" {
+		t.Errorf("DepartureAfter = %q, want %q", p.DepartureAfter, "06:00")
+	}
+
+	p2, ok := parsePartialParams(`{"departure_before":"22:00"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with departure_before to parse")
+	}
+	if p2.DepartureBefore != "22:00" {
+		t.Errorf("DepartureBefore = %q, want %q", p2.DepartureBefore, "22:00")
+	}
+}
+
+func TestMergeParams_DepartureTime(t *testing.T) {
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", DepartureAfter: "06:00", DepartureBefore: "22:00"}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.DepartureAfter != "06:00" {
+		t.Errorf("DepartureAfter = %q, want %q (preserved from prev)", got.DepartureAfter, "06:00")
+	}
+	if got.DepartureBefore != "22:00" {
+		t.Errorf("DepartureBefore = %q, want %q (preserved from prev)", got.DepartureBefore, "22:00")
+	}
+
+	// Partial overrides prev.
+	partial2 := tripParams{DepartureAfter: "08:00"}
+	got2 := mergeParams(prev, partial2)
+	if got2.DepartureAfter != "08:00" {
+		t.Errorf("DepartureAfter = %q, want %q (overridden by partial)", got2.DepartureAfter, "08:00")
+	}
+}
+
+func TestBuildRequestFromParams_DepartureTime(t *testing.T) {
+	params := tripParams{
+		Origin:          "DEL",
+		Destination:     "YYZ",
+		DepartureDate:   "2025-06-15",
+		DepartureAfter:  "06:00",
+		DepartureBefore: "22:00",
+	}
+	req := buildRequestFromParams(params)
+	if req.DepartureAfter != "06:00" {
+		t.Errorf("DepartureAfter = %q, want %q", req.DepartureAfter, "06:00")
+	}
+	if req.DepartureBefore != "22:00" {
+		t.Errorf("DepartureBefore = %q, want %q", req.DepartureBefore, "22:00")
+	}
+}
+
+func TestChatSystemPrompt_DepartureTime(t *testing.T) {
+	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
+	if !strings.Contains(prompt, "departure_after") {
+		t.Error("system prompt should mention departure_after")
+	}
+	if !strings.Contains(prompt, "departure_before") {
+		t.Error("system prompt should mention departure_before")
+	}
+}
+
+func TestRefinementHint_DepartureTime(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "departure_after") {
+		t.Error("refinement hint should mention departure_after")
+	}
+	if !strings.Contains(hint, "departure_before") {
+		t.Error("refinement hint should mention departure_before")
+	}
+}
+
 func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && indexOf(s, substr) >= 0
 }

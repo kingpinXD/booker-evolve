@@ -51,6 +51,8 @@ type tripParams struct {
 	FlexDays          int     `json:"flex_days,omitempty"`
 	Profile           string  `json:"profile,omitempty"`
 	PreferredAlliance string  `json:"preferred_alliance,omitempty"`
+	DepartureAfter    string  `json:"departure_after,omitempty"`
+	DepartureBefore   string  `json:"departure_before,omitempty"`
 	Context           string  `json:"context,omitempty"`
 }
 
@@ -74,6 +76,8 @@ Optional:
 - flex_days: search ± N days around departure date (default: 3)
 - profile: ranking profile — "budget" (cheapest), "comfort" (best schedule/airline), or "balanced" (default: budget)
 - preferred_alliance: "Star Alliance", "OneWorld", or "SkyTeam" — filter to this alliance only
+- departure_after: earliest acceptable departure time (HH:MM, e.g. "06:00")
+- departure_before: latest acceptable departure time (HH:MM, e.g. "22:00")
 - context: any preferences like "cheapest option" or "prefer direct flights"
 
 Ask clarifying questions to gather missing information. Be conversational but concise.
@@ -162,6 +166,8 @@ func buildRequestFromParams(p tripParams) search.Request {
 		MaxStops:          maxStops,
 		MaxPrice:          p.MaxPrice,
 		PreferredAlliance: p.PreferredAlliance,
+		DepartureAfter:    p.DepartureAfter,
+		DepartureBefore:   p.DepartureBefore,
 		MaxResults:        defaultMaxResults,
 		Context:           p.Context,
 	}
@@ -256,6 +262,12 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if merged.PreferredAlliance == "" {
 		merged.PreferredAlliance = prev.PreferredAlliance
 	}
+	if merged.DepartureAfter == "" {
+		merged.DepartureAfter = prev.DepartureAfter
+	}
+	if merged.DepartureBefore == "" {
+		merged.DepartureBefore = prev.DepartureBefore
+	}
 	if merged.Context == "" {
 		merged.Context = prev.Context
 	}
@@ -291,7 +303,8 @@ func parsePartialParams(response string) (tripParams, bool) {
 		if p.Origin != "" || p.Destination != "" || p.DepartureDate != "" ||
 			p.ReturnDate != "" || p.Passengers != 0 || p.Cabin != "" ||
 			p.MaxPrice != 0 || p.DirectOnly || p.FlexDays != 0 ||
-			p.Profile != "" || p.PreferredAlliance != "" || p.Context != "" {
+			p.Profile != "" || p.PreferredAlliance != "" ||
+			p.DepartureAfter != "" || p.DepartureBefore != "" || p.Context != "" {
 			return p, true
 		}
 	}
@@ -316,7 +329,8 @@ func refinementHint() string {
 		"adjust number of passengers, add a return date for round-trip pricing, " +
 		"adjust date flexibility (flex_days), " +
 		"change ranking profile (budget/comfort/balanced), " +
-		"or filter by preferred_alliance (Star Alliance/OneWorld/SkyTeam). " +
+		"filter by preferred_alliance (Star Alliance/OneWorld/SkyTeam), " +
+		"or filter by departure time (departure_after/departure_before in HH:MM). " +
 		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }

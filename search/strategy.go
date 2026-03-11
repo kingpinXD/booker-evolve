@@ -31,6 +31,8 @@ type Request struct {
 	MaxStops          int     // -1 = no limit
 	MaxPrice          float64 // 0 = no limit (USD)
 	PreferredAlliance string  // "Star Alliance", "OneWorld", "SkyTeam", or "" for no filter
+	DepartureAfter    string  // time-of-day "HH:MM" e.g. "06:00" — only keep flights departing at/after this
+	DepartureBefore   string  // time-of-day "HH:MM" e.g. "22:00" — only keep flights departing at/before this
 	MaxResults        int
 	Context           string // User's natural language context/preferences
 }

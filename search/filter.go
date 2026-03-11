@@ -1,6 +1,7 @@
 package search
 
 import (
+	"fmt"
 	"time"
 
 	"booker/types"
@@ -194,6 +195,51 @@ func FilterByAlliance(flights []types.Flight, alliance string) []types.Flight {
 		}
 	}
 	return filtered
+}
+
+// FilterByDepartureTime keeps only flights whose first outbound segment departs
+// within the given time-of-day range [after, before]. Both are "HH:MM" strings.
+// Empty strings mean no constraint on that end. Invalid formats return all flights.
+func FilterByDepartureTime(flights []types.Flight, after, before string) []types.Flight {
+	if after == "" && before == "" {
+		return flights
+	}
+	afterMin, afterOK := parseHHMM(after)
+	beforeMin, beforeOK := parseHHMM(before)
+	if (after != "" && !afterOK) || (before != "" && !beforeOK) {
+		return flights
+	}
+	filtered := make([]types.Flight, 0, len(flights))
+	for _, f := range flights {
+		if len(f.Outbound) == 0 {
+			continue
+		}
+		dep := f.Outbound[0].DepartureTime
+		depMin := dep.Hour()*60 + dep.Minute()
+		if afterOK && depMin < afterMin {
+			continue
+		}
+		if beforeOK && depMin > beforeMin {
+			continue
+		}
+		filtered = append(filtered, f)
+	}
+	return filtered
+}
+
+// parseHHMM parses "HH:MM" into minutes-since-midnight.
+func parseHHMM(s string) (int, bool) {
+	if s == "" {
+		return 0, false
+	}
+	var h, m int
+	if _, err := fmt.Sscanf(s, "%d:%d", &h, &m); err != nil {
+		return 0, false
+	}
+	if h < 0 || h > 23 || m < 0 || m > 59 {
+		return 0, false
+	}
+	return h*60 + m, true
 }
 
 // FilterZeroPrices removes flights with a $0 price — these are data artifacts

@@ -31,6 +31,48 @@ func TestNearbyAirports_SingleAirportMetro(t *testing.T) {
 	}
 }
 
+func TestNearbyAirports_NewClusters(t *testing.T) {
+	tests := []struct {
+		code string
+		want []string
+	}{
+		{"BKK", []string{"DMK"}},
+		{"DMK", []string{"BKK"}},
+		{"IST", []string{"SAW"}},
+		{"SAW", []string{"IST"}},
+		{"PEK", []string{"PKX"}},
+		{"PKX", []string{"PEK"}},
+		{"KIX", []string{"ITM"}},
+		{"ITM", []string{"KIX"}},
+		{"FCO", []string{"CIA"}},
+		{"CIA", []string{"FCO"}},
+		{"TPE", []string{"TSA"}},
+		{"TSA", []string{"TPE"}},
+		{"MIA", []string{"FLL"}},
+		{"FLL", []string{"MIA"}},
+		{"GRU", []string{"CGH", "VCP"}},
+		{"CGH", []string{"GRU", "VCP"}},
+		{"VCP", []string{"CGH", "GRU"}},
+	}
+	for _, tt := range tests {
+		got := NearbyAirports(tt.code)
+		sort.Strings(got)
+		want := make([]string, len(tt.want))
+		copy(want, tt.want)
+		sort.Strings(want)
+		if len(got) != len(want) {
+			t.Errorf("NearbyAirports(%q) = %v, want %v", tt.code, got, want)
+			continue
+		}
+		for i := range got {
+			if got[i] != want[i] {
+				t.Errorf("NearbyAirports(%q) = %v, want %v", tt.code, got, want)
+				break
+			}
+		}
+	}
+}
+
 func TestNearbyAirports_AllClusters(t *testing.T) {
 	for metro, codes := range airportClusters {
 		for _, code := range codes {

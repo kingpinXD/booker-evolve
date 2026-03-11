@@ -18,6 +18,14 @@ var airportClusters = map[string][]string{
 	"Milan":         {"MXP", "LIN"},
 	"Houston":       {"IAH", "HOU"},
 	"Dallas":        {"DFW", "DAL"},
+	"Bangkok":       {"BKK", "DMK"},
+	"Istanbul":      {"IST", "SAW"},
+	"Beijing":       {"PEK", "PKX"},
+	"Osaka":         {"KIX", "ITM"},
+	"Rome":          {"FCO", "CIA"},
+	"Taipei":        {"TPE", "TSA"},
+	"Miami":         {"MIA", "FLL"},
+	"Sao Paulo":     {"GRU", "CGH", "VCP"},
 }
 
 // codeToCluster is a reverse index from IATA code to its cluster slice,
@@ -25,7 +33,7 @@ var airportClusters = map[string][]string{
 var codeToCluster map[string][]string
 
 func init() {
-	codeToCluster = make(map[string][]string, 40)
+	codeToCluster = make(map[string][]string, 60)
 	for _, codes := range airportClusters {
 		for _, c := range codes {
 			codeToCluster[c] = codes

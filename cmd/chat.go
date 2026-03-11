@@ -452,6 +452,35 @@ func filterSuggestion(p tripParams) string {
 		". Try relaxing some of these constraints."
 }
 
+// zeroResultsSuggestion returns proactive suggestions when a search returns no
+// results, including nearby airports and flex-date advice.
+func zeroResultsSuggestion(params tripParams) string {
+	var parts []string
+
+	// Nearby airport suggestions.
+	originNearby := search.NearbyAirports(params.Origin)
+	destNearby := search.NearbyAirports(params.Destination)
+	if len(originNearby) > 0 {
+		parts = append(parts, fmt.Sprintf("origin %s also has %s", params.Origin, strings.Join(originNearby, ", ")))
+	}
+	if len(destNearby) > 0 {
+		parts = append(parts, fmt.Sprintf("destination %s also has %s", params.Destination, strings.Join(destNearby, ", ")))
+	}
+
+	// Flex-date advice.
+	switch {
+	case params.FlexDays > 0:
+		parts = append(parts, fmt.Sprintf("flex_days is already set to %d", params.FlexDays))
+	default:
+		parts = append(parts, "consider setting flex_days to 2-3 to search nearby dates")
+	}
+
+	if len(parts) == 0 {
+		return ""
+	}
+	return "Try nearby airports: " + strings.Join(parts, ". ") + "."
+}
+
 // truncateHistory keeps the first system message and the most recent maxRecent
 // non-system messages, dropping older messages to prevent token overflow.
 func truncateHistory(history []llm.Message, maxRecent int) []llm.Message {
@@ -558,6 +587,9 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		if len(results) == 0 {
 			_, _ = fmt.Fprintln(out, "No flights found. Try different dates or airports.")
 			if hint := filterSuggestion(params); hint != "" {
+				_, _ = fmt.Fprintln(out, hint)
+			}
+			if hint := zeroResultsSuggestion(params); hint != "" {
 				_, _ = fmt.Fprintln(out, hint)
 			}
 			continue

@@ -491,6 +491,9 @@ Added reverse direction lookup to StopoversForRoute: when origin->dest not found
 ### Session 41, Task 2 -- Add India-US West Coast stopovers (DEL/BOM to SFO)
 Added DELToSFOStopovers (6 cities: NRT, ICN, HKG, BKK, SIN, IST) and BOMToSFOStopovers (5 cities: NRT, HKG, BKK, SIN, IST). Primary corridor via East Asia Pacific routing. Total route-specific corridors: 9 (was 7). 2 new tests.
 
+### Session 41, Task 5 -- Zero-results proactive suggestions in chat
+Added zeroResultsSuggestion function: when search returns no results, suggests nearby airports for origin/dest (via NearbyAirports) and flex-date advice (suggest flex_days if not set, note if active). Wired into chatLoop zero-results block. 5 new tests including chatLoop integration test. Implemented in parallel worktree.
+
 ### Session 41, Task 4 -- Refactor ranker sort and extract applyScores
 Replaced O(n^2) selection sort in applySortByScore with sort.Slice (idiomatic Go). Extracted duplicate score-application loop from Rank() into applyScores helper. 2 new tests. Implemented in parallel worktree; gofmt fix needed after merge (expected per LEARNINGS).
 

@@ -1578,3 +1578,75 @@ func TestFilterSuggestion_NoFilters(t *testing.T) {
 		t.Errorf("filterSuggestion() = %q, want empty for no active filters", got)
 	}
 }
+
+// --- zeroResultsSuggestion ---
+
+func TestZeroResultsSuggestion_NearbyAirports(t *testing.T) {
+	// YYZ has nearby YTZ.
+	got := zeroResultsSuggestion(tripParams{Origin: "YYZ", Destination: "DEL"})
+	if !strings.Contains(got, "YTZ") {
+		t.Errorf("expected YTZ in suggestion, got: %s", got)
+	}
+	if !strings.Contains(got, "origin YYZ") {
+		t.Errorf("expected 'origin YYZ' label, got: %s", got)
+	}
+}
+
+func TestZeroResultsSuggestion_FlexDaysZero(t *testing.T) {
+	// FlexDays==0: should suggest setting flex_days.
+	got := zeroResultsSuggestion(tripParams{Origin: "DEL", Destination: "BOM"})
+	if !strings.Contains(got, "flex_days") {
+		t.Errorf("expected flex_days suggestion when FlexDays==0, got: %s", got)
+	}
+}
+
+func TestZeroResultsSuggestion_FlexDaysActive(t *testing.T) {
+	// FlexDays>0 and no nearby airports: should note flex is already active.
+	got := zeroResultsSuggestion(tripParams{Origin: "DEL", Destination: "BOM", FlexDays: 3})
+	if !strings.Contains(got, "already set to 3") {
+		t.Errorf("expected 'already set to 3' when FlexDays=3, got: %s", got)
+	}
+}
+
+func TestZeroResultsSuggestion_BothNearbyAndFlexDays(t *testing.T) {
+	// JFK has nearby airports + FlexDays==0.
+	got := zeroResultsSuggestion(tripParams{Origin: "JFK", Destination: "LHR"})
+	if !strings.Contains(got, "EWR") {
+		t.Errorf("expected EWR in suggestion, got: %s", got)
+	}
+	if !strings.Contains(got, "LGW") {
+		t.Errorf("expected LGW in suggestion, got: %s", got)
+	}
+	if !strings.Contains(got, "flex_days") {
+		t.Errorf("expected flex_days suggestion, got: %s", got)
+	}
+}
+
+func TestChatLoop_ZeroResultsShowsSuggestion(t *testing.T) {
+	responses := []string{
+		`{"origin":"YYZ","destination":"DEL","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	// Empty results triggers the zero-results block.
+	fakeStrat := &fakeSearchStrategy{results: nil}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	// YYZ has nearby YTZ -- should appear in output.
+	if !strings.Contains(output, "YTZ") {
+		t.Errorf("expected nearby airport YTZ in zero-results output, got:\n%s", output)
+	}
+	// Should suggest flex_days since default is 0.
+	if !strings.Contains(output, "flex_days") {
+		t.Errorf("expected flex_days suggestion in zero-results output, got:\n%s", output)
+	}
+}

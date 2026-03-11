@@ -118,3 +118,6 @@ Completed all 5 tasks in 5 commits with zero reverts and zero API calls. (1) Fix
 
 ### Day 20, Task 1 -- Chat param merging for follow-up searches
 Added mergeParams and parsePartialParams to enable chat refinement loop. chatLoop now stores lastParams after each search; when the LLM emits partial JSON (e.g. just cabin change), it merges with previous params and re-searches. Updated refinementHint to instruct the LLM to re-emit only changed fields. 3 new test functions (mergeParams table-driven, parsePartialParams, chatLoop follow-up integration).
+
+### Day 20, Task 2 -- Dynamic ranking profile from conversation
+Added profileWeights function reusing existing profiles map. Added Profile field to tripParams, --profile flag to chatCmd, profile mention in system prompt and refinement hint. runChat now uses the flag-specified profile instead of hardcoded WeightsBudget. 1 new test function (5 subtests for all profiles + unknown default).

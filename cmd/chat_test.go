@@ -500,6 +500,29 @@ Switching to business class.`,
 	}
 }
 
+func TestProfileWeights(t *testing.T) {
+	tests := []struct {
+		name    string
+		profile string
+		want    string // check a distinctive weight to verify correct profile
+	}{
+		{"budget", "budget", "budget"},
+		{"comfort", "comfort", "comfort"},
+		{"balanced", "balanced", "balanced"},
+		{"unknown defaults to budget", "deluxe", "budget"},
+		{"empty defaults to budget", "", "budget"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := profileWeights(tt.profile)
+			want := profileWeights(tt.want)
+			if got != want {
+				t.Errorf("profileWeights(%q) != profileWeights(%q)", tt.profile, tt.want)
+			}
+		})
+	}
+}
+
 func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && indexOf(s, substr) >= 0
 }

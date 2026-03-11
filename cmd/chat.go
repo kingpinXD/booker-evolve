@@ -32,6 +32,7 @@ func init() {
 	f := chatCmd.Flags()
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
 	f.String(keyFormat, "table", "output format: table or json")
+	f.String(keyProfile, "budget", "ranking profile: budget, comfort, or balanced")
 	f.BoolP(keyVerbose, "v", false, "show debug output")
 	_ = viper.BindPFlags(f)
 }
@@ -45,6 +46,7 @@ type tripParams struct {
 	Passengers    int     `json:"passengers,omitempty"`
 	Cabin         string  `json:"cabin,omitempty"`
 	MaxPrice      float64 `json:"max_price,omitempty"`
+	Profile       string  `json:"profile,omitempty"`
 	Context       string  `json:"context,omitempty"`
 }
 
@@ -62,6 +64,7 @@ Optional:
 - passengers: number of travelers (default: 1)
 - cabin: economy, premium_economy, business, or first (default: economy)
 - max_price: maximum budget per flight in USD (e.g. 1200)
+- profile: ranking profile — "budget" (cheapest), "comfort" (best schedule/airline), or "balanced" (default: budget)
 - context: any preferences like "cheapest option" or "prefer direct flights"
 
 Ask clarifying questions to gather missing information. Be conversational but concise.
@@ -190,6 +193,9 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if merged.MaxPrice == 0 {
 		merged.MaxPrice = prev.MaxPrice
 	}
+	if merged.Profile == "" {
+		merged.Profile = prev.Profile
+	}
 	if merged.Context == "" {
 		merged.Context = prev.Context
 	}
@@ -218,11 +224,20 @@ func parsePartialParams(response string) (tripParams, bool) {
 		// At least one field must be set.
 		if p.Origin != "" || p.Destination != "" || p.DepartureDate != "" ||
 			p.ReturnDate != "" || p.Passengers != 0 || p.Cabin != "" ||
-			p.MaxPrice != 0 || p.Context != "" {
+			p.MaxPrice != 0 || p.Profile != "" || p.Context != "" {
 			return p, true
 		}
 	}
 	return tripParams{}, false
+}
+
+// profileWeights maps a profile name to the corresponding ranking weights.
+// Unknown or empty profiles default to budget.
+func profileWeights(name string) multicity.RankingWeights {
+	if w, ok := profiles[name]; ok {
+		return w
+	}
+	return multicity.WeightsBudget
 }
 
 // refinementHint returns a system message listing available refinement levers.
@@ -231,7 +246,8 @@ func refinementHint() string {
 	return "The user can refine their search. Available options: " +
 		"try different dates, search nearby airports for cheaper fares, " +
 		"change cabin class (economy/business/first), filter to direct flights only, " +
-		"adjust number of passengers, or add a return date for round-trip pricing. " +
+		"adjust number of passengers, add a return date for round-trip pricing, " +
+		"or change ranking profile (budget/comfort/balanced). " +
 		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }
@@ -241,7 +257,8 @@ func runChat(cmd *cobra.Command, _ []string) error {
 		log.SetOutput(io.Discard)
 	}
 
-	picker, llmClient, _, err := buildPicker(multicity.WeightsBudget, "")
+	weights := profileWeights(viper.GetString(keyProfile))
+	picker, llmClient, _, err := buildPicker(weights, "")
 	if err != nil {
 		return err
 	}

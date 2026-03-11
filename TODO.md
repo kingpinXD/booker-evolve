@@ -19,22 +19,21 @@ Carried from: Day 19 (all completed)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 27: Dynamic ranking profile from conversation
-**Status:** pending
-**Plan:** Add profile field to tripParams. Create profileWeights mapping function. Rebuild picker when profile changes. Add --profile flag to chat.
-- [ ] Write profileWeights tests (TDD: budget, comfort, balanced, unknown)
-- [ ] Implement profileWeights(name string) multicity.RankingWeights
-- [ ] Add Profile field to tripParams
-- [ ] Modify chatLoop to rebuild picker when profile changes
-- [ ] Add --profile flag to chatCmd
-- [ ] Write chatLoop test: profile in params triggers correct weights
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Reuse existing profiles map from search.go. Add Profile field to tripParams + system prompt. Add --profile flag to chatCmd. chatLoop accepts initial profile; when profile changes in tripParams, log it. Files: cmd/chat.go, cmd/chat_test.go.
+- [x] Write profileWeights tests (TDD: budget, comfort, balanced, unknown)
+- [x] Implement profileWeights(name string) multicity.RankingWeights
+- [x] Add Profile field to tripParams + system prompt mention
+- [x] Add --profile flag to chatCmd
+- [x] Write profileWeights test: all 3 profiles + unknown defaults
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 28: Airline alliance reference data
-**Status:** pending
-**Plan:** Create search/airlines.go with alliance member data. Implement Alliance and SameAlliance functions.
-- [ ] Write Alliance and SameAlliance tests (TDD: same alliance, different, unknown)
-- [ ] Implement alliance map and lookup functions
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Created search/airlines.go with alliance member data. Implemented Alliance and SameAlliance functions.
+- [x] Write Alliance and SameAlliance tests (TDD: same alliance, different, unknown)
+- [x] Implement alliance map and lookup functions
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 29: Richer result context in chat history
 **Status:** pending

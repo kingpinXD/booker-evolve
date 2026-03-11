@@ -408,6 +408,58 @@ func TestParseMultiCityResult_InvalidLeg2(t *testing.T) {
 	}
 }
 
+func TestParseFlightGroup_CarbonEmissions(t *testing.T) {
+	g := FlightGroup{
+		Flights: []FlightSegment{{
+			DepartureAirport: Airport{ID: "DEL", Time: "2026-03-24 03:30"},
+			ArrivalAirport:   Airport{ID: "YYZ", Time: "2026-03-24 19:30"},
+			Duration:         960,
+			Airline:          "Air Canada",
+			FlightNumber:     "AC 42",
+			TravelClass:      "Economy",
+		}},
+		TotalDuration: 960,
+		Price:         850,
+		BookingToken:  "token_co2",
+		CarbonEmissions: CarbonEmissions{
+			ThisFlight:          1106000,
+			TypicalForThisRoute: 949000,
+			DifferencePercent:   17,
+		},
+	}
+
+	f, err := parseFlightGroup(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.CarbonKg != 1106 {
+		t.Errorf("CarbonKg = %d, want 1106", f.CarbonKg)
+	}
+}
+
+func TestParseFlightGroup_CarbonEmissions_Zero(t *testing.T) {
+	g := FlightGroup{
+		Flights: []FlightSegment{{
+			DepartureAirport: Airport{ID: "DEL", Time: "2026-03-24 03:30"},
+			ArrivalAirport:   Airport{ID: "HKG", Time: "2026-03-24 11:30"},
+			Duration:         480,
+			Airline:          "IndiGo",
+			FlightNumber:     "6E 1234",
+			TravelClass:      "Economy",
+		}},
+		TotalDuration: 480,
+		Price:         350,
+	}
+
+	f, err := parseFlightGroup(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.CarbonKg != 0 {
+		t.Errorf("CarbonKg = %d, want 0 for missing emissions", f.CarbonKg)
+	}
+}
+
 func TestParsePriceInsights(t *testing.T) {
 	resp := &Response{
 		PriceInsights: PriceInsights{

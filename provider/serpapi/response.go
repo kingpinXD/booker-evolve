@@ -10,13 +10,21 @@ type Response struct {
 
 // FlightGroup is a single itinerary (one or more segments + layovers).
 type FlightGroup struct {
-	Flights        []FlightSegment `json:"flights"`
-	Layovers       []Layover       `json:"layovers"`
-	TotalDuration  int             `json:"total_duration"` // minutes
-	Price          int             `json:"price"`
-	Type           string          `json:"type"`
-	BookingToken   string          `json:"booking_token"`
-	DepartureToken string          `json:"departure_token"` // multi-city step 1
+	Flights         []FlightSegment `json:"flights"`
+	Layovers        []Layover       `json:"layovers"`
+	TotalDuration   int             `json:"total_duration"` // minutes
+	Price           int             `json:"price"`
+	Type            string          `json:"type"`
+	BookingToken    string          `json:"booking_token"`
+	DepartureToken  string          `json:"departure_token"` // multi-city step 1
+	CarbonEmissions CarbonEmissions `json:"carbon_emissions"`
+}
+
+// CarbonEmissions holds CO2 data for a flight group.
+type CarbonEmissions struct {
+	ThisFlight          int `json:"this_flight"`            // grams CO2
+	TypicalForThisRoute int `json:"typical_for_this_route"` // grams CO2
+	DifferencePercent   int `json:"difference_percent"`     // vs typical
 }
 
 // MultiCityResult pairs leg1 and leg2 flight groups with the combined price.

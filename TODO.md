@@ -17,20 +17,20 @@
 - [x] Run full verification
 
 ## Task 157: Add India-Seoul stopover corridor
-**Status:** pending
+**Status:** done
 **Plan:** Add DELToICNStopovers and BOMToICNStopovers variables with East/Southeast Asian cities (BKK, SIN, HKG, TPE, KUL). Register in stopoversMap. Verify TestStopoverDataConsistency.
-- [ ] Add DELToICNStopovers variable
-- [ ] Add BOMToICNStopovers variable
-- [ ] Register both in stopoversMap
-- [ ] Run tests
+- [x] Add DELToICNStopovers variable
+- [x] Add BOMToICNStopovers variable
+- [x] Register both in stopoversMap
+- [x] Run tests
 
 ## Task 158: Add India-Hong Kong stopover corridor
-**Status:** pending
+**Status:** done
 **Plan:** Add DELToHKGStopovers and BOMToHKGStopovers variables with Southeast Asian cities (BKK, SIN, KUL, CCU/CMB, TPE). Register in stopoversMap. Verify TestStopoverDataConsistency.
-- [ ] Add DELToHKGStopovers variable
-- [ ] Add BOMToHKGStopovers variable
-- [ ] Register both in stopoversMap
-- [ ] Run tests
+- [x] Add DELToHKGStopovers variable
+- [x] Add BOMToHKGStopovers variable
+- [x] Register both in stopoversMap
+- [x] Run tests
 
 ## Task 159: Extract displayChatResults helper from chatLoop
 **Status:** pending

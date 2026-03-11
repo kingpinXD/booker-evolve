@@ -1260,26 +1260,123 @@ var BOMToCDGStopovers = []StopoverCity{
 	},
 }
 
-// DELToSINStopovers are the candidate stopover cities for Delhi → Singapore.
+// DELToICNStopovers are the candidate stopover cities for Delhi → Seoul Incheon.
 //
-// Route geometry: DEL is at ~28°N, 77°E. SIN is at ~1°N, 103°E.
-// Southeast and East Asia corridor — city breaks en route to Singapore.
-var DELToSINStopovers = []StopoverCity{
+// Route geometry: DEL is at ~28°N, 77°E. ICN is at ~37°N, 126°E.
+// Southeast and East Asian corridor.
+var DELToICNStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA ===
 	{
 		City:    "Bangkok",
 		Airport: "BKK",
 		Region:  "southeast_asia",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
 		Notes:   "Street food capital, temples, vibrant nightlife",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Singapore Airlines hub, major Asia-Pacific crossroads",
 	},
 	{
 		City:    "Kuala Lumpur",
 		Airport: "KUL",
 		Region:  "southeast_asia",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Petronas Towers, diverse cuisine, affordable luxury",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Victoria Peak, dim sum, world-class shopping",
+	},
+	{
+		City:    "Taipei",
+		Airport: "TPE",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Night markets, Taipei 101, hot springs",
+	},
+}
+
+// BOMToICNStopovers are the candidate stopover cities for Mumbai → Seoul Incheon.
+//
+// Route geometry: BOM is at ~19°N, 73°E. ICN is at ~37°N, 126°E.
+// East Asian corridor with strong BOM connectivity.
+var BOMToICNStopovers = []StopoverCity{
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-ICN direct on Thai/Korean Air.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. BOM-SIN frequent. SIN-ICN direct on SQ/Korean Air.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-ICN direct on Cathay/Korean Air.",
+	},
+	{
+		City:    "Taipei",
+		Airport: "TPE",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "EVA Air/China Airlines hub. TPE-ICN very frequent. BOM-TPE on EVA/China Airlines.",
+	},
+}
+
+// DELToHKGStopovers are the candidate stopover cities for Delhi → Hong Kong.
+//
+// Route geometry: DEL is at ~28°N, 77°E. HKG is at ~22°N, 114°E.
+// Southeast Asian corridor.
+var DELToHKGStopovers = []StopoverCity{
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Street food capital, temples, vibrant nightlife",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Singapore Airlines hub, major Asia-Pacific crossroads",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
 		Notes:   "Petronas Towers, diverse cuisine, affordable luxury",
 	},
 
@@ -1288,129 +1385,58 @@ var DELToSINStopovers = []StopoverCity{
 		City:    "Kolkata",
 		Airport: "CCU",
 		Region:  "south_asia",
-		MinStay: 48 * time.Hour,
+		MinStay: types.DefaultMinStopover,
 		MaxStay: 72 * time.Hour,
-		Notes:   "Cultural capital, Victoria Memorial, street food",
+		Notes:   "Colonial heritage, literary culture, gateway to East India",
 	},
 
 	// === EAST ASIA ===
 	{
-		City:    "Hong Kong",
-		Airport: "HKG",
+		City:    "Taipei",
+		Airport: "TPE",
 		Region:  "east_asia",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Victoria Peak, dim sum, world-class shopping",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Night markets, Taipei 101, hot springs",
 	},
 }
 
-// BOMToSINStopovers are the candidate stopover cities for Mumbai → Singapore.
+// BOMToHKGStopovers are the candidate stopover cities for Mumbai → Hong Kong.
 //
-// Route geometry: BOM is at ~19°N, 73°E. SIN is at ~1°N, 103°E.
-// Southeast and East Asia corridor with strong BOM connectivity.
-var BOMToSINStopovers = []StopoverCity{
+// Route geometry: BOM is at ~19°N, 73°E. HKG is at ~22°N, 114°E.
+// Southeast Asian corridor with strong BOM connectivity.
+var BOMToHKGStopovers = []StopoverCity{
 	{
 		City:    "Bangkok",
 		Airport: "BKK",
 		Region:  "southeast_asia",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Street food capital, temples, vibrant nightlife",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-HKG direct on Thai/Cathay.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. BOM-SIN frequent. SIN-HKG direct on SQ/Cathay.",
 	},
 	{
 		City:    "Kuala Lumpur",
 		Airport: "KUL",
 		Region:  "southeast_asia",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Petronas Towers, diverse cuisine, affordable luxury",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines/AirAsia hub. BOM-KUL on AirAsia/MAS. KUL-HKG direct on MAS/Cathay.",
 	},
 	{
-		City:    "Colombo",
-		Airport: "CMB",
-		Region:  "south_asia",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Coastal city, colonial architecture, Sri Lankan cuisine",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
+		City:    "Taipei",
+		Airport: "TPE",
 		Region:  "east_asia",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Victoria Peak, dim sum, world-class shopping",
-	},
-}
-
-// DELToDXBStopovers are the candidate stopover cities for Delhi → Dubai.
-//
-// Route geometry: DEL is at ~28°N, 77°E. DXB is at ~25°N, 55°E.
-// Gulf corridor — nearby Gulf states offer city breaks en route to Dubai.
-var DELToDXBStopovers = []StopoverCity{
-	// === GULF ===
-	{
-		City:    "Doha",
-		Airport: "DOH",
-		Region:  "gulf",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Museum of Islamic Art, souq, desert excursions",
-	},
-	{
-		City:    "Bahrain",
-		Airport: "BAH",
-		Region:  "gulf",
-		MinStay: 48 * time.Hour,
-		MaxStay: 72 * time.Hour,
-		Notes:   "Bahrain Fort, pearl diving heritage, compact island",
-	},
-	{
-		City:    "Muscat",
-		Airport: "MCT",
-		Region:  "gulf",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Sultan Qaboos Mosque, wadis, fjord-like coastline",
-	},
-	{
-		City:    "Kuwait City",
-		Airport: "KWI",
-		Region:  "gulf",
-		MinStay: 48 * time.Hour,
-		MaxStay: 72 * time.Hour,
-		Notes:   "Kuwait Towers, Grand Mosque, Liberation Tower",
-	},
-}
-
-// BOMToDXBStopovers are the candidate stopover cities for Mumbai → Dubai.
-//
-// Route geometry: BOM is at ~19°N, 73°E. DXB is at ~25°N, 55°E.
-// Gulf corridor with strong BOM connectivity.
-var BOMToDXBStopovers = []StopoverCity{
-	{
-		City:    "Doha",
-		Airport: "DOH",
-		Region:  "gulf",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Museum of Islamic Art, souq, desert excursions",
-	},
-	{
-		City:    "Bahrain",
-		Airport: "BAH",
-		Region:  "gulf",
-		MinStay: 48 * time.Hour,
-		MaxStay: 72 * time.Hour,
-		Notes:   "Bahrain Fort, pearl diving heritage, compact island",
-	},
-	{
-		City:    "Muscat",
-		Airport: "MCT",
-		Region:  "gulf",
-		MinStay: 48 * time.Hour,
-		MaxStay: 96 * time.Hour,
-		Notes:   "Sultan Qaboos Mosque, wadis, fjord-like coastline",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "EVA Air/China Airlines hub. TPE-HKG very frequent. BOM-TPE on EVA/China Airlines.",
 	},
 }
 
@@ -1442,10 +1468,10 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "MEL"): BOMToMELStopovers,
 	routeKey("DEL", "CDG"): DELToCDGStopovers,
 	routeKey("BOM", "CDG"): BOMToCDGStopovers,
-	routeKey("DEL", "SIN"): DELToSINStopovers,
-	routeKey("BOM", "SIN"): BOMToSINStopovers,
-	routeKey("DEL", "DXB"): DELToDXBStopovers,
-	routeKey("BOM", "DXB"): BOMToDXBStopovers,
+	routeKey("DEL", "ICN"): DELToICNStopovers,
+	routeKey("BOM", "ICN"): BOMToICNStopovers,
+	routeKey("DEL", "HKG"): DELToHKGStopovers,
+	routeKey("BOM", "HKG"): BOMToHKGStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

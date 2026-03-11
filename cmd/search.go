@@ -499,20 +499,20 @@ func formatDuration(d time.Duration) string {
 
 // jsonLeg is the JSON representation of a single flight leg.
 type jsonLeg struct {
-	Airlines   string `json:"airlines"`
-	CabinClass string `json:"cabin_class,omitempty"`
-	Origin     string `json:"origin"`
-	Dest       string `json:"destination"`
-	Departure  string `json:"departure"`
-	Arrival    string `json:"arrival,omitempty"`
-	Duration   string `json:"duration"`
-	Stops      int    `json:"stops"`
+	Airlines        string `json:"airlines"`
+	CabinClass      string `json:"cabin_class,omitempty"`
+	Origin          string `json:"origin"`
+	Dest            string `json:"destination"`
+	Departure       string `json:"departure"`
+	Arrival         string `json:"arrival,omitempty"`
+	Duration        string `json:"duration"`
+	Stops           int    `json:"stops"`
 	CarbonKg        int    `json:"carbon_kg,omitempty"`
 	TypicalCarbonKg int    `json:"typical_carbon_kg,omitempty"`
 	CarbonDiffPct   int    `json:"carbon_diff_percent,omitempty"`
 	BookingURL      string `json:"booking_url,omitempty"`
-	Aircraft   string `json:"aircraft,omitempty"`
-	Legroom    string `json:"legroom,omitempty"`
+	Aircraft        string `json:"aircraft,omitempty"`
+	Legroom         string `json:"legroom,omitempty"`
 }
 
 // jsonItinerary is the JSON representation of a search result.
@@ -585,20 +585,20 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				arr = segs[len(segs)-1].ArrivalTime.Format(time.RFC3339)
 			}
 			legs = append(legs, jsonLeg{
-				Airlines:   legAirlines(itin, idx),
-				CabinClass: legCabin(itin, idx),
-				Origin:     origin,
-				Dest:       dest,
-				Departure:  dep,
-				Arrival:    arr,
-				Duration:   formatDuration(leg.Flight.TotalDuration),
-				Stops:      leg.Flight.Stops(),
+				Airlines:        legAirlines(itin, idx),
+				CabinClass:      legCabin(itin, idx),
+				Origin:          origin,
+				Dest:            dest,
+				Departure:       dep,
+				Arrival:         arr,
+				Duration:        formatDuration(leg.Flight.TotalDuration),
+				Stops:           leg.Flight.Stops(),
 				CarbonKg:        leg.Flight.CarbonKg,
 				TypicalCarbonKg: leg.Flight.TypicalCarbonKg,
 				CarbonDiffPct:   leg.Flight.CarbonDiffPct,
 				BookingURL:      leg.Flight.BookingURL,
-				Aircraft:   legAircraft(itin, idx),
-				Legroom:    legLegroom(itin, idx),
+				Aircraft:        legAircraft(itin, idx),
+				Legroom:         legLegroom(itin, idx),
 			})
 		}
 

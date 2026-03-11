@@ -58,17 +58,17 @@ func (r SearchRequest) IsRoundTrip() bool {
 // Flight is a single itinerary option returned by a provider.
 // All providers normalize their API responses into this shape.
 type Flight struct {
-	Provider      config.ProviderName
-	Price         Money
-	Outbound      []Segment // outbound leg segments
-	Return        []Segment // return leg segments (empty for one-way)
-	TotalDuration time.Duration
-	BookingURL    string
-	CarbonKg         int // CO2 emissions in kg; 0 means unknown
-	TypicalCarbonKg  int // typical CO2 for this route in kg; 0 means unknown
-	CarbonDiffPct    int // difference vs typical in percent; 0 means unknown
-	SeatsLeft        int // 0 means unknown
-	BagsIncluded  BagsIncluded
+	Provider        config.ProviderName
+	Price           Money
+	Outbound        []Segment // outbound leg segments
+	Return          []Segment // return leg segments (empty for one-way)
+	TotalDuration   time.Duration
+	BookingURL      string
+	CarbonKg        int // CO2 emissions in kg; 0 means unknown
+	TypicalCarbonKg int // typical CO2 for this route in kg; 0 means unknown
+	CarbonDiffPct   int // difference vs typical in percent; 0 means unknown
+	SeatsLeft       int // 0 means unknown
+	BagsIncluded    BagsIncluded
 }
 
 // Stops returns the number of connections on the outbound leg.

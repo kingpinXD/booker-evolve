@@ -203,7 +203,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 		converted, _ := currency.Convert(itin.TotalPrice, cur)
 		dur := formatDuration(itin.TotalTravel)
 
-		stops := itineraryStops(itin)
+		stops := formatStops(itin)
 		if multiLeg {
 			t.AppendRow(table.Row{
 				i + 1,
@@ -349,6 +349,26 @@ func itineraryStops(itin search.Itinerary) int {
 		n += leg.Flight.Stops()
 	}
 	return n
+}
+
+// formatStops returns a display string for total stops across all legs.
+// If stops > 0 and layover data is available, it includes total layover time
+// (e.g. "1 (2h 30m)"). Otherwise returns just the count (e.g. "0" or "1").
+func formatStops(itin search.Itinerary) string {
+	stops := itineraryStops(itin)
+	if stops == 0 {
+		return "0"
+	}
+	var totalLayover time.Duration
+	for _, leg := range itin.Legs {
+		for _, seg := range leg.Flight.Outbound {
+			totalLayover += seg.LayoverDuration
+		}
+	}
+	if totalLayover == 0 {
+		return fmt.Sprintf("%d", stops)
+	}
+	return fmt.Sprintf("%d (%s)", stops, formatDuration(totalLayover))
 }
 
 func currencySymbol(cur string) string {

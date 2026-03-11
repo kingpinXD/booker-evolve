@@ -511,6 +511,55 @@ func TestPrintTable_StopsColumn(t *testing.T) {
 	}
 }
 
+// --- formatStops ---
+
+func TestFormatStops_Direct(t *testing.T) {
+	// 0 stops, no layover
+	itin := makeItin(makeLeg("AC", "DEL", "YYZ", basetime, 14*time.Hour, 800, nil))
+	got := formatStops(itin)
+	if got != "0" {
+		t.Errorf("formatStops = %q, want %q", got, "0")
+	}
+}
+
+func TestFormatStops_WithLayover(t *testing.T) {
+	// 1 stop with 2h30m layover
+	leg := search.Leg{
+		Flight: types.Flight{
+			Outbound: []types.Segment{
+				{Airline: "LH", Origin: "DEL", Destination: "FRA", DepartureTime: basetime, ArrivalTime: basetime.Add(8 * time.Hour), LayoverDuration: 2*time.Hour + 30*time.Minute},
+				{Airline: "LH", Origin: "FRA", Destination: "YYZ", DepartureTime: basetime.Add(10*time.Hour + 30*time.Minute), ArrivalTime: basetime.Add(20 * time.Hour)},
+			},
+			TotalDuration: 20 * time.Hour,
+			Price:         types.Money{Amount: 600, Currency: "USD"},
+		},
+	}
+	itin := makeItin(leg)
+	got := formatStops(itin)
+	if got != "1 (2h 30m)" {
+		t.Errorf("formatStops = %q, want %q", got, "1 (2h 30m)")
+	}
+}
+
+func TestFormatStops_NoLayoverData(t *testing.T) {
+	// 1 stop but LayoverDuration=0 (no data)
+	leg := search.Leg{
+		Flight: types.Flight{
+			Outbound: []types.Segment{
+				{Airline: "LH", Origin: "DEL", Destination: "FRA", DepartureTime: basetime, ArrivalTime: basetime.Add(8 * time.Hour)},
+				{Airline: "LH", Origin: "FRA", Destination: "YYZ", DepartureTime: basetime.Add(10 * time.Hour), ArrivalTime: basetime.Add(20 * time.Hour)},
+			},
+			TotalDuration: 20 * time.Hour,
+			Price:         types.Money{Amount: 600, Currency: "USD"},
+		},
+	}
+	itin := makeItin(leg)
+	got := formatStops(itin)
+	if got != "1" {
+		t.Errorf("formatStops = %q, want %q", got, "1")
+	}
+}
+
 // --- formatPriceInsights ---
 
 func TestFormatPriceInsights_WithData(t *testing.T) {

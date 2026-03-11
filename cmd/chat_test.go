@@ -1221,6 +1221,52 @@ func TestRefinementHint_AvoidAirlines(t *testing.T) {
 	}
 }
 
+func TestParsePartialParams_PreferredAirlines(t *testing.T) {
+	p, ok := parsePartialParams(`{"preferred_airlines":"AC,UA"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with preferred_airlines to parse")
+	}
+	if p.PreferredAirlines != "AC,UA" {
+		t.Errorf("PreferredAirlines = %q, want %q", p.PreferredAirlines, "AC,UA")
+	}
+}
+
+func TestMergeParams_PreferredAirlines(t *testing.T) {
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", PreferredAirlines: "AC"}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.PreferredAirlines != "AC" {
+		t.Errorf("PreferredAirlines = %q, want %q (preserved from prev)", got.PreferredAirlines, "AC")
+	}
+}
+
+func TestBuildRequestFromParams_PreferredAirlines(t *testing.T) {
+	p := tripParams{
+		Origin:            "DEL",
+		Destination:       "YYZ",
+		DepartureDate:     "2025-06-15",
+		PreferredAirlines: "AC,UA",
+	}
+	req := buildRequestFromParams(p)
+	if req.PreferredAirlines != "AC,UA" {
+		t.Errorf("PreferredAirlines = %q, want %q", req.PreferredAirlines, "AC,UA")
+	}
+}
+
+func TestChatSystemPrompt_PreferredAirlines(t *testing.T) {
+	prompt := chatSystemPrompt(time.Now())
+	if !strings.Contains(prompt, "preferred_airlines") {
+		t.Error("system prompt should mention preferred_airlines")
+	}
+}
+
+func TestRefinementHint_PreferredAirlines(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "preferred_airlines") {
+		t.Error("refinement hint should mention preferred_airlines")
+	}
+}
+
 func TestParsePartialParams_Leg2Date(t *testing.T) {
 	p, ok := parsePartialParams(`{"leg2_date":"2025-06-20"}`)
 	if !ok {

@@ -40,6 +40,7 @@ type Request struct {
 	MaxDuration       time.Duration // max total flight duration; 0 = no limit
 	SortBy            string        // "price" (default), "duration", or "departure"
 	AvoidAirlines     string        // comma-separated IATA codes to exclude (e.g. "BA,LH")
+	PreferredAirlines string        // comma-separated IATA codes to keep (e.g. "AC,UA")
 	MaxResults        int
 	Context           string // User's natural language context/preferences
 }

@@ -570,3 +570,55 @@ func TestFilterZeroPrices(t *testing.T) {
 		t.Errorf("FilterZeroPrices: kept wrong flight")
 	}
 }
+
+// --- FilterByPreferredAirlines ---
+
+func TestFilterByPreferredAirlines_EmptyKeepsAll(t *testing.T) {
+	flights := []types.Flight{
+		{Outbound: []types.Segment{{Airline: "AC"}}, Price: types.Money{Amount: 500, Currency: "USD"}},
+		{Outbound: []types.Segment{{Airline: "BA"}}, Price: types.Money{Amount: 600, Currency: "USD"}},
+	}
+	result := FilterByPreferredAirlines(flights, "")
+	if len(result) != 2 {
+		t.Fatalf("empty preferred should keep all: got %d, want 2", len(result))
+	}
+}
+
+func TestFilterByPreferredAirlines_SingleCode(t *testing.T) {
+	flights := []types.Flight{
+		{Outbound: []types.Segment{{Airline: "AC"}}, Price: types.Money{Amount: 500, Currency: "USD"}},
+		{Outbound: []types.Segment{{Airline: "BA"}}, Price: types.Money{Amount: 600, Currency: "USD"}},
+		{Outbound: []types.Segment{{Airline: "LH"}}, Price: types.Money{Amount: 700, Currency: "USD"}},
+	}
+	result := FilterByPreferredAirlines(flights, "AC")
+	if len(result) != 1 {
+		t.Fatalf("single code: got %d, want 1", len(result))
+	}
+	if result[0].Outbound[0].Airline != "AC" {
+		t.Errorf("kept wrong airline: %s", result[0].Outbound[0].Airline)
+	}
+}
+
+func TestFilterByPreferredAirlines_MultipleCodes(t *testing.T) {
+	flights := []types.Flight{
+		{Outbound: []types.Segment{{Airline: "AC"}}, Price: types.Money{Amount: 500, Currency: "USD"}},
+		{Outbound: []types.Segment{{Airline: "BA"}}, Price: types.Money{Amount: 600, Currency: "USD"}},
+		{Outbound: []types.Segment{{Airline: "LH"}}, Price: types.Money{Amount: 700, Currency: "USD"}},
+	}
+	result := FilterByPreferredAirlines(flights, "AC,LH")
+	if len(result) != 2 {
+		t.Fatalf("multiple codes: got %d, want 2", len(result))
+	}
+}
+
+func TestFilterByPreferredAirlines_OperatingCarrierMatch(t *testing.T) {
+	flights := []types.Flight{
+		{Outbound: []types.Segment{{Airline: "AC", OperatingCarrier: "UA"}}, Price: types.Money{Amount: 500, Currency: "USD"}},
+		{Outbound: []types.Segment{{Airline: "BA"}}, Price: types.Money{Amount: 600, Currency: "USD"}},
+	}
+	// Prefer UA -- should match via OperatingCarrier.
+	result := FilterByPreferredAirlines(flights, "UA")
+	if len(result) != 1 {
+		t.Fatalf("op carrier match: got %d, want 1", len(result))
+	}
+}

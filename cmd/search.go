@@ -21,25 +21,26 @@ import (
 
 // Flag/config key constants.
 const (
-	keyDate          = "date"
-	keyReturnDate    = "return-date"
-	keyLeg2Date      = "leg2-date"
-	keyPassengers    = "passengers"
-	keyCabin         = "cabin"
-	keyFlexDays      = "flex-days"
-	keyMaxStops      = "max-stops"
-	keyMaxPrice      = "max-price"
-	keyMaxResults    = "max-results"
-	keyProfile       = "profile"
-	keyCurrency      = "currency"
-	keyContext       = "context"
-	keySortBy        = "sort-by"
-	keyArrivalAfter  = "arrival-after"
-	keyArrivalBefore = "arrival-before"
-	keyMaxDuration   = "max-duration"
-	keyAvoidAirlines = "avoid-airlines"
-	keyFormat        = "format"
-	keyVerbose       = "verbose"
+	keyDate              = "date"
+	keyReturnDate        = "return-date"
+	keyLeg2Date          = "leg2-date"
+	keyPassengers        = "passengers"
+	keyCabin             = "cabin"
+	keyFlexDays          = "flex-days"
+	keyMaxStops          = "max-stops"
+	keyMaxPrice          = "max-price"
+	keyMaxResults        = "max-results"
+	keyProfile           = "profile"
+	keyCurrency          = "currency"
+	keyContext           = "context"
+	keySortBy            = "sort-by"
+	keyArrivalAfter      = "arrival-after"
+	keyArrivalBefore     = "arrival-before"
+	keyMaxDuration       = "max-duration"
+	keyAvoidAirlines     = "avoid-airlines"
+	keyPreferredAirlines = "preferred-airlines"
+	keyFormat            = "format"
+	keyVerbose           = "verbose"
 )
 
 // Default values.
@@ -89,6 +90,7 @@ func init() {
 	f.String(keyArrivalBefore, "", "latest acceptable arrival time (HH:MM)")
 	f.Duration(keyMaxDuration, 0, "max flight duration (e.g. 12h, 8h30m); 0 = no limit")
 	f.String(keyAvoidAirlines, "", "comma-separated IATA codes to exclude (e.g. BA,LH)")
+	f.String(keyPreferredAirlines, "", "comma-separated IATA codes to keep (e.g. AC,UA)")
 	f.String(keyFormat, "table", "output format: table or json")
 	f.BoolP(keyVerbose, "v", false, "show debug output from providers, cache, and LLM")
 
@@ -126,22 +128,23 @@ func runSearch(cmd *cobra.Command, args []string) error {
 
 	// Build common request.
 	req := search.Request{
-		Origin:        origin,
-		Destination:   destination,
-		DepartureDate: viper.GetString(keyDate),
-		ReturnDate:    viper.GetString(keyReturnDate),
-		Passengers:    viper.GetInt(keyPassengers),
-		CabinClass:    cabin,
-		FlexDays:      viper.GetInt(keyFlexDays),
-		MaxStops:      viper.GetInt(keyMaxStops),
-		MaxPrice:      viper.GetFloat64(keyMaxPrice),
-		ArrivalAfter:  viper.GetString(keyArrivalAfter),
-		ArrivalBefore: viper.GetString(keyArrivalBefore),
-		MaxDuration:   viper.GetDuration(keyMaxDuration),
-		SortBy:        viper.GetString(keySortBy),
-		AvoidAirlines: viper.GetString(keyAvoidAirlines),
-		MaxResults:    viper.GetInt(keyMaxResults),
-		Context:       viper.GetString(keyContext),
+		Origin:            origin,
+		Destination:       destination,
+		DepartureDate:     viper.GetString(keyDate),
+		ReturnDate:        viper.GetString(keyReturnDate),
+		Passengers:        viper.GetInt(keyPassengers),
+		CabinClass:        cabin,
+		FlexDays:          viper.GetInt(keyFlexDays),
+		MaxStops:          viper.GetInt(keyMaxStops),
+		MaxPrice:          viper.GetFloat64(keyMaxPrice),
+		ArrivalAfter:      viper.GetString(keyArrivalAfter),
+		ArrivalBefore:     viper.GetString(keyArrivalBefore),
+		MaxDuration:       viper.GetDuration(keyMaxDuration),
+		SortBy:            viper.GetString(keySortBy),
+		AvoidAirlines:     viper.GetString(keyAvoidAirlines),
+		PreferredAirlines: viper.GetString(keyPreferredAirlines),
+		MaxResults:        viper.GetInt(keyMaxResults),
+		Context:           viper.GetString(keyContext),
 	}
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), defaultTimeout)

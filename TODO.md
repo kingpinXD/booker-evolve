@@ -41,16 +41,16 @@ Carried from: Day 34 (all completed)
 - [ ] Verify existing chat tests still pass
 
 ## Task 88: Preferred airlines filter (positive filter)
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Write FilterByPreferredAirlines tests (empty keeps all, single code, multiple codes, operating carrier match)
-- [ ] Implement FilterByPreferredAirlines in filter.go
-- [ ] Add PreferredAirlines to search.Request
-- [ ] Wire into direct pipeline
-- [ ] Wire into multicity stages (FILTER + 4b)
-- [ ] Add --preferred-airlines CLI flag
-- [ ] Wire into chat tripParams (parse/merge/build/prompt/hint)
-- [ ] Write chat tests
+**Status:** done
+**Plan:** Add FilterByPreferredAirlines (keep only matching flights, checks Airline+OperatingCarrier). Wire through Request, direct, multicity, CLI, chat. Mirror FilterByAvoidAirlines pattern inverted.
+- [x] Write FilterByPreferredAirlines tests (empty keeps all, single code, multiple codes, operating carrier match)
+- [x] Implement FilterByPreferredAirlines in filter.go
+- [x] Add PreferredAirlines to search.Request
+- [x] Wire into direct pipeline
+- [x] Wire into multicity stages (FILTER + 4b)
+- [x] Add --preferred-airlines CLI flag
+- [x] Wire into chat tripParams (parse/merge/build/prompt/hint)
+- [x] Write chat tests
 
 ## Task 89: Ranker LLM response caching
 **Status:** pending

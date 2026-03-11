@@ -157,6 +157,10 @@ type SearchParams struct {
 	// AvoidAirlines is a comma-separated list of IATA codes to exclude.
 	// Empty means no filter.
 	AvoidAirlines string
+
+	// PreferredAirlines is a comma-separated list of IATA codes to keep.
+	// Empty means no filter.
+	PreferredAirlines string
 }
 
 // Searcher orchestrates the multi-city halt search pipeline.
@@ -383,7 +387,11 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 		pairs[i].leg1 = search.FilterByAvoidAirlines(pairs[i].leg1, params.AvoidAirlines)
 		pairs[i].leg2 = search.FilterByAvoidAirlines(pairs[i].leg2, params.AvoidAirlines)
 
-		// 3i: date window (leg1 only)
+		// 3i: preferred airlines
+		pairs[i].leg1 = search.FilterByPreferredAirlines(pairs[i].leg1, params.PreferredAirlines)
+		pairs[i].leg2 = search.FilterByPreferredAirlines(pairs[i].leg2, params.PreferredAirlines)
+
+		// 3j: date window (leg1 only)
 		beforeDate := len(pairs[i].leg1)
 		pairs[i].leg1 = search.FilterByDateRange(pairs[i].leg1, dateEarliest, dateLatest)
 		dateDrop := beforeDate - len(pairs[i].leg1)
@@ -477,6 +485,14 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 				continue
 			}
 			if len(search.FilterByAvoidAirlines([]types.Flight{leg2}, params.AvoidAirlines)) == 0 {
+				continue
+			}
+		}
+		if params.PreferredAirlines != "" {
+			if len(search.FilterByPreferredAirlines([]types.Flight{leg1}, params.PreferredAirlines)) == 0 {
+				continue
+			}
+			if len(search.FilterByPreferredAirlines([]types.Flight{leg2}, params.PreferredAirlines)) == 0 {
 				continue
 			}
 		}

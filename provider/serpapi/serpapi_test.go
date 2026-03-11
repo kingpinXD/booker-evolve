@@ -220,6 +220,37 @@ func TestSearch_RoundTrip(t *testing.T) {
 	if got := captured.Get(config.SerpAPIParamClass); got != config.SerpAPIClassBusiness {
 		t.Errorf("travel_class = %q, want %q", got, config.SerpAPIClassBusiness)
 	}
+	if got := captured.Get(config.SerpAPIParamReturnDate); got != "2026-04-17" {
+		t.Errorf("return_date = %q, want %q", got, "2026-04-17")
+	}
+}
+
+func TestSearch_OneWay_NoReturnDate(t *testing.T) {
+	var captured url.Values
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(cannedOneWayResponse)
+	}))
+	defer ts.Close()
+
+	p := newTestProvider(ts.URL)
+	dep, _ := time.Parse("2006-01-02", "2026-04-10")
+	req := types.SearchRequest{
+		Origin:        "JFK",
+		Destination:   "LHR",
+		DepartureDate: dep,
+		Passengers:    1,
+	}
+
+	_, err := p.Search(context.Background(), req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if captured.Has(config.SerpAPIParamReturnDate) {
+		t.Errorf("return_date should be absent for one-way, got %q", captured.Get(config.SerpAPIParamReturnDate))
+	}
 }
 
 func TestSearch_ServerError(t *testing.T) {

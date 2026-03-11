@@ -77,7 +77,8 @@ const (
 	SerpAPIParamClass     = "travel_class"
 	SerpAPIParamLanguage  = "hl"
 	SerpAPIParamCountry   = "gl"
-	SerpAPIParamStops     = "stops"
+	SerpAPIParamStops      = "stops"
+	SerpAPIParamReturnDate = "return_date"
 
 	SerpAPIEngineFlights = "google_flights"
 	SerpAPITypeOneWay    = "2"

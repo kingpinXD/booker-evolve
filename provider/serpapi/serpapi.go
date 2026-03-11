@@ -61,6 +61,9 @@ func (p *Provider) Search(ctx context.Context, req types.SearchRequest) ([]types
 	if req.MaxStops == 0 {
 		params[config.SerpAPIParamStops] = "0"
 	}
+	if req.IsRoundTrip() {
+		params[config.SerpAPIParamReturnDate] = req.ReturnDate.Format("2006-01-02")
+	}
 
 	url, err := httpclient.BuildURL(p.cfg.BaseURL, config.SerpAPISearchPath, params)
 	if err != nil {

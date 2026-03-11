@@ -407,3 +407,24 @@ priceSummary now appends total trip duration range for multi-leg itineraries. Ad
 ## Session 36 -- Multi-leg display fixes, fallback stopovers, combiner quality
 
 Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Used parallel worktree agents for Tasks 3 (stopovers) and 4 (combiner) while working on Tasks 1, 2, 5 sequentially on main. Task 91 was pivoted from bags display to flight number JSON (BagsIncluded only populated by inactive Kiwi provider). Key outcomes: (1) Multi-leg table now shows per-leg cabin class columns. (2) JSON output includes flight numbers for programmatic consumers. (3) Multicity search now works for any route via 8 global fallback hubs. (4) Combiner hard-filters red-eye leg2 departures. (5) Multi-leg price summary includes trip duration range. 16 new tests total. All build gates pass.
+
+---
+
+### Session 37, Task 1 -- Refactor stage 4b multi-city filtering
+Extracted passesAllFilters helper to replace ~70 lines of verbose single-element slice wrapping in stage 4b. Net -56 lines from multicity.go. 14 table-driven tests for the helper.
+
+### Session 37, Task 2 -- Add total_trip to JSON output
+Added total_trip field to jsonItinerary, populated from itin.TotalTrip using formatTripDuration. Omitted when zero (single-leg). 2 new tests.
+
+### Session 37, Task 3 -- Wire departure time CLI flags
+Added --departure-after and --departure-before flags to searchCmd. These fields already existed on search.Request and worked in chat but had no CLI flags. No new tests needed -- existing filter tests cover the logic.
+
+### Session 37, Task 4 -- Itinerary deduplication in multicity
+Added deduplicateItineraries after price sort in the multicity pipeline. Keys by flight number + departure per leg, keeps cheapest. Re-sorts after dedup since map iteration is unordered. 3 new tests.
+
+### Session 37, Task 5 -- Stopover duration control via CLI and chat
+Users can now customize city stopover duration via --min-stopover/--max-stopover CLI flags and min_stopover_hours/max_stopover_hours in chat. Threaded through search.Request -> SearchParams -> CombineParams. Zero values use defaults. 7 new tests across combiner and chat.
+
+## Session 37 -- Refactoring, deduplication, and user control
+
+Completed all 5 planned tasks in 4 commits with zero reverts and zero API calls. Used parallel worktree for Task 1 (refactor) while working on Tasks 2-3 on main. Key outcomes: (1) Stage 4b filter code reduced from ~70 lines to ~15 via passesAllFilters helper. (2) JSON output includes total_trip duration for multi-leg itineraries. (3) CLI now has departure time and stopover duration flags (completing chat-CLI parity). (4) Multicity deduplicates identical-flight itineraries, keeping cheapest. (5) Users can control stopover city visit length. 26 new tests total. All build gates pass.

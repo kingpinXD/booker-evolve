@@ -1,60 +1,53 @@
 # TODO
 
-Carried from: Day 35 (all completed)
-
-## Tasks 85-89: Day 35 tasks
-**Status:** completed -- next-day arrival, codeshare display, richer chat summary, preferred airlines filter, ranker LLM caching
-
----
+Carried from: Day 36 (all completed)
 
 ## Tasks 90-94: Day 36 tasks
 **Status:** completed -- per-leg cabin columns, flight number JSON, fallback hub stopovers, combiner red-eye filter, multi-leg trip summary
 
-## Task 90: Multi-leg per-leg cabin class columns
-**Status:** done
-**Plan:** Fix multi-leg table to show "Leg 1 Cabin" / "Leg 2 Cabin" instead of single "Cabin" showing only leg 0. Same pattern as CO2 per-leg fix. Files: cmd/search.go, cmd/search_test.go.
-- [x] Write test verifying multi-leg table has two cabin columns
-- [x] Change header from "Cabin" to "Leg 1 Cabin", "Leg 2 Cabin"
-- [x] Change row from legCabin(itin, 0) to legCabin(itin, 0), legCabin(itin, 1)
-- [x] Verify single-leg table still has single "Cabin" column
-- [x] Verify existing tests still pass
+---
 
-## Task 91: Flight number in JSON output
+## Tasks 95-99: Day 37 tasks
+**Status:** completed -- refactor stage 4b filtering, total_trip JSON, departure time CLI flags, itinerary deduplication, stopover duration control
+
+## Task 95: Refactor stage 4b multi-city filtering
 **Status:** done
-**Plan:** Add flight_number to jsonLeg (first segment's FlightNumber). Original plan was bags display but BagsIncluded only populated by inactive Kiwi provider. Files: cmd/search.go, cmd/search_test.go.
-- [x] Write test for flight_number in JSON output
-- [x] Write test for flight_number omitempty when empty
-- [x] Add FlightNumber to jsonLeg struct
+**Plan:** Extract passesAllFilters(f types.Flight, params SearchParams) bool helper to replace verbose single-element slice filtering in stage 4b. Files: search/multicity/multicity.go, search/multicity/helpers_test.go.
+- [x] Write test for passesAllFilters helper (14 table-driven cases)
+- [x] Extract helper function
+- [x] Replace stage 4b code with helper calls (-56 lines)
+- [x] Verify existing tests pass
+
+## Task 96: Add total_trip to JSON output
+**Status:** done
+**Plan:** Add TotalTrip string field to jsonItinerary, populate from itin.TotalTrip using formatTripDuration. Files: cmd/search.go, cmd/search_test.go.
+- [x] Write test verifying total_trip in JSON
+- [x] Write test verifying total_trip omitted when zero
+- [x] Add field to jsonItinerary struct
 - [x] Populate in buildJSONItineraries
-- [x] Verify existing tests still pass
+- [x] Verify existing tests pass
 
-## Task 92: Fallback global hub stopovers
+## Task 97: Wire departure time CLI flags
 **Status:** done
-**Plan:** Add GlobalFallbackHubs slice (8 well-connected hubs). Modify StopoversForRoute to return filtered fallback hubs when route-specific stopovers are nil. Filter out origin/destination airports. Files: search/multicity/stopovers.go, search/multicity/stopovers_test.go, search/multicity/search_test.go.
-- [x] Write test: known routes return specific stopovers (unchanged)
-- [x] Write test: unknown route returns fallback hubs
-- [x] Write test: fallback hubs exclude origin and destination airports
-- [x] Define GlobalFallbackHubs slice
-- [x] Modify StopoversForRoute to return filtered fallbacks
-- [x] Update search_test.go for new behavior (unknown routes now use fallbacks)
-- [x] Verify existing tests still pass
+**Plan:** Add --departure-after and --departure-before flags. Fields already on search.Request and wired in chat. Files: cmd/search.go.
+- [x] Add key constants and flags
+- [x] Wire into Request in runSearch
+- [x] Verify build passes
 
-## Task 93: Combiner red-eye leg filtering
+## Task 98: Itinerary deduplication in multicity
 **Status:** done
-**Plan:** Reuse existing isRedEye from ranker.go (same package). Skip combinations where leg2 departure is 00:00-04:59. Files: search/multicity/combiner.go, search/multicity/combiner_test.go.
-- [x] Write test: red-eye leg2 departure (02:00) rejected
-- [x] Write test: normal leg2 departure (10:00) passes
-- [x] Write test: edge cases (05:00 OK, 04:59 rejected, 00:00 rejected)
-- [x] Add red-eye check in CombineLegs loop (reuses ranker's isRedEye)
-- [x] Update TODO comment in combiner.go
-- [x] Verify existing combiner tests still pass
+**Plan:** Add deduplicateItineraries helper after COMBINE+sort stage. Key by first segment flight number + departure time per leg. Keep cheapest. Files: search/multicity/multicity.go, search/multicity/helpers_test.go.
+- [x] Write tests for deduplication (3 cases)
+- [x] Implement deduplicateItineraries and itineraryKey
+- [x] Wire into Search() after price sort
+- [x] Verify existing tests pass
 
-## Task 94: Multi-leg trip summary footer
+## Task 99: Stopover duration control via CLI and chat
 **Status:** done
-**Plan:** Enhance priceSummary to show total trip duration range for multi-leg itineraries. Files: cmd/search.go, cmd/search_test.go.
-- [x] Write test: multi-leg priceSummary includes duration range
-- [x] Write test: single-leg priceSummary unchanged
-- [x] Write test: single result shows duration without range
-- [x] Add formatTripDuration helper (Xd Yh format)
-- [x] Extend priceSummary with TotalTrip range for multi-leg
-- [x] Verify existing tests still pass
+**Plan:** Add MinStopover/MaxStopover (time.Duration) to search.Request and multicity.SearchParams. Thread to CombineParams. Add CLI flags. Wire into chat tripParams. Files: search/strategy.go, search/multicity/strategy.go, search/multicity/multicity.go, cmd/search.go, cmd/chat.go.
+- [x] Add fields to search.Request
+- [x] Add fields to multicity.SearchParams and thread to CombineParams
+- [x] Add CLI flags and wire to Request
+- [x] Add chat params (parse, merge, build, prompt, hint)
+- [x] Write tests: combiner override, chat parse/merge/build (7 test cases)
+- [x] Verify all tests pass

@@ -121,3 +121,11 @@ Session 36 planned to add baggage display (BagsIncluded) to the table and JSON o
 ## Lesson: Worktree agents may not commit -- copy uncommitted changes via file copy
 
 Session 36 worktree agents completed their tasks but did not create commits on their branches. The worktree branches showed the same commit as the base. The changes existed as uncommitted modifications in the worktree directories. To integrate: cp the modified files from the worktree dir to the main repo, verify tests pass, then commit on main. This is simpler than trying to commit in the worktree and cherry-pick.
+
+## Lesson: Cherry-picking worktree commits that touched governance files causes conflicts
+
+Session 37 worktree agent committed on its branch. When cherry-picking into main, governance files (JOURNAL.md, LEARNINGS.md, TODO.md) conflicted because they were also modified on main. The Go code itself was clean. Better approach: copy only the Go files from the worktree and commit them on main, ignoring the worktree's governance file changes. This avoids conflict resolution entirely.
+
+## Lesson: Dedup itineraries after sort requires re-sort
+
+deduplicateItineraries uses a map to track best (cheapest) per key. After extracting results from the map, iteration order is random. Must re-sort by price after dedup. This is a common pattern when using maps for deduplication -- always re-sort if order matters.

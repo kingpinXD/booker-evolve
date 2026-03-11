@@ -540,3 +540,9 @@ Added llm.StripCodeFences function with 6-case table test. Replaced identical 4-
 
 ### Session 44, Task 3 -- Fix NearbySearcher ignoring SortBy
 NearbySearcher hardcoded sort.Slice by price after dedup, ignoring req.SortBy. Replaced with search.SortResults. Added TestSearcher_SortByDuration to verify duration sorting works.
+
+### Session 44, Task 4 -- Thread user Context to multicity ranker
+Added Context field to SearchParams, threaded through toSearchParams, added UserContext field to Ranker. buildRankingPrompt now appends USER PREFERENCES section when context is non-empty. Implements VISION.md Section 3 user-aware ranking. Two new tests verify presence/absence of context in prompt.
+
+### Session 44, Task 5 -- Respect departure time preferences in CombineLegs red-eye filter
+CombineLegs previously hard-rejected all leg2 departures 00:00-04:59 regardless of user preferences. Added DepartureAfter/DepartureBefore fields to CombineParams. When either is set, the blanket red-eye rejection is skipped -- the user's own time constraints take precedence. Threaded from SearchParams in multicity.go. Resolves the TODO(iterate) in combiner.go.

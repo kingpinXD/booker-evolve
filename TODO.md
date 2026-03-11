@@ -33,21 +33,21 @@ Carried from: Day 43 (all completed)
 - [x] Verify existing nearby tests pass
 
 ## Task 123: Thread user Context to multicity ranker
-**Status:** pending
-**Plan:**
-- [ ] Write test: buildRankingPrompt includes context when non-empty
-- [ ] Write test: buildRankingPrompt unchanged when context is empty
-- [ ] Add Context field to SearchParams
-- [ ] Map req.Context to SearchParams.Context in toSearchParams
-- [ ] Append context to buildRankingPrompt when non-empty
-- [ ] Verify build + test + vet pass
+**Status:** done
+**Plan:** Add Context to SearchParams, thread from toSearchParams, add UserContext field to Ranker, append USER PREFERENCES to buildRankingPrompt.
+- [x] Write test: buildRankingPrompt includes context when non-empty
+- [x] Write test: buildRankingPrompt unchanged when context is empty
+- [x] Add Context field to SearchParams
+- [x] Map req.Context to SearchParams.Context in toSearchParams
+- [x] Add UserContext field to Ranker, pass to buildRankingPrompt
+- [x] Verify build + test + vet pass
 
 ## Task 124: Respect departure time preferences in CombineLegs red-eye filter
-**Status:** pending
-**Plan:**
-- [ ] Write test: CombineLegs with DepartureAfter="01:00" allows 02:00 leg2 departures
-- [ ] Write test: CombineLegs without explicit times still rejects red-eye
-- [ ] Add DepartureAfter/DepartureBefore to CombineParams
-- [ ] Skip isRedEye check when user has explicit departure time constraints
-- [ ] Thread DepartureAfter/DepartureBefore from SearchParams to CombineParams in multicity.go
-- [ ] Verify build + test + vet pass
+**Status:** done
+**Plan:** Add DepartureAfter/DepartureBefore to CombineParams, skip red-eye check when either is set, thread from SearchParams in multicity.go.
+- [x] Write test: CombineLegs with DepartureAfter="01:00" allows 02:00 leg2 departures
+- [x] Write test: CombineLegs without explicit times still rejects red-eye
+- [x] Add DepartureAfter/DepartureBefore to CombineParams
+- [x] Skip isRedEye check when user has explicit departure time constraints
+- [x] Thread DepartureAfter/DepartureBefore from SearchParams to CombineParams in multicity.go
+- [x] Verify build + test + vet + lint pass

@@ -457,6 +457,47 @@ func TestCombineLegs_CustomStopoverDuration(t *testing.T) {
 	}
 }
 
+func TestCombineLegs_RedEyeAllowedWithExplicitDepartureTime(t *testing.T) {
+	// leg1: DEL -> HKG, departs Mar 24 10:00, arrives 18:00
+	leg1Arr := basetime.Add(8 * time.Hour)
+	leg1 := []types.Flight{makeFlight("CX", "DEL", "HKG", basetime, leg1Arr, 300)}
+
+	// leg2 departs at 02:00 (red-eye) on Mar 27 — valid 56h stopover gap.
+	mar27_0200 := time.Date(2026, 3, 27, 2, 0, 0, 0, time.UTC)
+	leg2 := []types.Flight{makeFlight("AC", "HKG", "YYZ", mar27_0200, mar27_0200.Add(16*time.Hour), 500)}
+
+	// Without explicit departure time: red-eye should be rejected.
+	got := CombineLegs(leg1, leg2, defaultParams())
+	if len(got) != 0 {
+		t.Errorf("without explicit time, red-eye 02:00 should be rejected, got %d", len(got))
+	}
+
+	// With DepartureAfter="01:00": 02:00 falls within user's explicit window → allow.
+	params := defaultParams()
+	params.DepartureAfter = "01:00"
+	got = CombineLegs(leg1, leg2, params)
+	if len(got) != 1 {
+		t.Errorf("with DepartureAfter=01:00, 02:00 departure should be allowed, got %d", len(got))
+	}
+
+	// With DepartureBefore="03:00": 02:00 falls within → allow.
+	params2 := defaultParams()
+	params2.DepartureBefore = "03:00"
+	got = CombineLegs(leg1, leg2, params2)
+	if len(got) != 1 {
+		t.Errorf("with DepartureBefore=03:00, 02:00 departure should be allowed, got %d", len(got))
+	}
+
+	// With both set: DepartureAfter="01:00" DepartureBefore="04:00" → allow.
+	params3 := defaultParams()
+	params3.DepartureAfter = "01:00"
+	params3.DepartureBefore = "04:00"
+	got = CombineLegs(leg1, leg2, params3)
+	if len(got) != 1 {
+		t.Errorf("with explicit 01:00-04:00 window, 02:00 should be allowed, got %d", len(got))
+	}
+}
+
 func TestSameAirline(t *testing.T) {
 	cx := makeFlight("CX", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 300)
 	ai := makeFlight("AI", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 280)

@@ -30,8 +30,8 @@ import (
 //     exceeds MaxAirportLayover. A 2-hour connection is fine. An 8-hour
 //     airport wait is miserable.
 //
-// Red-eye leg2 departures (00:00-04:59) are hard-rejected.
-// TODO(iterate): Add broader time-of-day preferences beyond red-eye.
+// Red-eye leg2 departures (00:00-04:59) are hard-rejected unless the user
+// has explicit departure time constraints (DepartureAfter/DepartureBefore).
 
 // CombineParams controls how legs are paired.
 type CombineParams struct {
@@ -41,6 +41,12 @@ type CombineParams struct {
 	MinStay time.Duration
 	// MaxStay overrides the stopover city's default if set.
 	MaxStay time.Duration
+
+	// DepartureAfter/DepartureBefore are the user's explicit departure time
+	// preferences ("HH:MM"). When either is set, the blanket red-eye rejection
+	// is skipped — the user's own time constraints take precedence.
+	DepartureAfter  string
+	DepartureBefore string
 }
 
 // CombineLegs pairs leg1 and leg2 flights into valid Itineraries.
@@ -76,8 +82,10 @@ func CombineLegs(leg1, leg2 []types.Flight, params CombineParams) []search.Itine
 				continue
 			}
 
-			// Reject leg2 red-eye departures (00:00-04:59).
-			if isRedEye(leg2Departure) {
+			// Reject leg2 red-eye departures (00:00-04:59) unless the
+			// user has explicit departure time preferences.
+			hasExplicitTime := params.DepartureAfter != "" || params.DepartureBefore != ""
+			if !hasExplicitTime && isRedEye(leg2Departure) {
 				continue
 			}
 

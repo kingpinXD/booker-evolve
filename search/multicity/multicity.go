@@ -395,9 +395,11 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 	var allItineraries []search.Itinerary
 	for _, pair := range pairs {
 		combined := CombineLegs(pair.leg1, pair.leg2, CombineParams{
-			Stopover: pair.stopover,
-			MinStay:  params.MinStopover,
-			MaxStay:  params.MaxStopover,
+			Stopover:        pair.stopover,
+			MinStay:         params.MinStopover,
+			MaxStay:         params.MaxStopover,
+			DepartureAfter:  params.DepartureAfter,
+			DepartureBefore: params.DepartureBefore,
 		})
 		allItineraries = append(allItineraries, combined...)
 		if len(combined) > 0 {

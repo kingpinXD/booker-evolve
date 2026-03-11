@@ -1,5 +1,6 @@
 # TODO
 
+<<<<<<< Updated upstream
 Carried from: Day 22 (all completed)
 
 ## Tasks 36-40: Day 22 tasks
@@ -59,3 +60,48 @@ Carried from: Day 22 (all completed)
 - [x] Run go vet ./... and fix any warnings -- clean
 - [x] Run golangci-lint run and fix any issues -- 0 issues
 - [x] Run go test ./... and verify all pass -- 15 packages pass
+=======
+## Task 1: Add booking URL to table and JSON output
+**Status:** pending
+**Plan:**
+- [ ] Add legBookingURL helper to extract URL from itinerary leg
+- [ ] Write tests for legBookingURL and updated JSON output
+- [ ] Add booking_url to jsonLeg and jsonItinerary structs
+- [ ] Add Book column to table output (both single-leg and multi-leg)
+- [ ] Run go build && go test ./cmd/... && go vet ./...
+
+## Task 2: Airline alliance data and same-alliance scoring
+**Status:** pending
+**Plan:**
+- [ ] Write tests for Alliance lookup and SameAlliance function
+- [ ] Add airline alliance map (Star Alliance, OneWorld, SkyTeam members)
+- [ ] Add Alliance(iataCode string) string function
+- [ ] Add SameAlliance(a, b Flight) bool function using alliances
+- [ ] Run go build && go test ./search/multicity/... && go vet ./...
+
+## Task 3: Expand stopover routes beyond DEL-YYZ
+**Status:** pending
+**Plan:**
+- [ ] Write tests for new routes (BOM→YYZ, DEL→YVR, reverse directions)
+- [ ] Add BOMToYYZStopovers list
+- [ ] Add DELToYVRStopovers list
+- [ ] Update StopoversForRoute with new route lookups and reverse support
+- [ ] Run go build && go test ./search/multicity/... && go vet ./...
+
+## Task 4: Refactor printTable to accept io.Writer and add tests
+**Status:** pending
+**Plan:**
+- [ ] Change printTable signature to accept io.Writer
+- [ ] Update runSearch caller to pass os.Stdout
+- [ ] Write tests for single-leg and multi-leg table output
+- [ ] Run go build && go test ./cmd/... && go vet ./...
+
+## Task 5: Add seats-left indicator to output
+**Status:** pending
+**Plan:**
+- [ ] Write tests for seatsString helper
+- [ ] Add seatsString(itin, legIdx) helper
+- [ ] Add seats_left to jsonLeg struct
+- [ ] Add Seats column to table output (both layouts)
+- [ ] Run go build && go test ./cmd/... && go vet ./...
+>>>>>>> Stashed changes

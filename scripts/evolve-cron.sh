@@ -66,9 +66,7 @@ wait_for_network || exit 0
 # --- Sync ---
 
 echo "[$(date -u +%H:%M:%S)] Pulling latest changes..."
-git stash --quiet 2>/dev/null || true
 git pull --rebase origin main || echo "WARNING: git pull failed, continuing with local state"
-git stash pop --quiet 2>/dev/null || true
 
 # --- Run Evolution ---
 

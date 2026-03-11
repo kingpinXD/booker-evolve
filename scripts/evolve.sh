@@ -102,9 +102,7 @@ mkdir -p "$LOG_DIR"
 check_prerequisites
 
 if [[ "$NO_PUSH" != "1" ]]; then
-  git stash --quiet 2>/dev/null || true
   git pull --rebase origin main || log "WARNING: git pull failed, continuing"
-  git stash pop --quiet 2>/dev/null || true
 fi
 
 log "=== Evolution Session: Session $SESSION ==="

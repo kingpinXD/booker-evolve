@@ -189,12 +189,12 @@ func printTable(itineraries []search.Itinerary, cur string) {
 			"#", "Score", "Price", "Route",
 			"Leg 1 Airlines", "Leg 2 Airlines",
 			"Leg 1 Departure", "Leg 2 Departure",
-			"Stopover", "Duration",
+			"Stopover", "Duration", "Reason",
 		})
 	} else {
 		t.AppendHeader(table.Row{
 			"#", "Score", "Price", "Route",
-			"Airlines", "Departure", "Duration",
+			"Airlines", "Departure", "Duration", "Reason",
 		})
 	}
 
@@ -214,6 +214,7 @@ func printTable(itineraries []search.Itinerary, cur string) {
 				legDeparture(itin, 1),
 				stopoverString(itin),
 				dur,
+				itin.Reasoning,
 			})
 		} else {
 			t.AppendRow(table.Row{
@@ -224,6 +225,7 @@ func printTable(itineraries []search.Itinerary, cur string) {
 				legAirlines(itin, 0),
 				legDeparture(itin, 0),
 				dur,
+				itin.Reasoning,
 			})
 		}
 	}
@@ -369,14 +371,15 @@ type jsonLeg struct {
 
 // jsonItinerary is the JSON representation of a search result.
 type jsonItinerary struct {
-	Rank     int       `json:"rank"`
-	Score    float64   `json:"score"`
-	Price    float64   `json:"price"`
-	Currency string    `json:"currency"`
-	Route    string    `json:"route"`
-	Duration string    `json:"duration"`
-	Legs     []jsonLeg `json:"legs"`
-	Stopover string    `json:"stopover,omitempty"`
+	Rank      int       `json:"rank"`
+	Score     float64   `json:"score"`
+	Reasoning string    `json:"reasoning,omitempty"`
+	Price     float64   `json:"price"`
+	Currency  string    `json:"currency"`
+	Route     string    `json:"route"`
+	Duration  string    `json:"duration"`
+	Legs      []jsonLeg `json:"legs"`
+	Stopover  string    `json:"stopover,omitempty"`
 }
 
 // formatPriceInsights returns a one-line summary of price insights, or empty
@@ -445,14 +448,15 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 		}
 
 		out[i] = jsonItinerary{
-			Rank:     i + 1,
-			Score:    itin.Score,
-			Price:    converted.Amount,
-			Currency: cur,
-			Route:    routeString(itin),
-			Duration: formatDuration(itin.TotalTravel),
-			Legs:     legs,
-			Stopover: stopoverString(itin),
+			Rank:      i + 1,
+			Score:     itin.Score,
+			Reasoning: itin.Reasoning,
+			Price:     converted.Amount,
+			Currency:  cur,
+			Route:     routeString(itin),
+			Duration:  formatDuration(itin.TotalTravel),
+			Legs:      legs,
+			Stopover:  stopoverString(itin),
 		}
 	}
 	return out

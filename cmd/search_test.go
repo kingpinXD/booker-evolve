@@ -394,6 +394,68 @@ func TestPrintTable_MultiLeg(t *testing.T) {
 	}
 }
 
+// --- printTable reasoning ---
+
+func TestPrintTable_ReasoningColumn(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Reasoning = "cheap and fast"
+	out := capturePrintTable([]search.Itinerary{itin}, "USD")
+
+	if !bytes.Contains([]byte(out), []byte("REASON")) {
+		t.Error("table output missing REASON header")
+	}
+	if !bytes.Contains([]byte(out), []byte("cheap and fast")) {
+		t.Error("table output missing reasoning text")
+	}
+}
+
+func TestPrintTable_NoReasoning(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 0
+	itin.Reasoning = ""
+	out := capturePrintTable([]search.Itinerary{itin}, "USD")
+
+	if !bytes.Contains([]byte(out), []byte("REASON")) {
+		t.Error("table output missing REASON header even when reasoning is empty")
+	}
+}
+
+// --- buildJSONItineraries reasoning ---
+
+func TestBuildJSONItineraries_Reasoning(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Reasoning = "good schedule"
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	if len(results) != 1 {
+		t.Fatalf("results = %d, want 1", len(results))
+	}
+	if results[0].Reasoning != "good schedule" {
+		t.Errorf("reasoning = %q, want %q", results[0].Reasoning, "good schedule")
+	}
+}
+
+func TestBuildJSONItineraries_NoReasoning(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	if len(results) != 1 {
+		t.Fatalf("results = %d, want 1", len(results))
+	}
+	if results[0].Reasoning != "" {
+		t.Errorf("reasoning = %q, want empty", results[0].Reasoning)
+	}
+
+	// Verify omitempty: marshal and check "reasoning" is absent.
+	data, err := json.Marshal(results[0])
+	if err != nil {
+		t.Fatalf("json.Marshal error: %v", err)
+	}
+	if bytes.Contains(data, []byte(`"reasoning"`)) {
+		t.Error("empty reasoning should be omitted from JSON with omitempty")
+	}
+}
+
 // --- formatPriceInsights ---
 
 func TestFormatPriceInsights_WithData(t *testing.T) {

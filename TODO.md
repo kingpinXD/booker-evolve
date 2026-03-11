@@ -45,9 +45,9 @@ Carried from: Day 21 (all completed)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 40: Lint, gofmt sweep, and build gate verification
-**Status:** pending
-**Plan:**
-- [ ] Run gofmt -l . and fix violations
-- [ ] Run go vet ./... and fix warnings
-- [ ] Run golangci-lint run and fix findings
-- [ ] Run go test ./... and verify all pass
+**Status:** done
+**Plan:** Run all gates, fix any violations from worktree merges or new code.
+- [x] Run gofmt -l . -- clean (0 violations)
+- [x] Run go vet ./... -- clean
+- [x] Run golangci-lint run -- 0 issues
+- [x] Run go test ./... -- all pass

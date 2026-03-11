@@ -163,3 +163,6 @@ Added `truncateHistory` sliding window keeping system prompt + last 20 messages.
 
 ### Session 22, Task 4 -- Add stops count to table output
 Added `itineraryStops` helper that sums `Flight.Stops()` across all legs. Added "Stops" column to both single-leg and multi-leg table layouts. 1 new test with direct (0) and connecting (1) flights.
+
+### Session 22, Task 5 -- Lint, gofmt sweep, and build gate
+All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all pass. One gofmt fix was needed after worktree rebase (fixed during task 37/38 merge).

@@ -39,12 +39,12 @@ const (
 
 // Default values.
 const (
-	defaultPassengers = 1
-	defaultCabin      = string(types.CabinEconomy)
-	defaultFlexDays   = 3
-	defaultMaxStops   = -1
-	defaultMaxResults = 5
-	defaultProfile    = "budget"
+	defaultPassengers  = 1
+	defaultCabin       = string(types.CabinEconomy)
+	defaultFlexDays    = 3
+	defaultMaxStops    = -1
+	defaultMaxResults  = 5
+	defaultProfile     = "budget"
 	defaultCurrency    = "CAD"
 	defaultTimeout     = 5 * time.Minute
 	maxHistoryMessages = 20
@@ -190,12 +190,12 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 			"#", "Score", "Price", "Route",
 			"Leg 1 Airlines", "Leg 2 Airlines",
 			"Leg 1 Departure", "Leg 2 Departure",
-			"Stopover", "Duration", "Reason",
+			"Stopover", "Duration", "Reason", "Book",
 		})
 	} else {
 		t.AppendHeader(table.Row{
 			"#", "Score", "Price", "Route",
-			"Airlines", "Departure", "Duration", "Reason",
+			"Airlines", "Departure", "Duration", "Reason", "Book",
 		})
 	}
 
@@ -216,6 +216,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				stopoverString(itin),
 				dur,
 				itin.Reasoning,
+				legBookingURL(itin, 0),
 			})
 		} else {
 			t.AppendRow(table.Row{
@@ -227,6 +228,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				legDeparture(itin, 0),
 				dur,
 				itin.Reasoning,
+				legBookingURL(itin, 0),
 			})
 		}
 	}
@@ -320,6 +322,13 @@ func legDeparture(itin search.Itinerary, legIdx int) string {
 		return ""
 	}
 	return segs[0].DepartureTime.Format(outputDateTimeFmt)
+}
+
+func legBookingURL(itin search.Itinerary, legIdx int) string {
+	if legIdx >= len(itin.Legs) {
+		return ""
+	}
+	return itin.Legs[legIdx].Flight.BookingURL
 }
 
 func stopoverString(itin search.Itinerary) string {

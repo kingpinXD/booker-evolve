@@ -425,6 +425,54 @@ func TestBuildJSONItineraries_NoReasoning(t *testing.T) {
 	}
 }
 
+// --- printTable booking URL ---
+
+func TestPrintTable_BookingURL(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.BookingURL = "https://book.example.com/abc123"
+	itins := []search.Itinerary{makeItin(leg)}
+	out := capturePrintTable(itins, "USD")
+
+	if !bytes.Contains([]byte(out), []byte("BOOK")) {
+		t.Error("table output missing BOOK header")
+	}
+	if !bytes.Contains([]byte(out), []byte("https://book.example.com/abc123")) {
+		t.Error("table output missing booking URL value")
+	}
+}
+
+func TestPrintTable_NoBookingURL(t *testing.T) {
+	// Flight without BookingURL should show empty in the Book column.
+	itins := []search.Itinerary{
+		makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)),
+	}
+	out := capturePrintTable(itins, "USD")
+
+	if !bytes.Contains([]byte(out), []byte("BOOK")) {
+		t.Error("table output missing BOOK header even when URL is empty")
+	}
+	if bytes.Contains([]byte(out), []byte("https://")) {
+		t.Error("table output should not contain a URL when BookingURL is empty")
+	}
+}
+
+func TestPrintTable_MultiLeg_BookingURL(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg1.Flight.BookingURL = "https://book.example.com/leg1"
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil)
+	leg2.Flight.BookingURL = "https://book.example.com/leg2"
+	itins := []search.Itinerary{makeItin(leg1, leg2)}
+	out := capturePrintTable(itins, "CAD")
+
+	if !bytes.Contains([]byte(out), []byte("BOOK")) {
+		t.Error("multi-leg table output missing BOOK header")
+	}
+	if !bytes.Contains([]byte(out), []byte("https://book.example.com/leg1")) {
+		t.Error("multi-leg table output missing leg 1 booking URL")
+	}
+}
+
 // --- formatPriceInsights ---
 
 func TestFormatPriceInsights_WithData(t *testing.T) {

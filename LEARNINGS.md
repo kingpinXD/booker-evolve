@@ -138,3 +138,6 @@ When a worktree branch adds stopover entries that include KiwiID fields, but mai
 
 ## Lesson: Existing internal predicates make exported wrappers trivial
 The search/filter.go package already had unexported single-flight predicates (isFlightBlocked, flightMatchesAlliance, flightMatchesAvoid, flightMatchesPreferred). Adding exported wrappers (FlightPasses*) is a thin layer over these -- the real refactoring value is in the consumer site (passesAllFilters) where slice-wrapping is eliminated. Check for existing internal helpers before designing new predicate APIs.
+
+## Lesson: Adding optional struct fields with zero-value backward compat
+When extending a struct used across multiple presets (e.g., RankingWeights), adding a new field with a zero value preserves all existing behavior. The system prompt conditionally includes the new criterion only when the field is non-zero, so existing profiles (budget/comfort/balanced) produce identical output. This pattern avoids migrating every call site.

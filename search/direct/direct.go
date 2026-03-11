@@ -5,7 +5,6 @@ package direct
 import (
 	"context"
 	"fmt"
-	"sort"
 	"time"
 
 	"booker/provider"
@@ -64,10 +63,8 @@ func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Iti
 		}
 	}
 
-	// Sort by price.
-	sort.Slice(itineraries, func(i, j int) bool {
-		return itineraries[i].TotalPrice.Amount < itineraries[j].TotalPrice.Amount
-	})
+	// Sort results (default: price).
+	search.SortResults(itineraries, req.SortBy)
 
 	// Rank via LLM if available.
 	if s.ranker != nil {

@@ -33,6 +33,7 @@ const (
 	keyProfile    = "profile"
 	keyCurrency   = "currency"
 	keyContext    = "context"
+	keySortBy     = "sort-by"
 	keyFormat     = "format"
 	keyVerbose    = "verbose"
 )
@@ -79,6 +80,7 @@ func init() {
 	f.String(keyProfile, defaultProfile, "ranking profile (budget, comfort, balanced)")
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
 	f.String(keyContext, "", "search context/preferences (e.g. 'cheapest option' or 'want to explore a city on the way')")
+	f.String(keySortBy, "price", "sort results by: price, duration, or departure")
 	f.String(keyFormat, "table", "output format: table or json")
 	f.BoolP(keyVerbose, "v", false, "show debug output from providers, cache, and LLM")
 
@@ -125,6 +127,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		FlexDays:      viper.GetInt(keyFlexDays),
 		MaxStops:      viper.GetInt(keyMaxStops),
 		MaxPrice:      viper.GetFloat64(keyMaxPrice),
+		SortBy:        viper.GetString(keySortBy),
 		MaxResults:    viper.GetInt(keyMaxResults),
 		Context:       viper.GetString(keyContext),
 	}

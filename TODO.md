@@ -1,52 +1,64 @@
 # TODO
 
-Carried from: Day 29 (all completed)
+Carried from: Day 31 (all completed)
 
-## Tasks 65-69: Day 29 tasks
-**Status:** completed -- multicity alliance+maxprice consistency, departure time filter, seats display, build gate clean
+## Tasks 70-74: Day 31 tasks
+**Status:** completed -- multicity departure time filter, SerpAPI stops+return_date params, ranker city name cleanup, build gate clean
 
 ---
 
-## Task 70: Wire FilterByDepartureTime into multicity pipeline
-**Status:** done
-**Plan:** Add DepartureAfter/DepartureBefore to SearchParams, map in toSearchParams, apply FilterByDepartureTime in FILTER stage + stage 4b.
-- [x] Write test: multicity search with DepartureAfter/DepartureBefore filters out flights outside time window
-- [x] Add DepartureAfter and DepartureBefore string to multicity.SearchParams
-- [x] Map DepartureAfter/DepartureBefore from search.Request in toSearchParams
-- [x] Apply FilterByDepartureTime in FILTER stage for both leg1 and leg2
-- [x] Apply FilterByDepartureTime in stage 4b for mcItineraries
-- [x] Verify: `go build && go test ./... && go vet ./...`
+## Task 75: Post-fetch sorting in direct strategy + CLI flag
+**Status:** in-progress
+**Plan:** Add SortBy to search.Request. Implement SortResults in filter.go (price/duration/departure). Wire into direct.go after ranker. Add --sort-by CLI flag. Files: search/strategy.go, search/filter.go, search/filter_test.go, search/direct/direct.go, cmd/search.go.
+- [ ] Write test: SortResults sorts by price ascending (default)
+- [ ] Write test: SortResults sorts by duration ascending
+- [ ] Write test: SortResults sorts by departure time ascending
+- [ ] Write test: empty/unknown sort mode returns original order
+- [ ] Add SortBy string to search.Request
+- [ ] Implement SortResults(itineraries []Itinerary, sortBy string) in filter.go
+- [ ] Wire SortResults after filters in direct.go Search()
+- [ ] Add --sort-by CLI flag to search command
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 71: Pass stops=0 to SerpAPI when direct-only
-**Status:** done
-**Plan:** When req.MaxStops==0, add stops=0 to the SerpAPI params map.
-- [x] Write test: Search with MaxStops=0 includes stops=0 in request params
-- [x] Write test: Search with MaxStops!=0 does not include stops param
-- [x] Add stops=0 to params map when req.MaxStops == 0 in serpapi.Search()
-- [x] Verify: `go build && go test ./... && go vet ./...`
+## Task 76: Connection risk tags in ranker prompt
+**Status:** pending
+**Plan:** [to be filled during implementation]
+- [ ] Write test: buildRankingPrompt with 45min layover shows "[Risky connection: 45m]"
+- [ ] Write test: buildRankingPrompt with 75min layover shows "[Tight connection: 75m]"
+- [ ] Write test: buildRankingPrompt with 120min layover shows no connection tag
+- [ ] Add connection risk tagging after layover line in buildRankingPrompt
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 72: Send return_date to SerpAPI for round-trip requests
-**Status:** done
-**Plan:** Add SerpAPIParamReturnDate constant, include return_date in params when IsRoundTrip().
-- [x] Add SerpAPIParamReturnDate = "return_date" to config/routes.go
-- [x] Update serpapi.Search() to include return_date when req.IsRoundTrip()
-- [x] Update existing round-trip test to verify return_date param is sent
-- [x] Verify: `go build && go test ./... && go vet ./...`
+## Task 77: Wire sort_by into chat conversation
+**Status:** pending
+**Plan:** [to be filled during implementation]
+- [ ] Add SortBy string to tripParams
+- [ ] Wire sort_by into parsePartialParams
+- [ ] Wire sort_by into mergeParams
+- [ ] Wire sort_by into buildRequestFromParams
+- [ ] Add sort_by to system prompt and refinement hint
+- [ ] Write test: parsePartialParams with sort_by field
+- [ ] Write test: mergeParams preserves and overrides sort_by
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 73: Fix empty city names in ranker prompt
-**Status:** done
-**Plan:** Conditionally include city parenthetical only when OriginCity or DestinationCity is non-empty.
-- [x] Write test: buildRankingPrompt with empty OriginCity/DestinationCity produces clean output (no empty parens)
-- [x] Modify ranker.go line ~221 to conditionally include city parenthetical
-- [x] Verify existing ranker tests still pass
-- [x] Verify: `go build && go test ./... && go vet ./...`
+## Task 78: Enrich JSON output with airline codes and city names
+**Status:** pending
+**Plan:** [to be filled during implementation]
+- [ ] Add AirlineCode, OriginCity, DestinationCity, OriginName, DestinationName to jsonLeg (omitempty)
+- [ ] Populate new fields in buildJSONItineraries from first segment
+- [ ] Write test: JSON output includes new fields when segment data is available
+- [ ] Write test: new fields omitted when segment data is empty
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 74: Build gate verification and session finalize
-**Status:** done
-**Plan:** Full verification, fix gofmt alignment, update governance files, increment session number.
-- [x] Run gofmt -l . and fix any violations
-- [x] Run go vet ./... -- must be clean
-- [x] Run golangci-lint run -- must be 0 issues
-- [x] Run go test ./... -- all must pass
-- [x] Update JOURNAL.md with session summary
-- [x] Increment SESSION_NUMBER
+## Task 79: Avoid airline filter
+**Status:** pending
+**Plan:** [to be filled during implementation]
+- [ ] Write test: FilterByAvoidAirlines removes flight matching airline code
+- [ ] Write test: FilterByAvoidAirlines removes flight matching operating carrier
+- [ ] Write test: FilterByAvoidAirlines passes through non-matching flights
+- [ ] Add AvoidAirlines string to search.Request
+- [ ] Implement FilterByAvoidAirlines in filter.go
+- [ ] Wire into direct pipeline in direct.go
+- [ ] Wire into multicity SearchParams and multicity.go
+- [ ] Add --avoid-airlines CLI flag
+- [ ] Verify: `go build && go test ./... && go vet ./...`

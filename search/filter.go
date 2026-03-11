@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"booker/types"
@@ -252,6 +253,37 @@ func FilterZeroPrices(flights []types.Flight) []types.Flight {
 		}
 	}
 	return filtered
+}
+
+// SortResults sorts itineraries in place by the given mode.
+// Supported modes: "price" (default), "duration", "departure".
+// Unknown modes default to price.
+func SortResults(itins []Itinerary, sortBy string) {
+	if len(itins) < 2 {
+		return
+	}
+	switch sortBy {
+	case "duration":
+		sort.Slice(itins, func(i, j int) bool {
+			return itins[i].TotalTravel < itins[j].TotalTravel
+		})
+	case "departure":
+		sort.Slice(itins, func(i, j int) bool {
+			return firstDeparture(itins[i]).Before(firstDeparture(itins[j]))
+		})
+	default: // "price" or unknown
+		sort.Slice(itins, func(i, j int) bool {
+			return itins[i].TotalPrice.Amount < itins[j].TotalPrice.Amount
+		})
+	}
+}
+
+// firstDeparture returns the departure time of the first segment of the first leg.
+func firstDeparture(itin Itinerary) time.Time {
+	if len(itin.Legs) > 0 && len(itin.Legs[0].Flight.Outbound) > 0 {
+		return itin.Legs[0].Flight.Outbound[0].DepartureTime
+	}
+	return time.Time{}
 }
 
 func flightMatchesAlliance(f types.Flight, alliance string) bool {

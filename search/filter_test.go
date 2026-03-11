@@ -301,6 +301,84 @@ func TestFilterByDepartureTime_InvalidFormat(t *testing.T) {
 	}
 }
 
+// --- SortResults ---
+
+func makeSortItinerary(price float64, travel time.Duration, depTime time.Time) Itinerary {
+	return Itinerary{
+		TotalPrice:  types.Money{Amount: price, Currency: "USD"},
+		TotalTravel: travel,
+		Legs: []Leg{{
+			Flight: types.Flight{
+				Price:    types.Money{Amount: price, Currency: "USD"},
+				Outbound: []types.Segment{{DepartureTime: depTime}},
+			},
+		}},
+	}
+}
+
+func TestSortResults_ByPrice(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itins := []Itinerary{
+		makeSortItinerary(800, 10*time.Hour, now),
+		makeSortItinerary(400, 14*time.Hour, now.Add(2*time.Hour)),
+		makeSortItinerary(600, 8*time.Hour, now.Add(-time.Hour)),
+	}
+	SortResults(itins, "price")
+	if itins[0].TotalPrice.Amount != 400 || itins[1].TotalPrice.Amount != 600 || itins[2].TotalPrice.Amount != 800 {
+		t.Errorf("SortResults(price): got prices [%.0f, %.0f, %.0f], want [400, 600, 800]",
+			itins[0].TotalPrice.Amount, itins[1].TotalPrice.Amount, itins[2].TotalPrice.Amount)
+	}
+}
+
+func TestSortResults_ByDuration(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itins := []Itinerary{
+		makeSortItinerary(400, 14*time.Hour, now),
+		makeSortItinerary(800, 8*time.Hour, now),
+		makeSortItinerary(600, 10*time.Hour, now),
+	}
+	SortResults(itins, "duration")
+	if itins[0].TotalTravel != 8*time.Hour || itins[1].TotalTravel != 10*time.Hour || itins[2].TotalTravel != 14*time.Hour {
+		t.Errorf("SortResults(duration): got durations [%v, %v, %v], want [8h, 10h, 14h]",
+			itins[0].TotalTravel, itins[1].TotalTravel, itins[2].TotalTravel)
+	}
+}
+
+func TestSortResults_ByDeparture(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itins := []Itinerary{
+		makeSortItinerary(400, 10*time.Hour, now.Add(5*time.Hour)),
+		makeSortItinerary(800, 10*time.Hour, now),
+		makeSortItinerary(600, 10*time.Hour, now.Add(2*time.Hour)),
+	}
+	SortResults(itins, "departure")
+	wantTimes := []time.Time{now, now.Add(2 * time.Hour), now.Add(5 * time.Hour)}
+	for i, want := range wantTimes {
+		got := itins[i].Legs[0].Flight.Outbound[0].DepartureTime
+		if !got.Equal(want) {
+			t.Errorf("SortResults(departure)[%d]: got %v, want %v", i, got, want)
+		}
+	}
+}
+
+func TestSortResults_UnknownDefaultsToPrice(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itins := []Itinerary{
+		makeSortItinerary(800, 10*time.Hour, now),
+		makeSortItinerary(400, 14*time.Hour, now),
+	}
+	SortResults(itins, "unknown")
+	if itins[0].TotalPrice.Amount != 400 {
+		t.Errorf("SortResults(unknown): expected price sort, got first price=%.0f", itins[0].TotalPrice.Amount)
+	}
+}
+
+func TestSortResults_Empty(t *testing.T) {
+	// Should not panic on empty/nil.
+	SortResults(nil, "price")
+	SortResults([]Itinerary{}, "duration")
+}
+
 func TestFilterZeroPrices(t *testing.T) {
 	zero := types.Flight{Price: types.Money{Amount: 0, Currency: "USD"}}
 	valid := types.Flight{Price: types.Money{Amount: 100, Currency: "USD"}}

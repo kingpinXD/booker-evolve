@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -571,6 +573,104 @@ type weightsUpdater interface {
 	SetWeights(multicity.RankingWeights)
 }
 
+// looksLikeComparison returns true if the user input looks like a request
+// to compare search results (e.g. "compare 1 and 3").
+func looksLikeComparison(input string) bool {
+	lower := strings.ToLower(input)
+	return strings.HasPrefix(lower, "compare ")
+}
+
+// looksLikeDetail returns true if the user input looks like a request for
+// details on a specific result (e.g. "details on option 2", "more about 1").
+func looksLikeDetail(input string) bool {
+	lower := strings.ToLower(input)
+	return strings.HasPrefix(lower, "detail") ||
+		strings.HasPrefix(lower, "more about") ||
+		strings.HasPrefix(lower, "more info") ||
+		strings.Contains(lower, "more about")
+}
+
+var numberRe = regexp.MustCompile(`\d+`)
+
+// parseOptionIndices extracts 1-based option numbers from user input.
+func parseOptionIndices(input string) []int {
+	matches := numberRe.FindAllString(input, -1)
+	var indices []int
+	for _, m := range matches {
+		n, err := strconv.Atoi(m)
+		if err == nil && n > 0 {
+			indices = append(indices, n)
+		}
+	}
+	return indices
+}
+
+// formatOptionDetail returns a detailed summary of a single search result.
+// idx is 1-based.
+func formatOptionDetail(results []search.Itinerary, idx int) string {
+	if idx < 1 || idx > len(results) {
+		return fmt.Sprintf("Option %d is out of range (1-%d).", idx, len(results))
+	}
+	itin := results[idx-1]
+	var b strings.Builder
+	fmt.Fprintf(&b, "Option %d:\n", idx)
+	fmt.Fprintf(&b, "  Price: $%.0f USD\n", itin.TotalPrice.Amount)
+	fmt.Fprintf(&b, "  Duration: %s\n", formatFlightDuration(itin.TotalTravel))
+	for i, leg := range itin.Legs {
+		segs := leg.Flight.Outbound
+		if len(segs) == 0 {
+			continue
+		}
+		airline := segs[0].AirlineName
+		if airline == "" {
+			airline = segs[0].Airline
+		}
+		route := segs[0].Origin + " -> " + segs[len(segs)-1].Destination
+		stops := formatLayoverSummary(segs)
+		fmt.Fprintf(&b, "  Leg %d: %s, %s, %s, %s\n", i+1, airline, route, formatFlightDuration(leg.Flight.TotalDuration), stops)
+		if leg.Flight.CarbonKg > 0 {
+			fmt.Fprintf(&b, "    CO2: %dkg\n", leg.Flight.CarbonKg)
+		}
+		if leg.Flight.BookingURL != "" {
+			fmt.Fprintf(&b, "    Book: %s\n", leg.Flight.BookingURL)
+		}
+	}
+	if itin.Reasoning != "" {
+		fmt.Fprintf(&b, "  Ranking reason: %s\n", itin.Reasoning)
+	}
+	return b.String()
+}
+
+// formatComparison returns a side-by-side comparison of the specified results.
+// indices are 1-based.
+func formatComparison(results []search.Itinerary, indices []int) string {
+	var b strings.Builder
+	b.WriteString("Comparison:\n")
+	for _, idx := range indices {
+		if idx < 1 || idx > len(results) {
+			fmt.Fprintf(&b, "  Option %d: out of range (1-%d)\n", idx, len(results))
+			continue
+		}
+		itin := results[idx-1]
+		airline := ""
+		route := ""
+		stops := ""
+		if len(itin.Legs) > 0 && len(itin.Legs[0].Flight.Outbound) > 0 {
+			seg := itin.Legs[0].Flight.Outbound[0]
+			airline = seg.AirlineName
+			if airline == "" {
+				airline = seg.Airline
+			}
+			lastSeg := itin.Legs[0].Flight.Outbound[len(itin.Legs[0].Flight.Outbound)-1]
+			route = seg.Origin + " -> " + lastSeg.Destination
+			stops = formatLayoverSummary(itin.Legs[0].Flight.Outbound)
+		}
+		fmt.Fprintf(&b, "  Option %d: %s, %s, %s, %s, $%.0f\n",
+			idx, airline, route, formatFlightDuration(itin.TotalTravel), stops, itin.TotalPrice.Amount)
+	}
+	return b.String()
+}
+
 func runChat(cmd *cobra.Command, _ []string) error {
 	if !viper.GetBool(keyVerbose) {
 		log.SetOutput(io.Discard)
@@ -600,6 +700,7 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 	_, _ = fmt.Fprintln(out, "Where would you like to fly? (type 'quit' to exit)")
 
 	var lastParams tripParams
+	var lastResults []search.Itinerary
 
 	for {
 		_, _ = fmt.Fprint(out, "\n> ")
@@ -613,6 +714,25 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		if userInput == "quit" || userInput == "exit" {
 			_, _ = fmt.Fprintln(out, "Goodbye!")
 			return nil
+		}
+
+		// Intercept comparison/detail requests using cached results.
+		if len(lastResults) > 0 {
+			indices := parseOptionIndices(userInput)
+			if looksLikeComparison(userInput) && len(indices) >= 2 {
+				text := formatComparison(lastResults, indices)
+				_, _ = fmt.Fprintln(out, text)
+				history = append(history, llm.Message{Role: llm.RoleUser, Content: userInput})
+				history = append(history, llm.Message{Role: llm.RoleAssistant, Content: text})
+				continue
+			}
+			if looksLikeDetail(userInput) && len(indices) >= 1 {
+				text := formatOptionDetail(lastResults, indices[0])
+				_, _ = fmt.Fprintln(out, text)
+				history = append(history, llm.Message{Role: llm.RoleUser, Content: userInput})
+				history = append(history, llm.Message{Role: llm.RoleAssistant, Content: text})
+				continue
+			}
 		}
 
 		history = append(history, llm.Message{Role: llm.RoleUser, Content: userInput})
@@ -671,6 +791,8 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 			_, _ = fmt.Fprintf(out, "Search error: %v\n", err)
 			continue
 		}
+
+		lastResults = results
 
 		if len(results) == 0 {
 			_, _ = fmt.Fprintln(out, "No flights found. Try different dates or airports.")

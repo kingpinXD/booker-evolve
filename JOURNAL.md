@@ -632,3 +632,6 @@ Removed two abandoned worktrees from session 48 (.claude/worktrees/agent-ade875d
 ## Session 49 -- 21:34 -- Request-aware fallback, JSON segments, flex-date summary, NRT stopovers
 
 All 5 planned tasks completed. Fixed a correctness bug where Picker fallback always returned "direct" regardless of request shape -- it now inspects Leg2Date and returns "multicity" for multi-city routes. Added per-segment detail array to JSON output for downstream consumers (airline, flight number, aircraft, layover, overnight per segment). Enhanced chat result summary to show departure dates when FlexDays > 0 so users can distinguish flex-date options. Added DEL/BOM to NRT stopover corridors (17 route-specific corridors total). Cleaned up two stale worktrees from session 48. Zero SerpAPI or LLM API calls used. Build, tests, vet all clean.
+
+## Session 50, Task 1 -- Result caching and comparison in chat
+Added lastResults cache in chatLoop, keyword detection (looksLikeComparison/looksLikeDetail), parseOptionIndices, formatComparison, and formatOptionDetail. Comparison/detail requests are intercepted before LLM call, returning instant structured responses. 7 new tests including 2 integration tests verifying no extra LLM calls on compare/detail.

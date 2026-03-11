@@ -2064,3 +2064,242 @@ Searching for flights.`,
 		t.Errorf("unexpected price insight in output when no provider, got:\n%s", output)
 	}
 }
+
+// --- Result caching and comparison tests ---
+
+func TestLooksLikeComparison(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{"compare 1 and 3", true},
+		{"compare options 1, 2, 3", true},
+		{"Compare 1 vs 3", true},
+		{"which is better, 1 or 2?", false},
+		{"find flights to London", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		if got := looksLikeComparison(tt.input); got != tt.want {
+			t.Errorf("looksLikeComparison(%q) = %v, want %v", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestLooksLikeDetail(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{"details on option 2", true},
+		{"detail 3", true},
+		{"tell me more about 1", true},
+		{"more about option 2", true},
+		{"more info on 3", true},
+		{"find flights to London", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		if got := looksLikeDetail(tt.input); got != tt.want {
+			t.Errorf("looksLikeDetail(%q) = %v, want %v", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestParseOptionIndices(t *testing.T) {
+	tests := []struct {
+		input string
+		want  []int
+	}{
+		{"compare 1 and 3", []int{1, 3}},
+		{"compare options 1, 2, 3", []int{1, 2, 3}},
+		{"details on option 2", []int{2}},
+		{"more about 5", []int{5}},
+		{"no numbers here", nil},
+	}
+	for _, tt := range tests {
+		got := parseOptionIndices(tt.input)
+		if len(got) != len(tt.want) {
+			t.Errorf("parseOptionIndices(%q) = %v, want %v", tt.input, got, tt.want)
+			continue
+		}
+		for i := range got {
+			if got[i] != tt.want[i] {
+				t.Errorf("parseOptionIndices(%q)[%d] = %d, want %d", tt.input, i, got[i], tt.want[i])
+			}
+		}
+	}
+}
+
+func TestFormatOptionDetail(t *testing.T) {
+	results := []search.Itinerary{
+		{
+			Legs: []search.Leg{{Flight: types.Flight{
+				Price:         types.Money{Amount: 500, Currency: "USD"},
+				TotalDuration: 14 * time.Hour,
+				Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", Origin: "DEL", Destination: "YYZ"}},
+			}}},
+			TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+		},
+	}
+
+	// Valid index.
+	detail := formatOptionDetail(results, 1)
+	if !strings.Contains(detail, "Option 1") {
+		t.Errorf("detail should contain 'Option 1', got: %s", detail)
+	}
+	if !strings.Contains(detail, "Air Canada") {
+		t.Errorf("detail should contain airline, got: %s", detail)
+	}
+	if !strings.Contains(detail, "500") {
+		t.Errorf("detail should contain price, got: %s", detail)
+	}
+
+	// Out of range.
+	detail = formatOptionDetail(results, 5)
+	if !strings.Contains(detail, "out of range") {
+		t.Errorf("out of range detail should say so, got: %s", detail)
+	}
+}
+
+func TestFormatComparison(t *testing.T) {
+	results := []search.Itinerary{
+		{
+			Legs: []search.Leg{{Flight: types.Flight{
+				Price:         types.Money{Amount: 500, Currency: "USD"},
+				TotalDuration: 14 * time.Hour,
+				Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", Origin: "DEL", Destination: "YYZ"}},
+			}}},
+			TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+		},
+		{
+			Legs: []search.Leg{{Flight: types.Flight{
+				Price:         types.Money{Amount: 800, Currency: "USD"},
+				TotalDuration: 18 * time.Hour,
+				Outbound: []types.Segment{
+					{Airline: "BA", AirlineName: "British Airways", Origin: "DEL", Destination: "LHR", LayoverDuration: 3 * time.Hour},
+					{Airline: "BA", Origin: "LHR", Destination: "YYZ"},
+				},
+			}}},
+			TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+		},
+		{
+			Legs: []search.Leg{{Flight: types.Flight{
+				Price:         types.Money{Amount: 700, Currency: "USD"},
+				TotalDuration: 16 * time.Hour,
+				Outbound:      []types.Segment{{Airline: "LH", AirlineName: "Lufthansa", Origin: "DEL", Destination: "YYZ"}},
+			}}},
+			TotalPrice: types.Money{Amount: 700, Currency: "USD"},
+		},
+	}
+
+	comp := formatComparison(results, []int{1, 3})
+	if !strings.Contains(comp, "Air Canada") {
+		t.Errorf("comparison should contain first airline, got: %s", comp)
+	}
+	if !strings.Contains(comp, "Lufthansa") {
+		t.Errorf("comparison should contain third airline, got: %s", comp)
+	}
+	if !strings.Contains(comp, "500") {
+		t.Errorf("comparison should contain first price, got: %s", comp)
+	}
+	if !strings.Contains(comp, "700") {
+		t.Errorf("comparison should contain third price, got: %s", comp)
+	}
+
+	// Out of range index.
+	comp = formatComparison(results, []int{1, 10})
+	if !strings.Contains(comp, "out of range") {
+		t.Errorf("comparison with invalid index should say out of range, got: %s", comp)
+	}
+}
+
+func TestChatLoop_ComparisonInterceptsBeforeLLM(t *testing.T) {
+	// First response triggers a search. Second input is a comparison request,
+	// which should be intercepted without calling the LLM.
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses, captureHistory: true}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs: []search.Leg{{Flight: types.Flight{
+					Price:         types.Money{Amount: 500, Currency: "USD"},
+					TotalDuration: 14 * time.Hour,
+					Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", Origin: "DEL", Destination: "YYZ"}},
+				}}},
+				TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+			},
+			{
+				Legs: []search.Leg{{Flight: types.Flight{
+					Price:         types.Money{Amount: 800, Currency: "USD"},
+					TotalDuration: 18 * time.Hour,
+					Outbound:      []types.Segment{{Airline: "BA", AirlineName: "British Airways", Origin: "DEL", Destination: "YYZ"}},
+				}}},
+				TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\ncompare 1 and 2\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	// The comparison response should appear in output.
+	if !strings.Contains(output, "Air Canada") || !strings.Contains(output, "British Airways") {
+		t.Errorf("comparison output should contain both airlines, got:\n%s", output)
+	}
+
+	// Only 1 LLM call should have been made (for the search).
+	// The "compare 1 and 2" should NOT trigger a second LLM call.
+	if len(mock.historyLog) != 1 {
+		t.Errorf("expected 1 LLM call (comparison should be intercepted), got %d", len(mock.historyLog))
+	}
+}
+
+func TestChatLoop_DetailInterceptsBeforeLLM(t *testing.T) {
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses, captureHistory: true}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs: []search.Leg{{Flight: types.Flight{
+					Price:         types.Money{Amount: 500, Currency: "USD"},
+					TotalDuration: 14 * time.Hour,
+					Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", Origin: "DEL", Destination: "YYZ"}},
+				}}},
+				TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\ndetails on option 1\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	if !strings.Contains(output, "Option 1") {
+		t.Errorf("detail output should contain 'Option 1', got:\n%s", output)
+	}
+
+	// Only 1 LLM call should have been made.
+	if len(mock.historyLog) != 1 {
+		t.Errorf("expected 1 LLM call (detail should be intercepted), got %d", len(mock.historyLog))
+	}
+}

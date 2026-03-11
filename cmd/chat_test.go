@@ -834,6 +834,71 @@ func TestBuildRequestFromParams_FlexDays(t *testing.T) {
 	}
 }
 
+func TestParseTripParams_PreferredAlliance(t *testing.T) {
+	input := `{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15","preferred_alliance":"Star Alliance"}`
+	params, ok := parseTripParams(input)
+	if !ok {
+		t.Fatal("expected to find trip params")
+	}
+	if params.PreferredAlliance != "Star Alliance" {
+		t.Errorf("PreferredAlliance = %q, want %q", params.PreferredAlliance, "Star Alliance")
+	}
+}
+
+func TestParsePartialParams_PreferredAlliance(t *testing.T) {
+	p, ok := parsePartialParams(`{"preferred_alliance":"OneWorld"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with preferred_alliance to parse")
+	}
+	if p.PreferredAlliance != "OneWorld" {
+		t.Errorf("PreferredAlliance = %q, want %q", p.PreferredAlliance, "OneWorld")
+	}
+}
+
+func TestMergeParams_PreferredAlliance(t *testing.T) {
+	// PreferredAlliance from prev is preserved when partial has none.
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", PreferredAlliance: "Star Alliance"}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.PreferredAlliance != "Star Alliance" {
+		t.Errorf("PreferredAlliance = %q, want %q (preserved from prev)", got.PreferredAlliance, "Star Alliance")
+	}
+
+	// Partial PreferredAlliance overrides prev.
+	partial2 := tripParams{PreferredAlliance: "SkyTeam"}
+	got2 := mergeParams(prev, partial2)
+	if got2.PreferredAlliance != "SkyTeam" {
+		t.Errorf("PreferredAlliance = %q, want %q (overridden by partial)", got2.PreferredAlliance, "SkyTeam")
+	}
+}
+
+func TestBuildRequestFromParams_PreferredAlliance(t *testing.T) {
+	params := tripParams{
+		Origin:            "DEL",
+		Destination:       "YYZ",
+		DepartureDate:     "2025-06-15",
+		PreferredAlliance: "OneWorld",
+	}
+	req := buildRequestFromParams(params)
+	if req.PreferredAlliance != "OneWorld" {
+		t.Errorf("PreferredAlliance = %q, want %q", req.PreferredAlliance, "OneWorld")
+	}
+}
+
+func TestChatSystemPrompt_PreferredAlliance(t *testing.T) {
+	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
+	if !strings.Contains(prompt, "preferred_alliance") {
+		t.Error("system prompt should mention preferred_alliance")
+	}
+}
+
+func TestRefinementHint_PreferredAlliance(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "preferred_alliance") {
+		t.Error("refinement hint should mention preferred_alliance")
+	}
+}
+
 func TestChatSystemPrompt_FlexDays(t *testing.T) {
 	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
 	if !strings.Contains(prompt, "flex_days") {

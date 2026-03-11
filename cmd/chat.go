@@ -40,17 +40,18 @@ func init() {
 
 // tripParams holds extracted flight search parameters from the LLM dialogue.
 type tripParams struct {
-	Origin        string  `json:"origin"`
-	Destination   string  `json:"destination"`
-	DepartureDate string  `json:"departure_date"`
-	ReturnDate    string  `json:"return_date,omitempty"`
-	Passengers    int     `json:"passengers,omitempty"`
-	Cabin         string  `json:"cabin,omitempty"`
-	MaxPrice      float64 `json:"max_price,omitempty"`
-	DirectOnly    bool    `json:"direct_only,omitempty"`
-	FlexDays      int     `json:"flex_days,omitempty"`
-	Profile       string  `json:"profile,omitempty"`
-	Context       string  `json:"context,omitempty"`
+	Origin            string  `json:"origin"`
+	Destination       string  `json:"destination"`
+	DepartureDate     string  `json:"departure_date"`
+	ReturnDate        string  `json:"return_date,omitempty"`
+	Passengers        int     `json:"passengers,omitempty"`
+	Cabin             string  `json:"cabin,omitempty"`
+	MaxPrice          float64 `json:"max_price,omitempty"`
+	DirectOnly        bool    `json:"direct_only,omitempty"`
+	FlexDays          int     `json:"flex_days,omitempty"`
+	Profile           string  `json:"profile,omitempty"`
+	PreferredAlliance string  `json:"preferred_alliance,omitempty"`
+	Context           string  `json:"context,omitempty"`
 }
 
 // chatSystemPrompt returns the system prompt for the chat conversation.
@@ -72,6 +73,7 @@ Optional:
 - direct_only: true to show only non-stop flights
 - flex_days: search ± N days around departure date (default: 3)
 - profile: ranking profile — "budget" (cheapest), "comfort" (best schedule/airline), or "balanced" (default: budget)
+- preferred_alliance: "Star Alliance", "OneWorld", or "SkyTeam" — filter to this alliance only
 - context: any preferences like "cheapest option" or "prefer direct flights"
 
 Ask clarifying questions to gather missing information. Be conversational but concise.
@@ -150,17 +152,18 @@ func buildRequestFromParams(p tripParams) search.Request {
 		flexDays = defaultFlexDays
 	}
 	return search.Request{
-		Origin:        p.Origin,
-		Destination:   p.Destination,
-		DepartureDate: p.DepartureDate,
-		ReturnDate:    p.ReturnDate,
-		Passengers:    passengers,
-		CabinClass:    types.CabinClass(cabin),
-		FlexDays:      flexDays,
-		MaxStops:      maxStops,
-		MaxPrice:      p.MaxPrice,
-		MaxResults:    defaultMaxResults,
-		Context:       p.Context,
+		Origin:            p.Origin,
+		Destination:       p.Destination,
+		DepartureDate:     p.DepartureDate,
+		ReturnDate:        p.ReturnDate,
+		Passengers:        passengers,
+		CabinClass:        types.CabinClass(cabin),
+		FlexDays:          flexDays,
+		MaxStops:          maxStops,
+		MaxPrice:          p.MaxPrice,
+		PreferredAlliance: p.PreferredAlliance,
+		MaxResults:        defaultMaxResults,
+		Context:           p.Context,
 	}
 }
 
@@ -250,6 +253,9 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if merged.Profile == "" {
 		merged.Profile = prev.Profile
 	}
+	if merged.PreferredAlliance == "" {
+		merged.PreferredAlliance = prev.PreferredAlliance
+	}
 	if merged.Context == "" {
 		merged.Context = prev.Context
 	}
@@ -285,7 +291,7 @@ func parsePartialParams(response string) (tripParams, bool) {
 		if p.Origin != "" || p.Destination != "" || p.DepartureDate != "" ||
 			p.ReturnDate != "" || p.Passengers != 0 || p.Cabin != "" ||
 			p.MaxPrice != 0 || p.DirectOnly || p.FlexDays != 0 ||
-			p.Profile != "" || p.Context != "" {
+			p.Profile != "" || p.PreferredAlliance != "" || p.Context != "" {
 			return p, true
 		}
 	}
@@ -309,7 +315,8 @@ func refinementHint() string {
 		"change cabin class (economy/business/first), filter to direct flights only, " +
 		"adjust number of passengers, add a return date for round-trip pricing, " +
 		"adjust date flexibility (flex_days), " +
-		"or change ranking profile (budget/comfort/balanced). " +
+		"change ranking profile (budget/comfort/balanced), " +
+		"or filter by preferred_alliance (Star Alliance/OneWorld/SkyTeam). " +
 		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }

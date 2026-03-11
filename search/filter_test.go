@@ -177,6 +177,53 @@ func TestFilterByMaxPrice(t *testing.T) {
 	}
 }
 
+func TestFilterByAlliance(t *testing.T) {
+	starFlight := types.Flight{
+		Price:    types.Money{Amount: 500, Currency: "USD"},
+		Outbound: []types.Segment{{Airline: "AC"}}, // Air Canada = Star Alliance
+	}
+	oneWorldFlight := types.Flight{
+		Price:    types.Money{Amount: 600, Currency: "USD"},
+		Outbound: []types.Segment{{Airline: "AA"}}, // American Airlines = OneWorld
+	}
+	unknownFlight := types.Flight{
+		Price:    types.Money{Amount: 400, Currency: "USD"},
+		Outbound: []types.Segment{{Airline: "WN"}}, // Southwest = no alliance
+	}
+	operatingMatch := types.Flight{
+		Price:    types.Money{Amount: 700, Currency: "USD"},
+		Outbound: []types.Segment{{Airline: "WN", OperatingCarrier: "LH"}}, // Lufthansa operating = Star Alliance
+	}
+	flights := []types.Flight{starFlight, oneWorldFlight, unknownFlight, operatingMatch}
+
+	// Empty preference keeps all flights.
+	result := FilterByAlliance(flights, "")
+	if len(result) != 4 {
+		t.Errorf("FilterByAlliance(empty): got %d, want 4", len(result))
+	}
+
+	// Star Alliance filter: keeps AC and LH-operated.
+	result = FilterByAlliance(flights, "Star Alliance")
+	if len(result) != 2 {
+		t.Errorf("FilterByAlliance(Star Alliance): got %d, want 2", len(result))
+	}
+	if result[0].Price.Amount != 500 || result[1].Price.Amount != 700 {
+		t.Errorf("FilterByAlliance(Star Alliance): wrong flights kept")
+	}
+
+	// OneWorld filter: keeps only AA.
+	result = FilterByAlliance(flights, "OneWorld")
+	if len(result) != 1 {
+		t.Errorf("FilterByAlliance(OneWorld): got %d, want 1", len(result))
+	}
+
+	// SkyTeam filter: keeps none of these.
+	result = FilterByAlliance(flights, "SkyTeam")
+	if len(result) != 0 {
+		t.Errorf("FilterByAlliance(SkyTeam): got %d, want 0", len(result))
+	}
+}
+
 func TestFilterZeroPrices(t *testing.T) {
 	zero := types.Flight{Price: types.Money{Amount: 0, Currency: "USD"}}
 	valid := types.Flight{Price: types.Money{Amount: 100, Currency: "USD"}}

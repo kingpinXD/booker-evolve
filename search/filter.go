@@ -181,6 +181,21 @@ func FilterByMaxPrice(flights []types.Flight, maxPrice float64) []types.Flight {
 	return filtered
 }
 
+// FilterByAlliance keeps only flights where at least one outbound segment's
+// airline belongs to the preferred alliance. Empty preference keeps all flights.
+func FilterByAlliance(flights []types.Flight, alliance string) []types.Flight {
+	if alliance == "" {
+		return flights
+	}
+	filtered := make([]types.Flight, 0, len(flights))
+	for _, f := range flights {
+		if flightMatchesAlliance(f, alliance) {
+			filtered = append(filtered, f)
+		}
+	}
+	return filtered
+}
+
 // FilterZeroPrices removes flights with a $0 price — these are data artifacts
 // from providers (e.g. Google Flights returning incomplete pricing).
 func FilterZeroPrices(flights []types.Flight) []types.Flight {
@@ -191,6 +206,15 @@ func FilterZeroPrices(flights []types.Flight) []types.Flight {
 		}
 	}
 	return filtered
+}
+
+func flightMatchesAlliance(f types.Flight, alliance string) bool {
+	for _, seg := range f.Outbound {
+		if Alliance(seg.Airline) == alliance || Alliance(seg.OperatingCarrier) == alliance {
+			return true
+		}
+	}
+	return false
 }
 
 func isFlightBlocked(f types.Flight) bool {

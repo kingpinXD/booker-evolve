@@ -21,17 +21,18 @@ type Strategy interface {
 
 // Request is the common input for all search strategies.
 type Request struct {
-	Origin        string // IATA code, e.g. "DEL"
-	Destination   string // IATA code, e.g. "YYZ"
-	DepartureDate string // YYYY-MM-DD
-	ReturnDate    string // YYYY-MM-DD, empty for one-way
-	Passengers    int
-	CabinClass    types.CabinClass
-	FlexDays      int
-	MaxStops      int     // -1 = no limit
-	MaxPrice      float64 // 0 = no limit (USD)
-	MaxResults    int
-	Context       string // User's natural language context/preferences
+	Origin            string // IATA code, e.g. "DEL"
+	Destination       string // IATA code, e.g. "YYZ"
+	DepartureDate     string // YYYY-MM-DD
+	ReturnDate        string // YYYY-MM-DD, empty for one-way
+	Passengers        int
+	CabinClass        types.CabinClass
+	FlexDays          int
+	MaxStops          int     // -1 = no limit
+	MaxPrice          float64 // 0 = no limit (USD)
+	PreferredAlliance string  // "Star Alliance", "OneWorld", "SkyTeam", or "" for no filter
+	MaxResults        int
+	Context           string // User's natural language context/preferences
 }
 
 // Ranker scores and reorders itineraries. Decoupled from strategies so

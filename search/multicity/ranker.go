@@ -188,6 +188,9 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 
 		for j, leg := range itin.Legs {
 			fmt.Fprintf(&b, "  LEG %d: $%.2f\n", j+1, leg.Flight.Price.Amount)
+			if leg.Flight.CarbonKg > 0 {
+				fmt.Fprintf(&b, "  CO2: %dkg\n", leg.Flight.CarbonKg)
+			}
 			for _, seg := range leg.Flight.Outbound {
 				airlineInfo := seg.AirlineName
 				if tag := search.Alliance(seg.Airline); tag != "" {
@@ -201,6 +204,9 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 				}
 				if seg.Legroom != "" {
 					airlineInfo += " [Legroom: " + seg.Legroom + "]"
+				}
+				if seg.Aircraft != "" {
+					airlineInfo += " [Aircraft: " + seg.Aircraft + "]"
 				}
 				fmt.Fprintf(&b, "    %s %s→%s (%s→%s) depart %s arrive %s [%s] %s\n",
 					seg.FlightNumber,

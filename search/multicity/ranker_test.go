@@ -502,6 +502,124 @@ func TestBuildRankingPrompt_NoLegroomTag(t *testing.T) {
 	}
 }
 
+func TestBuildRankingPrompt_AircraftTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+							Aircraft: "Boeing 787",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "[Aircraft: Boeing 787]") {
+		t.Errorf("prompt should contain [Aircraft: Boeing 787], got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_NoAircraftTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if searchString(prompt, "[Aircraft:") {
+		t.Errorf("prompt should not contain [Aircraft:] when aircraft is empty, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_CarbonLine(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price:    types.Money{Amount: 400, Currency: "USD"},
+						CarbonKg: 150,
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "CO2: 150kg") {
+		t.Errorf("prompt should contain CO2: 150kg, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_NoCarbonLine(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if searchString(prompt, "CO2:") {
+		t.Errorf("prompt should not contain CO2: when CarbonKg is 0, got:\n%s", prompt)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

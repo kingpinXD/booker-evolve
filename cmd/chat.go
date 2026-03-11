@@ -204,6 +204,24 @@ func buildRequestFromParams(p tripParams) search.Request {
 	}
 }
 
+// chatSearch builds a request from params, picks a strategy, and executes the search.
+// Status messages and tips are written to out during execution.
+func chatSearch(ctx context.Context, params tripParams, picker *search.Picker, out io.Writer) ([]search.Itinerary, error) {
+	req := buildRequestFromParams(params)
+	_, _ = fmt.Fprintf(out, "Searching %s -> %s on %s...\n", req.Origin, req.Destination, req.DepartureDate)
+	if hint := nearbyAirportHint(req.Origin, req.Destination); hint != "" {
+		_, _ = fmt.Fprintf(out, "Tip: %s\n", hint)
+	}
+
+	strategy, reason, err := picker.Pick(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("picking strategy: %w", err)
+	}
+	_, _ = fmt.Fprintf(out, "Using %s strategy (%s)\n", strategy.Name(), reason)
+
+	return strategy.Search(ctx, req)
+}
+
 // resultSummaryForChat builds a summary of search results for the conversation
 // history, including top 3 results with price, airline, duration, and stops so
 // the LLM can explain recommendations and answer comparison questions.
@@ -776,22 +794,9 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		}
 
 		// Build and execute the search.
-		req := buildRequestFromParams(params)
-		_, _ = fmt.Fprintf(out, "Searching %s -> %s on %s...\n", req.Origin, req.Destination, req.DepartureDate)
-		if hint := nearbyAirportHint(req.Origin, req.Destination); hint != "" {
-			_, _ = fmt.Fprintf(out, "Tip: %s\n", hint)
-		}
-
-		strategy, reason, err := picker.Pick(ctx, req)
+		results, err := chatSearch(ctx, params, picker, out)
 		if err != nil {
-			_, _ = fmt.Fprintf(out, "Error picking strategy: %v\n", err)
-			continue
-		}
-		_, _ = fmt.Fprintf(out, "Using %s strategy (%s)\n", strategy.Name(), reason)
-
-		results, err := strategy.Search(ctx, req)
-		if err != nil {
-			_, _ = fmt.Fprintf(out, "Search error: %v\n", err)
+			_, _ = fmt.Fprintf(out, "Error: %v\n", err)
 			continue
 		}
 

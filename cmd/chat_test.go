@@ -2465,6 +2465,39 @@ func TestMergeParams_ClearFieldsMultiple(t *testing.T) {
 	}
 }
 
+func TestChatSearch(t *testing.T) {
+	mock := &chatMockLLM{responses: []string{""}}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 600, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 600, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	var out strings.Builder
+	results, err := chatSearch(context.Background(), params, picker, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].TotalPrice.Amount != 600 {
+		t.Errorf("TotalPrice = %v, want 600", results[0].TotalPrice.Amount)
+	}
+	output := out.String()
+	if !strings.Contains(output, "Searching DEL -> YYZ") {
+		t.Errorf("expected search status in output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "Using direct strategy") {
+		t.Errorf("expected strategy info in output, got:\n%s", output)
+	}
+}
+
 func TestParsePartialParams_ClearFields(t *testing.T) {
 	input := `{"clear_fields":["direct_only","max_price"]}`
 	p, ok := parsePartialParams(input)

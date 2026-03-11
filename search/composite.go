@@ -68,7 +68,7 @@ func (c *CompositeStrategy) Search(ctx context.Context, req Request) ([]Itinerar
 		return nil, fmt.Errorf("all strategies failed: %v", errs[0])
 	}
 
-	merged = deduplicate(merged)
+	merged = DeduplicateItineraries(merged)
 
 	if c.ranker != nil {
 		ranked, err := c.ranker.Rank(ctx, merged)
@@ -84,8 +84,8 @@ func (c *CompositeStrategy) Search(ctx context.Context, req Request) ([]Itinerar
 	return merged, nil
 }
 
-// deduplicate removes itineraries with identical route and price.
-func deduplicate(itins []Itinerary) []Itinerary {
+// DeduplicateItineraries removes itineraries with identical route and price.
+func DeduplicateItineraries(itins []Itinerary) []Itinerary {
 	type key struct {
 		route string
 		price float64
@@ -93,7 +93,7 @@ func deduplicate(itins []Itinerary) []Itinerary {
 	seen := make(map[key]bool, len(itins))
 	out := make([]Itinerary, 0, len(itins))
 	for _, itin := range itins {
-		k := key{route: itinRoute(itin), price: itin.TotalPrice.Amount}
+		k := key{route: ItinRoute(itin), price: itin.TotalPrice.Amount}
 		if seen[k] {
 			continue
 		}
@@ -103,8 +103,8 @@ func deduplicate(itins []Itinerary) []Itinerary {
 	return out
 }
 
-// itinRoute builds a string key from the itinerary's segments.
-func itinRoute(itin Itinerary) string {
+// ItinRoute builds a string key from the itinerary's segments.
+func ItinRoute(itin Itinerary) string {
 	route := ""
 	for _, leg := range itin.Legs {
 		for _, seg := range leg.Flight.Outbound {

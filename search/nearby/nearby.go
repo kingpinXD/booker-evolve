@@ -79,7 +79,7 @@ func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Iti
 		return nil, lastErr
 	}
 
-	merged = deduplicate(merged)
+	merged = search.DeduplicateItineraries(merged)
 
 	search.SortResults(merged, req.SortBy)
 
@@ -104,32 +104,3 @@ func expandCode(code string) []string {
 	return cluster
 }
 
-// deduplicate removes itineraries with identical route and price.
-func deduplicate(itins []search.Itinerary) []search.Itinerary {
-	type key struct {
-		route string
-		price float64
-	}
-	seen := make(map[key]bool, len(itins))
-	out := make([]search.Itinerary, 0, len(itins))
-	for _, itin := range itins {
-		k := key{route: itinRoute(itin), price: itin.TotalPrice.Amount}
-		if seen[k] {
-			continue
-		}
-		seen[k] = true
-		out = append(out, itin)
-	}
-	return out
-}
-
-// itinRoute builds a string key from the itinerary's segments.
-func itinRoute(itin search.Itinerary) string {
-	route := ""
-	for _, leg := range itin.Legs {
-		for _, seg := range leg.Flight.Outbound {
-			route += seg.Origin + "-" + seg.Destination + "|"
-		}
-	}
-	return route
-}

@@ -165,13 +165,75 @@ func resultSummaryForChat(results []search.Itinerary) string {
 		len(results), minPrice, maxPrice)
 }
 
+// mergeParams fills zero-value fields in partial from prev, producing
+// a complete set of params for a follow-up search.
+func mergeParams(prev, partial tripParams) tripParams {
+	merged := partial
+	if merged.Origin == "" {
+		merged.Origin = prev.Origin
+	}
+	if merged.Destination == "" {
+		merged.Destination = prev.Destination
+	}
+	if merged.DepartureDate == "" {
+		merged.DepartureDate = prev.DepartureDate
+	}
+	if merged.ReturnDate == "" {
+		merged.ReturnDate = prev.ReturnDate
+	}
+	if merged.Passengers == 0 {
+		merged.Passengers = prev.Passengers
+	}
+	if merged.Cabin == "" {
+		merged.Cabin = prev.Cabin
+	}
+	if merged.MaxPrice == 0 {
+		merged.MaxPrice = prev.MaxPrice
+	}
+	if merged.Context == "" {
+		merged.Context = prev.Context
+	}
+	return merged
+}
+
+// parsePartialParams extracts trip parameters from an LLM response,
+// accepting partial JSON (at least one recognized field set). Used for
+// follow-up refinements where the LLM only emits changed fields.
+func parsePartialParams(response string) (tripParams, bool) {
+	for _, line := range strings.Split(response, "\n") {
+		line = strings.TrimSpace(line)
+		line = strings.TrimPrefix(line, "```json")
+		line = strings.TrimPrefix(line, "```")
+		line = strings.TrimSuffix(line, "```")
+		line = strings.TrimSpace(line)
+
+		if !strings.HasPrefix(line, "{") {
+			continue
+		}
+
+		var p tripParams
+		if err := json.Unmarshal([]byte(line), &p); err != nil {
+			continue
+		}
+		// At least one field must be set.
+		if p.Origin != "" || p.Destination != "" || p.DepartureDate != "" ||
+			p.ReturnDate != "" || p.Passengers != 0 || p.Cabin != "" ||
+			p.MaxPrice != 0 || p.Context != "" {
+			return p, true
+		}
+	}
+	return tripParams{}, false
+}
+
 // refinementHint returns a system message listing available refinement levers.
 // Appended to conversation history after results so the LLM knows what to suggest.
 func refinementHint() string {
 	return "The user can refine their search. Available options: " +
 		"try different dates, search nearby airports for cheaper fares, " +
 		"change cabin class (economy/business/first), filter to direct flights only, " +
-		"adjust number of passengers, or add a return date for round-trip pricing."
+		"adjust number of passengers, or add a return date for round-trip pricing. " +
+		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +
+		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }
 
 func runChat(cmd *cobra.Command, _ []string) error {
@@ -199,6 +261,8 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 	scanner := bufio.NewScanner(in)
 	_, _ = fmt.Fprintln(out, "Where would you like to fly? (type 'quit' to exit)")
 
+	var lastParams tripParams
+
 	for {
 		_, _ = fmt.Fprint(out, "\n> ")
 		if !scanner.Scan() {
@@ -223,12 +287,21 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 
 		history = append(history, llm.Message{Role: llm.RoleAssistant, Content: response})
 
-		// Check if the LLM extracted search parameters.
+		// Try full parse first, then partial merge for follow-ups.
 		params, found := parseTripParams(response)
+		if !found && lastParams.Origin != "" {
+			partial, partialFound := parsePartialParams(response)
+			if partialFound {
+				params = mergeParams(lastParams, partial)
+				found = true
+			}
+		}
 		if !found {
 			_, _ = fmt.Fprintln(out, response)
 			continue
 		}
+
+		lastParams = params
 
 		// Build and execute the search.
 		req := buildRequestFromParams(params)

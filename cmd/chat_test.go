@@ -381,6 +381,125 @@ Searching for flights.`,
 	}
 }
 
+func TestMergeParams(t *testing.T) {
+	tests := []struct {
+		name    string
+		prev    tripParams
+		partial tripParams
+		want    tripParams
+	}{
+		{
+			name:    "full merge from empty prev",
+			prev:    tripParams{},
+			partial: tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"},
+			want:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"},
+		},
+		{
+			name:    "partial cabin override",
+			prev:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Cabin: "economy"},
+			partial: tripParams{Cabin: "business"},
+			want:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Cabin: "business"},
+		},
+		{
+			name:    "partial date override",
+			prev:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Cabin: "economy"},
+			partial: tripParams{DepartureDate: "2025-07-01"},
+			want:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-07-01", Cabin: "economy"},
+		},
+		{
+			name:    "zero-value fields preserved from prev",
+			prev:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Passengers: 2, MaxPrice: 1200},
+			partial: tripParams{Cabin: "business"},
+			want:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Passengers: 2, MaxPrice: 1200, Cabin: "business"},
+		},
+		{
+			name:    "partial max_price override",
+			prev:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", MaxPrice: 1200},
+			partial: tripParams{MaxPrice: 800},
+			want:    tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", MaxPrice: 800},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := mergeParams(tt.prev, tt.partial)
+			if got != tt.want {
+				t.Errorf("mergeParams() =\n  %+v\nwant\n  %+v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParsePartialParams(t *testing.T) {
+	// Full JSON should parse.
+	_, ok := parsePartialParams(`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}`)
+	if !ok {
+		t.Error("expected full JSON to parse as partial")
+	}
+
+	// Partial JSON with only cabin should parse.
+	p, ok := parsePartialParams(`{"cabin":"business"}`)
+	if !ok {
+		t.Error("expected partial JSON with cabin to parse")
+	}
+	if p.Cabin != "business" {
+		t.Errorf("Cabin = %q, want %q", p.Cabin, "business")
+	}
+
+	// Empty JSON should NOT parse (no recognized fields set).
+	_, ok = parsePartialParams(`{}`)
+	if ok {
+		t.Error("expected empty JSON to not parse as partial")
+	}
+
+	// Non-JSON should NOT parse.
+	_, ok = parsePartialParams("Can you try a different date?")
+	if ok {
+		t.Error("expected non-JSON to not parse as partial")
+	}
+}
+
+func TestChatLoop_FollowUpPartialParams(t *testing.T) {
+	// First response: full params -> triggers search.
+	// Second response: partial params (cabin only) -> should merge and re-search.
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15","cabin":"economy"}
+Searching for flights.`,
+		`{"cabin":"business"}
+Switching to business class.`,
+	}
+	mock := &chatMockLLM{responses: responses, captureHistory: true}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 800, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ", Airline: "AC"}}}}},
+				TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\ntry business class\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	// First search: economy.
+	if !strings.Contains(output, "Searching DEL -> YYZ") {
+		t.Errorf("expected first search, got:\n%s", output)
+	}
+	// Second search should still be DEL -> YYZ (merged from prev).
+	// Count occurrences of "Searching DEL -> YYZ".
+	count := strings.Count(output, "Searching DEL -> YYZ")
+	if count < 2 {
+		t.Errorf("expected 2 searches for DEL -> YYZ, got %d in:\n%s", count, output)
+	}
+}
+
 func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && indexOf(s, substr) >= 0
 }

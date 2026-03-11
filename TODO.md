@@ -40,12 +40,12 @@ Carried from: Day 37 (all completed)
 - [x] Verify tests pass
 
 ## Task 103: Consolidate stage 3 filter logging
-**Status:** in-progress
-**Plan:** Extract applyFilter helper to reduce ~60 lines of before/after counting to a compact loop.
-- [ ] Extract applyFilter helper or use compact loop pattern
-- [ ] Replace verbose before/after counting with consolidated logic
-- [ ] Verify existing multicity tests pass
-- [ ] Verify build + vet pass
+**Status:** done
+**Plan:** Extract applyBoth closure to reduce repetitive before/after counting. MaxStops handled separately (different params per leg).
+- [x] Extract applyBoth helper closure for filter + drop counting
+- [x] Replace verbose before/after counting with consolidated logic
+- [x] Handle MaxStops separately (different per-leg params)
+- [x] Verify existing multicity tests pass + build + vet + lint
 
 ## Task 104: No-results filter suggestion in chat
 **Status:** done

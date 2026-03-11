@@ -335,60 +335,46 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 	//     via stopover duration (leg1_arrival + 2-4 days).
 	// ---------------------------------------------------------------
 	for i := range pairs {
-		before1, before2 := len(pairs[i].leg1), len(pairs[i].leg2)
+		// Apply all per-flight filters to both legs.
+		// applyBoth applies a filter to both legs and returns the drop counts.
+		type filterFunc func([]types.Flight) []types.Flight
+		applyBoth := func(f filterFunc) (int, int) {
+			b1, b2 := len(pairs[i].leg1), len(pairs[i].leg2)
+			pairs[i].leg1 = f(pairs[i].leg1)
+			pairs[i].leg2 = f(pairs[i].leg2)
+			return b1 - len(pairs[i].leg1), b2 - len(pairs[i].leg2)
+		}
 
-		// 3a: blocked airlines/hubs
-		pairs[i].leg1 = search.FilterFlights(pairs[i].leg1)
-		pairs[i].leg2 = search.FilterFlights(pairs[i].leg2)
+		blocked1, blocked2 := applyBoth(search.FilterFlights)
+		zero1, zero2 := applyBoth(search.FilterZeroPrices)
 
-		blocked1 := before1 - len(pairs[i].leg1)
-		blocked2 := before2 - len(pairs[i].leg2)
-
-		// 3b: zero-price artifacts
-		before1z, before2z := len(pairs[i].leg1), len(pairs[i].leg2)
-		pairs[i].leg1 = search.FilterZeroPrices(pairs[i].leg1)
-		pairs[i].leg2 = search.FilterZeroPrices(pairs[i].leg2)
-		zero1 := before1z - len(pairs[i].leg1)
-		zero2 := before2z - len(pairs[i].leg2)
-
-		// 3c: max layovers
-		before1s, before2s := len(pairs[i].leg1), len(pairs[i].leg2)
+		// Max layovers: different limits per leg.
+		b1 := len(pairs[i].leg1)
 		pairs[i].leg1 = search.FilterByMaxStops(pairs[i].leg1, params.MaxLayoversLeg1)
+		stops1 := b1 - len(pairs[i].leg1)
+		b2 := len(pairs[i].leg2)
 		pairs[i].leg2 = search.FilterByMaxStops(pairs[i].leg2, params.MaxLayoversLeg2)
-		stops1 := before1s - len(pairs[i].leg1)
-		stops2 := before2s - len(pairs[i].leg2)
+		stops2 := b2 - len(pairs[i].leg2)
+		alliance1, alliance2 := applyBoth(func(f []types.Flight) []types.Flight {
+			return search.FilterByAlliance(f, params.PreferredAlliance)
+		})
+		depTime1, depTime2 := applyBoth(func(f []types.Flight) []types.Flight {
+			return search.FilterByDepartureTime(f, params.DepartureAfter, params.DepartureBefore)
+		})
+		applyBoth(func(f []types.Flight) []types.Flight {
+			return search.FilterByArrivalTime(f, params.ArrivalAfter, params.ArrivalBefore)
+		})
+		applyBoth(func(f []types.Flight) []types.Flight {
+			return search.FilterByMaxDuration(f, params.MaxDuration)
+		})
+		applyBoth(func(f []types.Flight) []types.Flight {
+			return search.FilterByAvoidAirlines(f, params.AvoidAirlines)
+		})
+		applyBoth(func(f []types.Flight) []types.Flight {
+			return search.FilterByPreferredAirlines(f, params.PreferredAirlines)
+		})
 
-		// 3d: alliance preference
-		before1a, before2a := len(pairs[i].leg1), len(pairs[i].leg2)
-		pairs[i].leg1 = search.FilterByAlliance(pairs[i].leg1, params.PreferredAlliance)
-		pairs[i].leg2 = search.FilterByAlliance(pairs[i].leg2, params.PreferredAlliance)
-		alliance1 := before1a - len(pairs[i].leg1)
-		alliance2 := before2a - len(pairs[i].leg2)
-
-		// 3e: departure time-of-day preference
-		before1t, before2t := len(pairs[i].leg1), len(pairs[i].leg2)
-		pairs[i].leg1 = search.FilterByDepartureTime(pairs[i].leg1, params.DepartureAfter, params.DepartureBefore)
-		pairs[i].leg2 = search.FilterByDepartureTime(pairs[i].leg2, params.DepartureAfter, params.DepartureBefore)
-		depTime1 := before1t - len(pairs[i].leg1)
-		depTime2 := before2t - len(pairs[i].leg2)
-
-		// 3f: arrival time-of-day preference
-		pairs[i].leg1 = search.FilterByArrivalTime(pairs[i].leg1, params.ArrivalAfter, params.ArrivalBefore)
-		pairs[i].leg2 = search.FilterByArrivalTime(pairs[i].leg2, params.ArrivalAfter, params.ArrivalBefore)
-
-		// 3g: max duration
-		pairs[i].leg1 = search.FilterByMaxDuration(pairs[i].leg1, params.MaxDuration)
-		pairs[i].leg2 = search.FilterByMaxDuration(pairs[i].leg2, params.MaxDuration)
-
-		// 3h: avoid airlines
-		pairs[i].leg1 = search.FilterByAvoidAirlines(pairs[i].leg1, params.AvoidAirlines)
-		pairs[i].leg2 = search.FilterByAvoidAirlines(pairs[i].leg2, params.AvoidAirlines)
-
-		// 3i: preferred airlines
-		pairs[i].leg1 = search.FilterByPreferredAirlines(pairs[i].leg1, params.PreferredAirlines)
-		pairs[i].leg2 = search.FilterByPreferredAirlines(pairs[i].leg2, params.PreferredAirlines)
-
-		// 3j: date window (leg1 only)
+		// Date window (leg1 only).
 		beforeDate := len(pairs[i].leg1)
 		pairs[i].leg1 = search.FilterByDateRange(pairs[i].leg1, dateEarliest, dateLatest)
 		dateDrop := beforeDate - len(pairs[i].leg1)

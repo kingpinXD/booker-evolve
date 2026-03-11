@@ -440,3 +440,6 @@ Added DELToJFKStopovers (8 cities) and BOMToJFKStopovers (7 cities) with curated
 
 ### Session 38, Task 5 -- No-results filter suggestion in chat
 Added filterSuggestion(tripParams) that checks 8 optional filter categories and suggests relaxing them when search returns zero results. Wired into chatLoop after the no-results message. 10 new tests (9 table-driven for active filters + 1 no-filters case). Implemented in parallel worktree.
+
+### Session 38, Task 4 -- Consolidate stage 3 filter logging
+Extracted applyBoth closure in stage 3 filter loop to eliminate repetitive before/after counting. Each filter application is now one line (plus a closure wrapper for parameterized filters). MaxStops kept separate since it uses different per-leg parameters. Same log output format preserved. Net reduction: ~15 lines while maintaining identical behavior.

@@ -688,3 +688,27 @@ Key changes:
 4. SIN/DXB stopovers: 4 new corridors (25 total, 50 bidirectional)
 
 Zero SerpAPI or LLM API calls used. Build, tests, vet all clean.
+
+## Session 52, Task 1 -- parsePartialParams reflection refactor
+Replaced the 10-line OR chain checking every tripParams field for non-zero with a reflection-based anyFieldSet helper. Mirrors the mergeParams refactor from Day 51. All existing tests pass unchanged.
+
+## Session 52, Task 2 -- Price insights in chat conversation history
+Added PriceInsights parameter to resultSummaryForChat. When price level data is available, appends "Typical prices: $X-$Y (price level: Z)" to the summary so the LLM can reference price context when advising the user. 2 new tests.
+
+## Session 52, Tasks 3+4 -- India-Seoul and India-Hong Kong stopover corridors
+Added DEL/BOM -> ICN (5+4 cities via BKK, SIN, HKG, TPE, KUL) and DEL/BOM -> HKG (5+4 cities via BKK, SIN, KUL, CCU, TPE). Ran in parallel worktree. 4 new route-specific tests. 29 route-specific corridors total (58 bidirectional).
+
+## Session 52, Task 5 -- displayChatResults extraction
+Extracted format switch + price insights display from chatLoop into displayChatResults helper. Reduces chatLoop complexity and makes the display path independently testable. 2 new tests for table and JSON modes.
+
+## Session 52 -- Summary
+
+All 5 planned tasks completed across 4 commits with zero reverts and zero API calls.
+
+Key changes:
+1. anyFieldSet reflection helper: parsePartialParams auto-supports new tripParams fields
+2. Price insights in LLM context: resultSummaryForChat includes typical price range when available
+3. ICN/HKG stopovers: 4 new corridors (29 total, 58 bidirectional)
+4. displayChatResults extraction: format selection + price insights in standalone function
+
+Zero SerpAPI or LLM API calls used. Build, tests, vet, lint all clean.

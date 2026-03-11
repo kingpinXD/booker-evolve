@@ -55,6 +55,17 @@ func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Iti
 			return nil, err
 		}
 		itineraries = combineRoundTrip(outbound, returnFlights)
+		// Per-leg FilterByMaxPrice already ran in searchFlights, but the
+		// combined total can exceed max_price. Filter by total price.
+		if req.MaxPrice > 0 {
+			filtered := itineraries[:0]
+			for _, itin := range itineraries {
+				if itin.TotalPrice.Amount <= req.MaxPrice {
+					filtered = append(filtered, itin)
+				}
+			}
+			itineraries = filtered
+		}
 	default:
 		// One-way: convert each outbound flight to a single-leg itinerary.
 		itineraries = make([]search.Itinerary, 0, len(outbound))

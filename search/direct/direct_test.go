@@ -793,6 +793,74 @@ func TestDirectSearch_OneWayUnchanged(t *testing.T) {
 	}
 }
 
+func TestSearch_RoundTrip_MaxPriceTotalFilter(t *testing.T) {
+	outDep := time.Date(2026, 3, 24, 8, 0, 0, 0, time.UTC)
+	retDep := time.Date(2026, 3, 31, 10, 0, 0, 0, time.UTC)
+
+	rp := &routeProvider{
+		name: "route-fake",
+		flights: map[string][]types.Flight{
+			"DEL-LHR-2026-03-24": {
+				{
+					Price: types.Money{Amount: 400, Currency: "USD"}, TotalDuration: 10 * time.Hour,
+					Outbound: []types.Segment{{
+						Airline: "AI", FlightNumber: "AI100", Origin: "DEL", Destination: "LHR",
+						DepartureTime: outDep, ArrivalTime: outDep.Add(10 * time.Hour), Duration: 10 * time.Hour,
+					}},
+				},
+				{
+					Price: types.Money{Amount: 500, Currency: "USD"}, TotalDuration: 11 * time.Hour,
+					Outbound: []types.Segment{{
+						Airline: "BA", FlightNumber: "BA200", Origin: "DEL", Destination: "LHR",
+						DepartureTime: outDep.Add(2 * time.Hour), ArrivalTime: outDep.Add(13 * time.Hour), Duration: 11 * time.Hour,
+					}},
+				},
+			},
+			"LHR-DEL-2026-03-31": {
+				{
+					Price: types.Money{Amount: 350, Currency: "USD"}, TotalDuration: 9 * time.Hour,
+					Outbound: []types.Segment{{
+						Airline: "AI", FlightNumber: "AI101", Origin: "LHR", Destination: "DEL",
+						DepartureTime: retDep, ArrivalTime: retDep.Add(9 * time.Hour), Duration: 9 * time.Hour,
+					}},
+				},
+				{
+					Price: types.Money{Amount: 500, Currency: "USD"}, TotalDuration: 10 * time.Hour,
+					Outbound: []types.Segment{{
+						Airline: "BA", FlightNumber: "BA201", Origin: "LHR", Destination: "DEL",
+						DepartureTime: retDep.Add(2 * time.Hour), ArrivalTime: retDep.Add(12 * time.Hour), Duration: 10 * time.Hour,
+					}},
+				},
+			},
+		},
+	}
+
+	r := provider.NewRegistry()
+	_ = r.Register(rp)
+
+	s := NewSearcher(r, nil)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin: "DEL", Destination: "LHR",
+		DepartureDate: "2026-03-24",
+		ReturnDate:    "2026-03-31",
+		Passengers:    1, CabinClass: types.CabinEconomy, MaxStops: -1,
+		MaxPrice: 800,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Without total-price filter: 2x2 = 4 combos.
+	// With MaxPrice=800: only AI($400)+AI($350)=$750 survives.
+	// AI($400)+BA($500)=$900, BA($500)+AI($350)=$850, BA($500)+BA($500)=$1000 all filtered.
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result (total price <= 800), got %d", len(results))
+	}
+	if results[0].TotalPrice.Amount != 750 {
+		t.Errorf("expected total price 750, got %.0f", results[0].TotalPrice.Amount)
+	}
+}
+
 func TestFlightToItinerary_EmptyOutbound(t *testing.T) {
 	f := types.Flight{
 		Price:         types.Money{Amount: 100, Currency: "USD"},

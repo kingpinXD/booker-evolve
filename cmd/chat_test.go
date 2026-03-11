@@ -1115,6 +1115,59 @@ func TestRefinementHint_AvoidAirlines(t *testing.T) {
 	}
 }
 
+func TestParsePartialParams_Leg2Date(t *testing.T) {
+	p, ok := parsePartialParams(`{"leg2_date":"2025-06-20"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with leg2_date to parse")
+	}
+	if p.Leg2Date != "2025-06-20" {
+		t.Errorf("Leg2Date = %q, want %q", p.Leg2Date, "2025-06-20")
+	}
+}
+
+func TestMergeParams_Leg2Date(t *testing.T) {
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Leg2Date: "2025-06-20"}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.Leg2Date != "2025-06-20" {
+		t.Errorf("Leg2Date = %q, want %q (preserved from prev)", got.Leg2Date, "2025-06-20")
+	}
+
+	// Partial overrides prev.
+	partial2 := tripParams{Leg2Date: "2025-06-25"}
+	got2 := mergeParams(prev, partial2)
+	if got2.Leg2Date != "2025-06-25" {
+		t.Errorf("Leg2Date = %q, want %q (overridden by partial)", got2.Leg2Date, "2025-06-25")
+	}
+}
+
+func TestBuildRequestFromParams_Leg2Date(t *testing.T) {
+	params := tripParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2025-06-15",
+		Leg2Date:      "2025-06-20",
+	}
+	req := buildRequestFromParams(params)
+	if req.Leg2Date != "2025-06-20" {
+		t.Errorf("Leg2Date = %q, want %q", req.Leg2Date, "2025-06-20")
+	}
+}
+
+func TestChatSystemPrompt_Leg2Date(t *testing.T) {
+	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
+	if !strings.Contains(prompt, "leg2_date") {
+		t.Error("system prompt should mention leg2_date")
+	}
+}
+
+func TestRefinementHint_Leg2Date(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "leg2_date") {
+		t.Error("refinement hint should mention leg2_date")
+	}
+}
+
 func TestChatLoop_PriceInsightsInOutput(t *testing.T) {
 	responses := []string{
 		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}

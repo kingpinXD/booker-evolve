@@ -33,8 +33,8 @@ func TestNewStrategy(t *testing.T) {
 	if s == nil {
 		t.Fatal("NewStrategy returned nil")
 	}
-	if s.leg2Date != "2026-04-01" {
-		t.Errorf("leg2Date = %q, want %q", s.leg2Date, "2026-04-01")
+	if s.defaultLeg2Date != "2026-04-01" {
+		t.Errorf("leg2Date = %q, want %q", s.defaultLeg2Date, "2026-04-01")
 	}
 }
 
@@ -51,7 +51,7 @@ func TestStrategy_RequestMapping(t *testing.T) {
 		MaxResults:    5,
 	}
 
-	s := &Strategy{leg2Date: "2026-03-30"}
+	s := &Strategy{defaultLeg2Date: "2026-03-30"}
 	params := s.toSearchParams(req)
 
 	if params.Origin != "DEL" {
@@ -86,6 +86,59 @@ func TestStrategy_RequestMapping(t *testing.T) {
 	}
 }
 
+// TestStrategy_RequestMapping_Leg2DateOverride verifies req.Leg2Date overrides default.
+func TestStrategy_RequestMapping_Leg2DateOverride(t *testing.T) {
+	req := search.Request{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2026-03-24",
+		Passengers:    1,
+		Leg2Date:      "2026-04-05",
+	}
+
+	s := &Strategy{defaultLeg2Date: "2026-03-30"}
+	params := s.toSearchParams(req)
+
+	if params.Leg2Date != "2026-04-05" {
+		t.Errorf("Leg2Date = %q, want %q (req should override default)", params.Leg2Date, "2026-04-05")
+	}
+}
+
+// TestStrategy_RequestMapping_Leg2DateFallback verifies defaultLeg2Date is used when req has none.
+func TestStrategy_RequestMapping_Leg2DateFallback(t *testing.T) {
+	req := search.Request{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2026-03-24",
+		Passengers:    1,
+	}
+
+	s := &Strategy{defaultLeg2Date: "2026-03-30"}
+	params := s.toSearchParams(req)
+
+	if params.Leg2Date != "2026-03-30" {
+		t.Errorf("Leg2Date = %q, want %q (should fall back to default)", params.Leg2Date, "2026-03-30")
+	}
+}
+
+// TestStrategy_RequestMapping_AvoidAirlines verifies AvoidAirlines maps from Request.
+func TestStrategy_RequestMapping_AvoidAirlines(t *testing.T) {
+	req := search.Request{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2026-03-24",
+		Passengers:    1,
+		AvoidAirlines: "BA,LH",
+	}
+
+	s := &Strategy{defaultLeg2Date: "2026-03-30"}
+	params := s.toSearchParams(req)
+
+	if params.AvoidAirlines != "BA,LH" {
+		t.Errorf("AvoidAirlines = %q, want %q", params.AvoidAirlines, "BA,LH")
+	}
+}
+
 // TestStrategy_RequestMapping_PreferredAlliance verifies PreferredAlliance maps from Request.
 func TestStrategy_RequestMapping_PreferredAlliance(t *testing.T) {
 	req := search.Request{
@@ -96,7 +149,7 @@ func TestStrategy_RequestMapping_PreferredAlliance(t *testing.T) {
 		PreferredAlliance: "Star Alliance",
 	}
 
-	s := &Strategy{leg2Date: "2026-03-30"}
+	s := &Strategy{defaultLeg2Date: "2026-03-30"}
 	params := s.toSearchParams(req)
 
 	if params.PreferredAlliance != "Star Alliance" {
@@ -114,7 +167,7 @@ func TestStrategy_RequestMapping_MaxPrice(t *testing.T) {
 		MaxPrice:      1500,
 	}
 
-	s := &Strategy{leg2Date: "2026-03-30"}
+	s := &Strategy{defaultLeg2Date: "2026-03-30"}
 	params := s.toSearchParams(req)
 
 	if params.MaxPrice != 1500 {
@@ -133,7 +186,7 @@ func TestStrategy_RequestMapping_DepartureTime(t *testing.T) {
 		DepartureBefore: "22:00",
 	}
 
-	s := &Strategy{leg2Date: "2026-03-30"}
+	s := &Strategy{defaultLeg2Date: "2026-03-30"}
 	params := s.toSearchParams(req)
 
 	if params.DepartureAfter != "06:00" {

@@ -44,6 +44,7 @@ type tripParams struct {
 	Destination       string  `json:"destination"`
 	DepartureDate     string  `json:"departure_date"`
 	ReturnDate        string  `json:"return_date,omitempty"`
+	Leg2Date          string  `json:"leg2_date,omitempty"`
 	Passengers        int     `json:"passengers,omitempty"`
 	Cabin             string  `json:"cabin,omitempty"`
 	MaxPrice          float64 `json:"max_price,omitempty"`
@@ -71,6 +72,7 @@ Required:
 
 Optional:
 - return_date: in YYYY-MM-DD format (for round trips)
+- leg2_date: in YYYY-MM-DD format (for multi-city trips — when the traveler leaves the stopover city)
 - passengers: number of travelers (default: 1)
 - cabin: economy, premium_economy, business, or first (default: economy)
 - max_price: maximum budget per flight in USD (e.g. 1200)
@@ -164,6 +166,7 @@ func buildRequestFromParams(p tripParams) search.Request {
 		Destination:       p.Destination,
 		DepartureDate:     p.DepartureDate,
 		ReturnDate:        p.ReturnDate,
+		Leg2Date:          p.Leg2Date,
 		Passengers:        passengers,
 		CabinClass:        types.CabinClass(cabin),
 		FlexDays:          flexDays,
@@ -253,6 +256,9 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if merged.ReturnDate == "" {
 		merged.ReturnDate = prev.ReturnDate
 	}
+	if merged.Leg2Date == "" {
+		merged.Leg2Date = prev.Leg2Date
+	}
 	if merged.Passengers == 0 {
 		merged.Passengers = prev.Passengers
 	}
@@ -313,7 +319,7 @@ func parsePartialParams(response string) (tripParams, bool) {
 		}
 		// At least one field must be set.
 		if p.Origin != "" || p.Destination != "" || p.DepartureDate != "" ||
-			p.ReturnDate != "" || p.Passengers != 0 || p.Cabin != "" ||
+			p.ReturnDate != "" || p.Leg2Date != "" || p.Passengers != 0 || p.Cabin != "" ||
 			p.MaxPrice != 0 || p.DirectOnly || p.FlexDays != 0 ||
 			p.Profile != "" || p.PreferredAlliance != "" ||
 			p.DepartureAfter != "" || p.DepartureBefore != "" ||
@@ -340,6 +346,7 @@ func refinementHint() string {
 		"try different dates, search nearby airports for cheaper fares, " +
 		"change cabin class (economy/business/first), filter to direct flights only, " +
 		"adjust number of passengers, add a return date for round-trip pricing, " +
+		"set leg2_date for multi-city trips (YYYY-MM-DD, date to leave the stopover city), " +
 		"adjust date flexibility (flex_days), " +
 		"change ranking profile (budget/comfort/balanced), " +
 		"filter by preferred_alliance (Star Alliance/OneWorld/SkyTeam), " +

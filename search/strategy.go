@@ -25,6 +25,7 @@ type Request struct {
 	Destination       string // IATA code, e.g. "YYZ"
 	DepartureDate     string // YYYY-MM-DD
 	ReturnDate        string // YYYY-MM-DD, empty for one-way
+	Leg2Date          string // YYYY-MM-DD, for multicity second leg departure
 	Passengers        int
 	CabinClass        types.CabinClass
 	FlexDays          int

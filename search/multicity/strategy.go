@@ -8,13 +8,13 @@ import (
 
 // Strategy adapts the multicity Searcher to implement search.Strategy.
 type Strategy struct {
-	searcher *Searcher
-	leg2Date string // provided at construction time from CLI flag
+	searcher        *Searcher
+	defaultLeg2Date string // fallback from CLI flag; overridden by req.Leg2Date
 }
 
 // NewStrategy wraps a Searcher as a search.Strategy.
 func NewStrategy(searcher *Searcher, leg2Date string) *Strategy {
-	return &Strategy{searcher: searcher, leg2Date: leg2Date}
+	return &Strategy{searcher: searcher, defaultLeg2Date: leg2Date}
 }
 
 // Name returns the strategy identifier.
@@ -34,11 +34,15 @@ func (s *Strategy) Search(ctx context.Context, req search.Request) ([]search.Iti
 }
 
 func (s *Strategy) toSearchParams(req search.Request) SearchParams {
+	leg2Date := req.Leg2Date
+	if leg2Date == "" {
+		leg2Date = s.defaultLeg2Date
+	}
 	return SearchParams{
 		Origin:            req.Origin,
 		Destination:       req.Destination,
 		DepartureDate:     req.DepartureDate,
-		Leg2Date:          s.leg2Date,
+		Leg2Date:          leg2Date,
 		Passengers:        req.Passengers,
 		CabinClass:        req.CabinClass,
 		FlexDays:          req.FlexDays,
@@ -49,5 +53,6 @@ func (s *Strategy) toSearchParams(req search.Request) SearchParams {
 		MaxPrice:          req.MaxPrice,
 		DepartureAfter:    req.DepartureAfter,
 		DepartureBefore:   req.DepartureBefore,
+		AvoidAirlines:     req.AvoidAirlines,
 	}
 }

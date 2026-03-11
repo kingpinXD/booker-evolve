@@ -396,11 +396,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		cur := viper.GetString(keyCurrency)
 		switch viper.GetString(keyFormat) {
 		case "json":
-			if err := printJSON(results, cur); err != nil {
+			if err := printJSON(out, results, cur); err != nil {
 				_, _ = fmt.Fprintf(out, "Error: %v\n", err)
 			}
 		default:
-			printTable(results, cur)
+			printTable(out, results, cur)
 		}
 
 		// Add result summary and refinement guidance to conversation history

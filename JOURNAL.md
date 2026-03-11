@@ -149,3 +149,8 @@ Added "Reason" column to table output and "reasoning" field to jsonItinerary. Th
 
 ### Session 21, Task 5 -- Lint, gofmt sweep, and build gate
 All gates clean after merging worktree branches: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all pass.
+
+## Day 22
+
+### Session 22, Task 1 -- Fix chat output routing to use io.Writer
+Added `io.Writer` parameter to `printTable`, `printJSON`, and `printJSONWithInsights`. chatLoop now routes all search output through its `out` writer instead of hardcoding os.Stdout. Removed os.Pipe hacks from tests in favor of direct buffer writes. Added new test confirming chatLoop output buffer captures table data.

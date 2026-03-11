@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
-	"os"
 	"testing"
 	"time"
 
@@ -255,21 +254,11 @@ func TestPrintJSON_BookingURL(t *testing.T) {
 	leg.Flight.BookingURL = "https://book.example.com/abc123"
 	itins := []search.Itinerary{makeItin(leg)}
 
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	err := printJSON(itins, "USD")
-
-	_ = w.Close()
-	os.Stdout = old
-
+	var buf bytes.Buffer
+	err := printJSON(&buf, itins, "USD")
 	if err != nil {
 		t.Fatalf("printJSON error: %v", err)
 	}
-
-	var buf bytes.Buffer
-	_, _ = buf.ReadFrom(r)
 
 	var results []jsonItinerary
 	if err := json.Unmarshal(buf.Bytes(), &results); err != nil {
@@ -288,22 +277,11 @@ func TestPrintJSON_SingleLeg(t *testing.T) {
 		makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)),
 	}
 
-	// Capture stdout.
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	err := printJSON(itins, "USD")
-
-	_ = w.Close()
-	os.Stdout = old
-
+	var buf bytes.Buffer
+	err := printJSON(&buf, itins, "USD")
 	if err != nil {
 		t.Fatalf("printJSON error: %v", err)
 	}
-
-	var buf bytes.Buffer
-	_, _ = buf.ReadFrom(r)
 
 	var results []jsonItinerary
 	if err := json.Unmarshal(buf.Bytes(), &results); err != nil {
@@ -326,17 +304,8 @@ func TestPrintJSON_SingleLeg(t *testing.T) {
 // --- printTable ---
 
 func capturePrintTable(itins []search.Itinerary, cur string) string {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	printTable(itins, cur)
-
-	_ = w.Close()
-	os.Stdout = old
-
 	var buf bytes.Buffer
-	_, _ = buf.ReadFrom(r)
+	printTable(&buf, itins, cur)
 	return buf.String()
 }
 

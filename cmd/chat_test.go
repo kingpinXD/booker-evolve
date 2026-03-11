@@ -595,6 +595,48 @@ func TestMergeParams_DirectOnly(t *testing.T) {
 	}
 }
 
+func TestChatLoop_OutputContainsResultData(t *testing.T) {
+	// Verify that chatLoop writes search result data (price, route) to the
+	// provided io.Writer, not to os.Stdout.
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs: []search.Leg{{Flight: types.Flight{
+					Price:    types.Money{Amount: 750, Currency: "USD"},
+					Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ", Airline: "AC", DepartureTime: time.Date(2025, 6, 15, 8, 0, 0, 0, time.UTC), ArrivalTime: time.Date(2025, 6, 15, 20, 0, 0, 0, time.UTC)}},
+				}}},
+				TotalPrice: types.Money{Amount: 750, Currency: "USD"},
+				Score:      90,
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	// The table output (price, route) must appear in the writer, not just os.Stdout.
+	if !strings.Contains(output, "DEL") || !strings.Contains(output, "YYZ") {
+		t.Errorf("chatLoop output missing route data, got:\n%s", output)
+	}
+	// Price is converted to display currency (CAD by default), so check for
+	// the table structure rather than the raw USD amount.
+	if !strings.Contains(output, "PRICE") {
+		t.Errorf("chatLoop output missing table header, got:\n%s", output)
+	}
+}
+
 func TestProfileWeights(t *testing.T) {
 	tests := []struct {
 		name    string

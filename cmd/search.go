@@ -157,9 +157,9 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	insights := rawProvider.LastPriceInsights()
 	switch viper.GetString(keyFormat) {
 	case "json":
-		return printJSONWithInsights(results, cur, insights)
+		return printJSONWithInsights(os.Stdout, results, cur, insights)
 	default:
-		printTable(results, cur)
+		printTable(os.Stdout, results, cur)
 		if s := formatPriceInsights(insights); s != "" {
 			fmt.Println(s)
 		}
@@ -177,9 +177,9 @@ func isMultiLeg(itineraries []search.Itinerary) bool {
 	return false
 }
 
-func printTable(itineraries []search.Itinerary, cur string) {
+func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 	t := table.NewWriter()
-	t.SetOutputMirror(os.Stdout)
+	t.SetOutputMirror(w)
 	t.SetStyle(table.StyleRounded)
 
 	multiLeg := isMultiLeg(itineraries)
@@ -230,12 +230,12 @@ func printTable(itineraries []search.Itinerary, cur string) {
 		}
 	}
 
-	fmt.Println()
+	_, _ = fmt.Fprintln(w)
 	t.Render()
 	if s := priceSummary(itineraries, cur); s != "" {
-		fmt.Println(s)
+		_, _ = fmt.Fprintln(w, s)
 	}
-	fmt.Println()
+	_, _ = fmt.Fprintln(w)
 }
 
 // priceSummary returns a one-line summary of price range and result count.
@@ -402,7 +402,7 @@ type jsonPriceInsights struct {
 	TypicalPriceRange [2]float64 `json:"typical_price_range,omitempty"`
 }
 
-func printJSONWithInsights(itineraries []search.Itinerary, cur string, pi search.PriceInsights) error {
+func printJSONWithInsights(w io.Writer, itineraries []search.Itinerary, cur string, pi search.PriceInsights) error {
 	type jsonOutput struct {
 		Results       []jsonItinerary    `json:"results"`
 		PriceInsights *jsonPriceInsights `json:"price_insights,omitempty"`
@@ -418,7 +418,7 @@ func printJSONWithInsights(itineraries []search.Itinerary, cur string, pi search
 		}
 	}
 
-	enc := json.NewEncoder(os.Stdout)
+	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
 }
@@ -462,9 +462,9 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 	return out
 }
 
-func printJSON(itineraries []search.Itinerary, cur string) error {
+func printJSON(w io.Writer, itineraries []search.Itinerary, cur string) error {
 	out := buildJSONItineraries(itineraries, cur)
-	enc := json.NewEncoder(os.Stdout)
+	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
 }

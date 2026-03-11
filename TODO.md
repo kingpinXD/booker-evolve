@@ -31,14 +31,14 @@ Carried from: Day 34 (all completed)
 - [x] Verify existing tests still pass
 
 ## Task 87: Richer result summary in chat history
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Write test with 5+ results expecting top 3 in summary
-- [ ] Write test with 1-2 results for graceful degradation
-- [ ] Modify resultSummaryForChat to include top 3 results
-- [ ] Include price, airline, duration, stops per result
-- [ ] Verify 0-result case unchanged
-- [ ] Verify existing chat tests still pass
+**Status:** done
+**Plan:** Expand resultSummaryForChat to show top 3 results (price, airline, duration, stops). Graceful degradation for <3 results.
+- [x] Write test with 5+ results expecting top 3 in summary
+- [x] Write test with 1-2 results for graceful degradation
+- [x] Modify resultSummaryForChat to include top 3 results
+- [x] Include price, airline, duration, stops per result
+- [x] Verify 0-result case unchanged
+- [x] Verify existing chat tests still pass
 
 ## Task 88: Preferred airlines filter (positive filter)
 **Status:** done
@@ -53,12 +53,12 @@ Carried from: Day 34 (all completed)
 - [x] Write chat tests
 
 ## Task 89: Ranker LLM response caching
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Write test: identical itineraries + weights -> cache hit (mock LLM called once)
-- [ ] Write test: different itineraries -> cache miss
-- [ ] Write test: different weights -> cache miss
-- [ ] Implement cache key generation (hash sorted candidates + weights)
-- [ ] Add in-memory cache map to Ranker struct
-- [ ] Short-circuit Rank() on cache hit
-- [ ] Remove TODO comment from ranker.go
+**Status:** done
+**Plan:** SHA-256 cache key from weights + itinerary data. In-memory map on Ranker. Short-circuit Rank() on cache hit.
+- [x] Write test: identical itineraries + weights -> cache hit (mock LLM called once)
+- [x] Write test: different itineraries -> cache miss
+- [x] Write test: different weights -> cache miss
+- [x] Implement cache key generation (hash sorted candidates + weights)
+- [x] Add in-memory cache map to Ranker struct
+- [x] Short-circuit Rank() on cache hit
+- [x] Remove TODO comment from ranker.go

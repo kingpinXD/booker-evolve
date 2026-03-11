@@ -109,3 +109,7 @@ Tasks 82 (arrival time filter) and 83 (max duration filter) touched the exact sa
 ## Lesson: Field renames in structs break test files referencing internal fields
 
 Renaming Strategy.leg2Date to Strategy.defaultLeg2Date broke strategy_test.go which accessed the unexported field directly (s.leg2Date, &Strategy{leg2Date:}). When renaming struct fields, always grep the test files for direct references to the old name. Use replace_all to fix all occurrences in one pass rather than hunting them down individually.
+
+## Lesson: Parallel worktree agents work well for disjoint package work
+
+Session 35 ran Tasks 87 (cmd/chat.go only) and 89 (search/multicity/ranker.go only) as parallel worktree agents while main worked on Tasks 85+86+88 sequentially. Both parallel agents completed successfully with no merge conflicts. The key constraint is strict file disjointness -- the chat task touched chat.go/chat_test.go and the ranker task touched ranker.go/ranker_test.go, with zero overlap. Rebasing both branches into main after the sequential tasks completed cleanly. This pattern saves significant wall-clock time on 5-task sessions.

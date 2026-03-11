@@ -369,3 +369,22 @@ Completed all 5 planned tasks (+ pre-task gofmt commit) in 5 commits with zero r
 ## Session 34 -- 11:32 -- CLI-chat parity, arrival/duration filters, and helper coverage
 
 Completed all planned tasks plus a pre-task gofmt fix in 6 commits with zero reverts and zero API calls. The major milestone is full CLI-chat parity: avoid_airlines was the last search.Request field not wired into the chat conversation, and leg2_date enables multicity trip planning from chat for the first time. Added two new filter types -- FilterByArrivalTime and FilterByMaxDuration -- wired end-to-end through direct pipeline, multicity stages, CLI flags, and chat tripParams. Combined arrival and duration filter tasks into one commit since they share >80% of their files. Improved cmd helper coverage with edge-case tests for empty-segment and out-of-bounds paths. Coverage at ~85% across 15 packages. All build gates pass.
+
+### Session 35, Task 1 -- Next-day arrival indicator
+Added isNextDay helper comparing departure/arrival dates. legArrival now appends (+N) marker for cross-day flights. Added arrival_next_day boolean to JSON output. 8 new tests covering same-day, next-day, multi-day, and JSON omitempty.
+
+### Session 35, Task 2 -- Operating carrier display (codeshare)
+legAirlines now appends "(op. XX)" when OperatingCarrier differs from marketing Airline. Added operating_carrier to JSON output. 5 new tests for codeshare, same-carrier, and empty-carrier cases.
+
+### Session 35, Task 3 -- Richer result summary in chat
+Expanded resultSummaryForChat from top-1 to top-3 results, each showing airline, duration, stops, and price. Graceful degradation for 1-2 results. 4 new tests.
+
+### Session 35, Task 4 -- Preferred airlines filter
+Added FilterByPreferredAirlines (positive filter: keep only matching airline/operating carrier). Wired end-to-end through search.Request, direct pipeline, multicity (FILTER + 4b), strategy adapter, CLI flag, and chat (tripParams, parse/merge/build/prompt/hint). 9 new tests.
+
+### Session 35, Task 5 -- Ranker LLM response caching
+Added in-memory cache to Ranker keyed by SHA-256 hash of weights + itinerary data. Identical candidate sets skip the LLM call. Introduced rankerLLM interface for testability. Removed TODO comment. 3 new tests verifying cache hit, miss on different itineraries, and miss on different weights.
+
+## Session 35 -- New display features, preferred airlines filter, ranker caching
+
+Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Used parallel worktree agents for Tasks 87 (chat summary) and 89 (ranker caching) while working on Tasks 85+86+88 sequentially on main. Key outcomes: (1) Users see next-day arrival markers and codeshare info in table/JSON output. (2) Chat LLM gets richer context with top-3 result summaries. (3) New preferred_airlines filter complements existing avoid_airlines for full airline control. (4) Ranker caches LLM responses for identical candidate sets, saving tokens/latency. All build gates pass.

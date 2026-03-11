@@ -42,8 +42,9 @@ func (s *Strategy) toSearchParams(req search.Request) SearchParams {
 		Passengers:      req.Passengers,
 		CabinClass:      req.CabinClass,
 		FlexDays:        req.FlexDays,
-		MaxLayoversLeg1: req.MaxStops,
-		MaxLayoversLeg2: req.MaxStops,
-		MaxResults:      req.MaxResults,
+		MaxLayoversLeg1:   req.MaxStops,
+		MaxLayoversLeg2:   req.MaxStops,
+		MaxResults:        req.MaxResults,
+		PreferredAlliance: req.PreferredAlliance,
 	}
 }

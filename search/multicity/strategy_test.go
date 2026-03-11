@@ -86,6 +86,24 @@ func TestStrategy_RequestMapping(t *testing.T) {
 	}
 }
 
+// TestStrategy_RequestMapping_PreferredAlliance verifies PreferredAlliance maps from Request.
+func TestStrategy_RequestMapping_PreferredAlliance(t *testing.T) {
+	req := search.Request{
+		Origin:            "DEL",
+		Destination:       "YYZ",
+		DepartureDate:     "2026-03-24",
+		Passengers:        1,
+		PreferredAlliance: "Star Alliance",
+	}
+
+	s := &Strategy{leg2Date: "2026-03-30"}
+	params := s.toSearchParams(req)
+
+	if params.PreferredAlliance != "Star Alliance" {
+		t.Errorf("PreferredAlliance = %q, want %q", params.PreferredAlliance, "Star Alliance")
+	}
+}
+
 // TestStrategy_Search verifies the full delegation: Strategy.Search maps the
 // search.Request to SearchParams via toSearchParams, then calls Searcher.Search,
 // returning itineraries from the underlying pipeline.

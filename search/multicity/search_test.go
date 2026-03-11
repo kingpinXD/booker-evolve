@@ -13,6 +13,7 @@ import (
 	"booker/httpclient"
 	"booker/llm"
 	"booker/provider"
+	"booker/search"
 	"booker/types"
 )
 
@@ -444,6 +445,49 @@ func TestSearch_MultiCityProvider(t *testing.T) {
 	}
 	if len(results) == 0 {
 		t.Fatal("expected multi-city results to be merged")
+	}
+}
+
+func TestSearch_PreferredAllianceFilter(t *testing.T) {
+	// AC is Star Alliance, AA is OneWorld.
+	// With PreferredAlliance="Star Alliance", only AC flights should survive.
+	// Use different departure times to avoid dedup collisions.
+	flights := []types.Flight{
+		makeFlight("AC", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 300),
+		makeFlight("AA", "DEL", "HKG", basetime.Add(1*time.Hour), basetime.Add(9*time.Hour), 280),
+		makeFlight("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), basetime.Add(88*time.Hour), 500),
+		makeFlight("AA", "HKG", "YYZ", basetime.Add(73*time.Hour), basetime.Add(89*time.Hour), 480),
+	}
+	searcher := newTestSearcher(t, flights, llmRankingHandler(15))
+
+	results, err := searcher.Search(context.Background(), SearchParams{
+		Origin:            "DEL",
+		Destination:       "YYZ",
+		DepartureDate:     basetime.Format(DateLayout),
+		Passengers:        1,
+		CabinClass:        types.CabinEconomy,
+		Stopovers:         []StopoverCity{testStopover()},
+		FlexDays:          3,
+		PreferredAlliance: "Star Alliance",
+	})
+	if err != nil {
+		t.Fatalf("Search() error: %v", err)
+	}
+	if len(results) == 0 {
+		t.Fatal("Search() returned 0 results, expected at least 1")
+	}
+
+	// Every leg in every itinerary should be Star Alliance.
+	for i, itin := range results {
+		for j, leg := range itin.Legs {
+			for _, seg := range leg.Flight.Outbound {
+				alliance := search.Alliance(seg.Airline)
+				if alliance != "Star Alliance" {
+					t.Errorf("result[%d].leg[%d] airline %s is %q, want Star Alliance",
+						i, j, seg.Airline, alliance)
+				}
+			}
+		}
 	}
 }
 

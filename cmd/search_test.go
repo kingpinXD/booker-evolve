@@ -759,6 +759,42 @@ func TestBuildJSONItineraries_CarbonKg_OmitEmpty(t *testing.T) {
 	}
 }
 
+func TestBuildJSONItineraries_CarbonBenchmark(t *testing.T) {
+	leg := makeLeg("AC", "DEL", "YYZ", basetime, 14*time.Hour, 850, nil)
+	leg.Flight.CarbonKg = 1106
+	leg.Flight.TypicalCarbonKg = 949
+	leg.Flight.CarbonDiffPct = 17
+	itin := makeItin(leg)
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatalf("unexpected results shape")
+	}
+	jl := results[0].Legs[0]
+	if jl.TypicalCarbonKg != 949 {
+		t.Errorf("TypicalCarbonKg = %d, want 949", jl.TypicalCarbonKg)
+	}
+	if jl.CarbonDiffPct != 17 {
+		t.Errorf("CarbonDiffPct = %d, want 17", jl.CarbonDiffPct)
+	}
+}
+
+func TestBuildJSONItineraries_CarbonBenchmark_OmitEmpty(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	data, err := json.Marshal(results[0].Legs[0])
+	if err != nil {
+		t.Fatalf("json.Marshal error: %v", err)
+	}
+	if bytes.Contains(data, []byte(`"typical_carbon_kg"`)) {
+		t.Error("zero typical_carbon_kg should be omitted from JSON")
+	}
+	if bytes.Contains(data, []byte(`"carbon_diff_percent"`)) {
+		t.Error("zero carbon_diff_percent should be omitted from JSON")
+	}
+}
+
 // --- hasScores ---
 
 func TestHasScores_AllZero(t *testing.T) {

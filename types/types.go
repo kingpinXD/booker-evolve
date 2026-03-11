@@ -64,8 +64,10 @@ type Flight struct {
 	Return        []Segment // return leg segments (empty for one-way)
 	TotalDuration time.Duration
 	BookingURL    string
-	CarbonKg      int // CO2 emissions in kg; 0 means unknown
-	SeatsLeft     int // 0 means unknown
+	CarbonKg         int // CO2 emissions in kg; 0 means unknown
+	TypicalCarbonKg  int // typical CO2 for this route in kg; 0 means unknown
+	CarbonDiffPct    int // difference vs typical in percent; 0 means unknown
+	SeatsLeft        int // 0 means unknown
 	BagsIncluded  BagsIncluded
 }
 

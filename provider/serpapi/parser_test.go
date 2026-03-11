@@ -435,6 +435,41 @@ func TestParseFlightGroup_CarbonEmissions(t *testing.T) {
 	if f.CarbonKg != 1106 {
 		t.Errorf("CarbonKg = %d, want 1106", f.CarbonKg)
 	}
+	if f.TypicalCarbonKg != 949 {
+		t.Errorf("TypicalCarbonKg = %d, want 949", f.TypicalCarbonKg)
+	}
+	if f.CarbonDiffPct != 17 {
+		t.Errorf("CarbonDiffPct = %d, want 17", f.CarbonDiffPct)
+	}
+}
+
+func TestParseFlightGroup_CarbonBenchmark_Zero(t *testing.T) {
+	g := FlightGroup{
+		Flights: []FlightSegment{{
+			DepartureAirport: Airport{ID: "DEL", Time: "2026-03-24 03:30"},
+			ArrivalAirport:   Airport{ID: "HKG", Time: "2026-03-24 11:30"},
+			Duration:         480,
+			Airline:          "IndiGo",
+			FlightNumber:     "6E 1234",
+			TravelClass:      "Economy",
+		}},
+		TotalDuration: 480,
+		Price:         350,
+		CarbonEmissions: CarbonEmissions{
+			ThisFlight: 500000,
+		},
+	}
+
+	f, err := parseFlightGroup(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.TypicalCarbonKg != 0 {
+		t.Errorf("TypicalCarbonKg = %d, want 0 when TypicalForThisRoute is 0", f.TypicalCarbonKg)
+	}
+	if f.CarbonDiffPct != 0 {
+		t.Errorf("CarbonDiffPct = %d, want 0 when DifferencePercent is 0", f.CarbonDiffPct)
+	}
 }
 
 func TestParseFlightGroup_CarbonEmissions_Zero(t *testing.T) {

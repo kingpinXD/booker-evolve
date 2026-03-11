@@ -189,7 +189,14 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 		for j, leg := range itin.Legs {
 			fmt.Fprintf(&b, "  LEG %d: $%.2f\n", j+1, leg.Flight.Price.Amount)
 			if leg.Flight.CarbonKg > 0 {
-				fmt.Fprintf(&b, "  CO2: %dkg\n", leg.Flight.CarbonKg)
+				switch {
+				case leg.Flight.CarbonDiffPct != 0:
+					fmt.Fprintf(&b, "  CO2: %dkg (%+d%% vs typical)\n", leg.Flight.CarbonKg, leg.Flight.CarbonDiffPct)
+				case leg.Flight.TypicalCarbonKg > 0:
+					fmt.Fprintf(&b, "  CO2: %dkg (typical: %dkg)\n", leg.Flight.CarbonKg, leg.Flight.TypicalCarbonKg)
+				default:
+					fmt.Fprintf(&b, "  CO2: %dkg\n", leg.Flight.CarbonKg)
+				}
 			}
 			for _, seg := range leg.Flight.Outbound {
 				airlineInfo := seg.AirlineName

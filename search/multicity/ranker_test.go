@@ -620,6 +620,69 @@ func TestBuildRankingPrompt_NoCarbonLine(t *testing.T) {
 	}
 }
 
+func TestBuildRankingPrompt_CarbonBenchmark(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price:           types.Money{Amount: 400, Currency: "USD"},
+						CarbonKg:        1106,
+						TypicalCarbonKg: 949,
+						CarbonDiffPct:   17,
+						Outbound: []types.Segment{{
+							FlightNumber: "AC42", Origin: "DEL", Destination: "YYZ",
+							OriginCity: "Delhi", DestinationCity: "Toronto",
+							DepartureTime: dep, ArrivalTime: dep.Add(14 * time.Hour),
+							Duration: 14 * time.Hour, AirlineName: "Air Canada",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "CO2: 1106kg (+17% vs typical)") {
+		t.Errorf("prompt should contain benchmark comparison, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_CarbonTypicalOnly(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price:           types.Money{Amount: 400, Currency: "USD"},
+						CarbonKg:        949,
+						TypicalCarbonKg: 949,
+						Outbound: []types.Segment{{
+							FlightNumber: "AC42", Origin: "DEL", Destination: "YYZ",
+							OriginCity: "Delhi", DestinationCity: "Toronto",
+							DepartureTime: dep, ArrivalTime: dep.Add(14 * time.Hour),
+							Duration: 14 * time.Hour, AirlineName: "Air Canada",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "CO2: 949kg (typical: 949kg)") {
+		t.Errorf("prompt should show typical when DiffPct is 0 but typical is known, got:\n%s", prompt)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

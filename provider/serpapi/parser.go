@@ -45,12 +45,14 @@ func parseFlightGroup(g FlightGroup) (types.Flight, error) {
 	}
 
 	return types.Flight{
-		Provider:      config.ProviderSerpAPI,
-		Price:         types.Money{Amount: float64(g.Price), Currency: "USD"},
-		Outbound:      segments,
-		TotalDuration: time.Duration(g.TotalDuration) * time.Minute,
-		BookingURL:    g.BookingToken,
-		CarbonKg:      (g.CarbonEmissions.ThisFlight + 500) / 1000,
+		Provider:        config.ProviderSerpAPI,
+		Price:           types.Money{Amount: float64(g.Price), Currency: "USD"},
+		Outbound:        segments,
+		TotalDuration:   time.Duration(g.TotalDuration) * time.Minute,
+		BookingURL:      g.BookingToken,
+		CarbonKg:        (g.CarbonEmissions.ThisFlight + 500) / 1000,
+		TypicalCarbonKg: (g.CarbonEmissions.TypicalForThisRoute + 500) / 1000,
+		CarbonDiffPct:   g.CarbonEmissions.DifferencePercent,
 	}, nil
 }
 

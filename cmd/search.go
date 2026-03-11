@@ -507,8 +507,10 @@ type jsonLeg struct {
 	Arrival    string `json:"arrival,omitempty"`
 	Duration   string `json:"duration"`
 	Stops      int    `json:"stops"`
-	CarbonKg   int    `json:"carbon_kg,omitempty"`
-	BookingURL string `json:"booking_url,omitempty"`
+	CarbonKg        int    `json:"carbon_kg,omitempty"`
+	TypicalCarbonKg int    `json:"typical_carbon_kg,omitempty"`
+	CarbonDiffPct   int    `json:"carbon_diff_percent,omitempty"`
+	BookingURL      string `json:"booking_url,omitempty"`
 	Aircraft   string `json:"aircraft,omitempty"`
 	Legroom    string `json:"legroom,omitempty"`
 }
@@ -591,8 +593,10 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				Arrival:    arr,
 				Duration:   formatDuration(leg.Flight.TotalDuration),
 				Stops:      leg.Flight.Stops(),
-				CarbonKg:   leg.Flight.CarbonKg,
-				BookingURL: leg.Flight.BookingURL,
+				CarbonKg:        leg.Flight.CarbonKg,
+				TypicalCarbonKg: leg.Flight.TypicalCarbonKg,
+				CarbonDiffPct:   leg.Flight.CarbonDiffPct,
+				BookingURL:      leg.Flight.BookingURL,
 				Aircraft:   legAircraft(itin, idx),
 				Legroom:    legLegroom(itin, idx),
 			})

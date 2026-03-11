@@ -159,3 +159,6 @@ When relying on LLM output for structured fields like ranking profile, a determi
 
 ## Lesson: Layover data enriches LLM context for tradeoff discussion
 Changing chat summary from "1 stop" to "1 stop (3h IST)" gives the LLM concrete data points to explain tradeoffs ("the 3-hour Istanbul layover saves $200"). This required no new API calls -- segment LayoverDuration and Destination were already parsed from SerpAPI. The formatLayoverSummary function gracefully degrades to stop count when data is missing.
+
+## Lesson: Fallback paths should inspect the request, not return a hardcoded default
+The Picker fallback returned "direct" for every request, ignoring Leg2Date entirely. This meant LLM-less environments always used the wrong strategy for multi-city trips. Fallback/default paths are often written once during initial implementation and never revisited as the request shape gains new fields. When adding a field that changes which code path should execute (like Leg2Date selecting multicity vs direct), audit both the primary path and all fallback/error paths to ensure they respect the new field. A fallback that ignores request context is a silent correctness bug.

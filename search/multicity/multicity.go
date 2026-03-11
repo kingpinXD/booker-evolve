@@ -135,6 +135,13 @@ type SearchParams struct {
 	// MaxPrice filters combined itineraries whose total price exceeds this
 	// amount (USD). 0 means no limit.
 	MaxPrice float64
+
+	// DepartureAfter filters flights departing before this time-of-day ("HH:MM").
+	// Empty means no constraint.
+	DepartureAfter string
+	// DepartureBefore filters flights departing after this time-of-day ("HH:MM").
+	// Empty means no constraint.
+	DepartureBefore string
 }
 
 // Searcher orchestrates the multi-city halt search pipeline.
@@ -342,15 +349,22 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 		alliance1 := before1a - len(pairs[i].leg1)
 		alliance2 := before2a - len(pairs[i].leg2)
 
-		// 3e: date window (leg1 only)
+		// 3e: departure time-of-day preference
+		before1t, before2t := len(pairs[i].leg1), len(pairs[i].leg2)
+		pairs[i].leg1 = search.FilterByDepartureTime(pairs[i].leg1, params.DepartureAfter, params.DepartureBefore)
+		pairs[i].leg2 = search.FilterByDepartureTime(pairs[i].leg2, params.DepartureAfter, params.DepartureBefore)
+		depTime1 := before1t - len(pairs[i].leg1)
+		depTime2 := before2t - len(pairs[i].leg2)
+
+		// 3f: date window (leg1 only)
 		beforeDate := len(pairs[i].leg1)
 		pairs[i].leg1 = search.FilterByDateRange(pairs[i].leg1, dateEarliest, dateLatest)
 		dateDrop := beforeDate - len(pairs[i].leg1)
 
-		log.Printf("[multicity]   %s after filter: %d leg1 (-%d blocked, -%d $0, -%d stops, -%d alliance, -%d date), %d leg2 (-%d blocked, -%d $0, -%d stops, -%d alliance)",
+		log.Printf("[multicity]   %s after filter: %d leg1 (-%d blocked, -%d $0, -%d stops, -%d alliance, -%d deptime, -%d date), %d leg2 (-%d blocked, -%d $0, -%d stops, -%d alliance, -%d deptime)",
 			pairs[i].stopover.City,
-			len(pairs[i].leg1), blocked1, zero1, stops1, alliance1, dateDrop,
-			len(pairs[i].leg2), blocked2, zero2, stops2, alliance2)
+			len(pairs[i].leg1), blocked1, zero1, stops1, alliance1, depTime1, dateDrop,
+			len(pairs[i].leg2), blocked2, zero2, stops2, alliance2, depTime2)
 	}
 
 	// ---------------------------------------------------------------
@@ -404,6 +418,14 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 				continue
 			}
 			if len(search.FilterByAlliance([]types.Flight{leg2}, params.PreferredAlliance)) == 0 {
+				continue
+			}
+		}
+		if params.DepartureAfter != "" || params.DepartureBefore != "" {
+			if len(search.FilterByDepartureTime([]types.Flight{leg1}, params.DepartureAfter, params.DepartureBefore)) == 0 {
+				continue
+			}
+			if len(search.FilterByDepartureTime([]types.Flight{leg2}, params.DepartureAfter, params.DepartureBefore)) == 0 {
 				continue
 			}
 		}

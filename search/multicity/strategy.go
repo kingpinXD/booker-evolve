@@ -47,5 +47,7 @@ func (s *Strategy) toSearchParams(req search.Request) SearchParams {
 		MaxResults:        req.MaxResults,
 		PreferredAlliance: req.PreferredAlliance,
 		MaxPrice:          req.MaxPrice,
+		DepartureAfter:    req.DepartureAfter,
+		DepartureBefore:   req.DepartureBefore,
 	}
 }

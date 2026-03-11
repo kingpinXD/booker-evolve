@@ -559,6 +559,48 @@ func TestSearch_ZeroPriceFiltered(t *testing.T) {
 	}
 }
 
+func TestSearch_DepartureTimeFilter(t *testing.T) {
+	// Create two leg1 flights: 10:00 (basetime) and 01:00 (red-eye).
+	// DepartureAfter="06:00" should filter out the 01:00 flight.
+	redEyeDep := time.Date(basetime.Year(), basetime.Month(), basetime.Day(), 1, 0, 0, 0, time.UTC)
+	flights := []types.Flight{
+		makeFlight("CX", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 300),
+		makeFlight("CX", "DEL", "HKG", redEyeDep, redEyeDep.Add(8*time.Hour), 280),
+		makeFlight("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), basetime.Add(88*time.Hour), 500),
+	}
+	searcher := newTestSearcher(t, flights, llmRankingHandler(15))
+
+	results, err := searcher.Search(context.Background(), SearchParams{
+		Origin:         "DEL",
+		Destination:    "YYZ",
+		DepartureDate:  basetime.Format(DateLayout),
+		Passengers:     1,
+		CabinClass:     types.CabinEconomy,
+		Stopovers:      []StopoverCity{testStopover()},
+		FlexDays:       3,
+		DepartureAfter: "06:00",
+	})
+	if err != nil {
+		t.Fatalf("Search() error: %v", err)
+	}
+	if len(results) == 0 {
+		t.Fatal("Search() returned 0 results, expected at least 1")
+	}
+
+	// Every leg1 should depart at or after 06:00.
+	for i, itin := range results {
+		if len(itin.Legs) == 0 || len(itin.Legs[0].Flight.Outbound) == 0 {
+			continue
+		}
+		dep := itin.Legs[0].Flight.Outbound[0].DepartureTime
+		depMin := dep.Hour()*60 + dep.Minute()
+		if depMin < 360 { // 06:00 = 360 minutes
+			t.Errorf("result[%d] leg1 departs at %02d:%02d, want >= 06:00",
+				i, dep.Hour(), dep.Minute())
+		}
+	}
+}
+
 func TestSearch_BlockedAirlineFiltered(t *testing.T) {
 	// Flights on blocked airlines (e.g. Emirates "EK") should be filtered out.
 	flights := []types.Flight{

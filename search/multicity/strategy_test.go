@@ -122,6 +122,28 @@ func TestStrategy_RequestMapping_MaxPrice(t *testing.T) {
 	}
 }
 
+// TestStrategy_RequestMapping_DepartureTime verifies DepartureAfter/DepartureBefore map from Request.
+func TestStrategy_RequestMapping_DepartureTime(t *testing.T) {
+	req := search.Request{
+		Origin:          "DEL",
+		Destination:     "YYZ",
+		DepartureDate:   "2026-03-24",
+		Passengers:      1,
+		DepartureAfter:  "06:00",
+		DepartureBefore: "22:00",
+	}
+
+	s := &Strategy{leg2Date: "2026-03-30"}
+	params := s.toSearchParams(req)
+
+	if params.DepartureAfter != "06:00" {
+		t.Errorf("DepartureAfter = %q, want %q", params.DepartureAfter, "06:00")
+	}
+	if params.DepartureBefore != "22:00" {
+		t.Errorf("DepartureBefore = %q, want %q", params.DepartureBefore, "22:00")
+	}
+}
+
 // TestStrategy_Search verifies the full delegation: Strategy.Search maps the
 // search.Request to SearchParams via toSearchParams, then calls Searcher.Search,
 // returning itineraries from the underlying pipeline.

@@ -352,8 +352,8 @@ wait "$CLAUDE_PID" 2>/dev/null || {
 }
 
 # Clean up timer if claude finished before timeout
-kill "$TIMER_PID" 2>/dev/null
-wait "$TIMER_PID" 2>/dev/null
+kill "$TIMER_PID" 2>/dev/null || true
+wait "$TIMER_PID" 2>/dev/null || true
 
 log "Implementation phase complete"
 

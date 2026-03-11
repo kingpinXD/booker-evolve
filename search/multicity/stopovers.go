@@ -1066,6 +1066,200 @@ var BOMToNRTStopovers = []StopoverCity{
 	},
 }
 
+// DELToMELStopovers are the candidate stopover cities for Delhi → Melbourne.
+//
+// Route geometry: DEL is at ~28°N, 77°E. MEL is at ~37°S, 144°E.
+// Southeast Asia is the primary corridor — same hubs as the SYD route
+// minus Osaka (weak KIX-MEL connectivity).
+var DELToMELStopovers = []StopoverCity{
+	// === SOUTHEAST ASIA — Primary corridor ===
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-MEL very frequent on SQ/Qantas. Strong DEL-SIN frequency. Clean, safe, great food.",
+	},
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BKK-MEL direct on Thai. DEL-BKK frequent and cheap. Temples, street food.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines/AirAsia hub. KUL-MEL direct on MAS/AirAsia X. Cheap DEL-KUL.",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-MEL direct on Cathay/Qantas. DEL-HKG frequent.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-MEL direct on JAL/Qantas. DEL-NRT on JAL. Slight detour but great city.",
+	},
+}
+
+// BOMToMELStopovers are the candidate stopover cities for Mumbai → Melbourne.
+//
+// Route geometry: BOM is at ~19°N, 73°E. MEL is at ~37°S, 144°E.
+// Southeast Asia is the natural corridor with strong BOM connectivity.
+var BOMToMELStopovers = []StopoverCity{
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-MEL very frequent on SQ/Qantas. Strong BOM-SIN frequency.",
+	},
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-MEL direct on Thai.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines/AirAsia hub. KUL-MEL direct on MAS/AirAsia X. Cheap BOM-KUL.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-MEL direct on Cathay/Qantas. BOM-HKG on Cathay/Air India.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-MEL direct on JAL/Qantas. BOM-NRT on ANA.",
+	},
+}
+
+// DELToCDGStopovers are the candidate stopover cities for Delhi → Paris CDG.
+//
+// Route geometry: DEL is at ~28°N, 77°E. CDG is at ~49°N, 2°E.
+// Gulf carrier hubs are the primary corridor — strong connectivity
+// to both India and Paris via ME3 airlines and Air France partners.
+var DELToCDGStopovers = []StopoverCity{
+	// === GULF — Primary corridor ===
+	{
+		City:    "Doha",
+		Airport: "DOH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-CDG direct on QR/Air France.",
+	},
+	{
+		City:    "Abu Dhabi",
+		Airport: "AUH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Etihad hub. DEL-AUH on Etihad/Air India. AUH-CDG direct on Etihad.",
+	},
+	{
+		City:    "Dubai",
+		Airport: "DXB",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-CDG direct on Emirates/Air France.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-CDG direct on Turkish/Air France. Bosphorus, bazaars.",
+	},
+	{
+		City:    "Bahrain",
+		Airport: "BAH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Gulf Air hub. DEL-BAH on Gulf Air. BAH-CDG direct on Gulf Air. Compact, walkable.",
+	},
+}
+
+// BOMToCDGStopovers are the candidate stopover cities for Mumbai → Paris CDG.
+//
+// Route geometry: BOM is at ~19°N, 73°E. CDG is at ~49°N, 2°E.
+// Gulf carrier hubs are the primary corridor with strong BOM connectivity.
+var BOMToCDGStopovers = []StopoverCity{
+	{
+		City:    "Doha",
+		Airport: "DOH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-CDG direct on QR/Air France.",
+	},
+	{
+		City:    "Abu Dhabi",
+		Airport: "AUH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Etihad hub. BOM-AUH on Etihad/Air India. AUH-CDG direct on Etihad.",
+	},
+	{
+		City:    "Dubai",
+		Airport: "DXB",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-CDG direct on Emirates/Air France.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-CDG direct on Turkish/Air France.",
+	},
+	{
+		City:    "Bahrain",
+		Airport: "BAH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Gulf Air hub. BOM-BAH on Gulf Air. BAH-CDG direct on Gulf Air.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -1090,6 +1284,10 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "BKK"): BOMToBKKStopovers,
 	routeKey("DEL", "NRT"): DELToNRTStopovers,
 	routeKey("BOM", "NRT"): BOMToNRTStopovers,
+	routeKey("DEL", "MEL"): DELToMELStopovers,
+	routeKey("BOM", "MEL"): BOMToMELStopovers,
+	routeKey("DEL", "CDG"): DELToCDGStopovers,
+	routeKey("BOM", "CDG"): BOMToCDGStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

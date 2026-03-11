@@ -44,9 +44,9 @@ Carried from: Day 19 (all completed)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 30: Lint, gofmt sweep, and build gate verification
-**Status:** pending
+**Status:** done
 **Plan:** Run all linting and testing tools. Fix any violations.
-- [ ] Run gofmt -l . and fix violations
-- [ ] Run go vet ./... and fix warnings
-- [ ] Run golangci-lint run and fix findings
-- [ ] Run go test ./... and verify all pass
+- [x] Run gofmt -l . and fix violations -- clean
+- [x] Run go vet ./... and fix warnings -- clean
+- [x] Run golangci-lint run and fix findings -- 0 issues
+- [x] Run go test ./... and verify all pass -- 15 packages pass

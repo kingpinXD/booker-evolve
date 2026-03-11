@@ -89,3 +89,11 @@ When adding per-leg data columns (CO2, arrival, cabin) to the multi-leg table la
 ## Lesson: Parallel worktree agents work well when files are strictly disjoint
 
 Session 28 ran two worktree agents in parallel: one for airports.go (pure data addition) and one for filter.go + chat.go + strategy.go (new filter feature). Both completed independently and rebased cleanly with zero conflicts. The key was ensuring no shared files between the two tasks. When tasks touch different files in the same package, parallelization is safe -- the risk is only when they modify the same file.
+
+## Lesson: Multicity filters need separate per-flight and per-itinerary logic
+
+MaxPrice in direct search filters individual flights (FilterByMaxPrice on each flight's price). In multicity, the meaningful filter is on total itinerary price (sum of both legs), not individual leg price. A $300 leg 1 + $500 leg 2 = $800 itinerary should be rejected by MaxPrice=700, even though each leg individually is below $700. Always consider the aggregation level when porting filters from direct to multicity.
+
+## Lesson: Three-way parallel worktrees with sequential sub-tasks
+
+When two tasks share files (65+66 both touch multicity/), put them in one worktree running sequentially. Other independent tasks get their own worktrees. This session used 3 worktrees: one for 65+66 (sequential), one for 67, one for 68. All rebased cleanly. The gofmt alignment issue after rebase is expected when struct fields are added in one branch and other fields already existed with different alignment.

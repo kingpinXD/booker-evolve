@@ -35,13 +35,13 @@ func (s *Strategy) Search(ctx context.Context, req search.Request) ([]search.Iti
 
 func (s *Strategy) toSearchParams(req search.Request) SearchParams {
 	return SearchParams{
-		Origin:          req.Origin,
-		Destination:     req.Destination,
-		DepartureDate:   req.DepartureDate,
-		Leg2Date:        s.leg2Date,
-		Passengers:      req.Passengers,
-		CabinClass:      req.CabinClass,
-		FlexDays:        req.FlexDays,
+		Origin:            req.Origin,
+		Destination:       req.Destination,
+		DepartureDate:     req.DepartureDate,
+		Leg2Date:          s.leg2Date,
+		Passengers:        req.Passengers,
+		CabinClass:        req.CabinClass,
+		FlexDays:          req.FlexDays,
 		MaxLayoversLeg1:   req.MaxStops,
 		MaxLayoversLeg2:   req.MaxStops,
 		MaxResults:        req.MaxResults,

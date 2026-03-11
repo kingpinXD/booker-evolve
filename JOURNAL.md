@@ -274,3 +274,24 @@ Completed all 3 planned tasks in 3 commits with zero reverts and zero API calls.
 ## Session 27 -- 07:26 -- Session close and Day 28 handoff
 
 Day 28 delivered two high-impact features across 6 commits (spanning Days 27-28) with zero reverts and zero API calls. The ranker now receives aircraft type, carbon emissions with benchmark comparisons, and the full data pipeline from SerpAPI through types through display is complete for all enrichment fields. Airport clusters expanded from 14 to 22 metros, and alliance preference filtering is wired end-to-end from CLI flags through chat params to the direct search pipeline. Coverage steady at ~84% across 15 packages. No open GitHub issues remain. Next priorities: multi-city alliance filtering (currently only in direct pipeline), cached flight data analysis for route recommendations, or passenger count support.
+
+## Day 29
+
+### Session 29, Task 1 -- Wire PreferredAlliance into multicity strategy
+Added PreferredAlliance to multicity.SearchParams, mapped from search.Request in toSearchParams, applied FilterByAlliance in the FILTER stage for both legs and multi-city provider results. 2 new tests in strategy_test.go and search_test.go. Ran as parallel worktree agent.
+
+### Session 29, Task 2 -- Wire MaxPrice into multicity strategy
+Added MaxPrice to multicity.SearchParams, mapped from search.Request. Filter applied after COMBINE stage on total itinerary price (not per-flight), and in stage 4b for multi-city results. 2 new tests. Ran in same worktree as Task 1 (sequential, shared files).
+
+### Session 29, Task 3 -- Add departure time preference filter
+Added DepartureAfter/DepartureBefore (HH:MM) to search.Request and FilterByDepartureTime in filter.go with graceful degradation for invalid formats. Wired into direct pipeline, chat tripParams (merge/parse/build/system prompt/refinement hint). 9 new tests. Ran as parallel worktree agent.
+
+### Session 29, Task 4 -- Surface SeatsLeft in JSON output and ranker prompt
+Added seats_left (omitempty) to jsonLeg with legSeatsLeft helper (min across segments). Added [Seats: N left] tag in buildRankingPrompt so the LLM can factor scarcity into ranking. 6 new tests. Ran as parallel worktree agent.
+
+### Session 29, Task 5 -- Build gate verification and session finalize
+Post-merge verification. Fixed gofmt alignment in strategy.go (common with struct field additions during rebase). go vet clean, golangci-lint 0 issues, all 15 packages pass.
+
+## Session 29 -- Multicity consistency, departure time filter, seats display
+
+Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Tasks ran in 3 parallel worktree agents (65+66 sequential in one worktree, 67 and 68 in separate worktrees). Key outcomes: (1) PreferredAlliance and MaxPrice now work in multicity strategy, closing the consistency gap with the direct pipeline. (2) Users can filter by departure time-of-day to avoid red-eyes or prefer morning flights. (3) Seat scarcity data (SeatsLeft) is now visible in JSON output and in the LLM ranker prompt. gofmt fix needed after rebase (expected pattern for struct alignment). Coverage steady at ~84%.

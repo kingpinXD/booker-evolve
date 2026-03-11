@@ -30,7 +30,6 @@ import (
 //     exceeds MaxAirportLayover. A 2-hour connection is fine. An 8-hour
 //     airport wait is miserable.
 //
-// TODO(iterate): Score airline alliance matching (Star Alliance, OneWorld, SkyTeam).
 // TODO(iterate): Add time-of-day preferences (avoid red-eye on long legs).
 // TODO(iterate): Weight stopover city attractiveness into the combination.
 

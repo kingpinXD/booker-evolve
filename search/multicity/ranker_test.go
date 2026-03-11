@@ -129,6 +129,89 @@ func TestBuildRankingPrompt(t *testing.T) {
 	}
 }
 
+func TestBuildRankingPrompt_AllianceTags(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 600, Currency: "USD"},
+			TotalTravel: 15 * time.Hour,
+			TotalTrip:   96 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 300, Currency: "USD"},
+						Outbound: []types.Segment{
+							{
+								FlightNumber: "AC100",
+								Origin:       "YYZ", Destination: "LHR",
+								OriginCity: "Toronto", DestinationCity: "London",
+								DepartureTime: now, ArrivalTime: now.Add(7 * time.Hour),
+								Duration: 7 * time.Hour, Airline: "AC", AirlineName: "Air Canada",
+							},
+						},
+					},
+					Stopover: &search.Stopover{City: "London", Airport: "LHR", Duration: 72 * time.Hour},
+				},
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 300, Currency: "USD"},
+						Outbound: []types.Segment{
+							{
+								FlightNumber: "BA200",
+								Origin:       "LHR", Destination: "DEL",
+								OriginCity: "London", DestinationCity: "Delhi",
+								DepartureTime: now.Add(79 * time.Hour), ArrivalTime: now.Add(87 * time.Hour),
+								Duration: 8 * time.Hour, Airline: "BA", AirlineName: "British Airways",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	// AC is Star Alliance, BA is OneWorld.
+	if !containsAll(prompt, "[Star Alliance]", "[OneWorld]") {
+		t.Errorf("prompt missing alliance tags, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_UnknownAirlineNoTag(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 200, Currency: "USD"},
+			TotalTravel: 5 * time.Hour,
+			TotalTrip:   5 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 200, Currency: "USD"},
+						Outbound: []types.Segment{
+							{
+								FlightNumber: "XX999",
+								Origin:       "AAA", Destination: "BBB",
+								OriginCity: "CityA", DestinationCity: "CityB",
+								DepartureTime: now, ArrivalTime: now.Add(5 * time.Hour),
+								Duration: 5 * time.Hour, Airline: "XX", AirlineName: "Unknown Air",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	// Unknown airline should have no alliance tag.
+	for _, tag := range []string{"[Star Alliance]", "[OneWorld]", "[SkyTeam]"} {
+		if searchString(prompt, tag) {
+			t.Errorf("prompt should not contain %s for unknown airline, got:\n%s", tag, prompt)
+		}
+	}
+}
+
 // containsAll checks that s contains every substring.
 func containsAll(s string, subs ...string) bool {
 	for _, sub := range subs {

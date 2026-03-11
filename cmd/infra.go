@@ -38,5 +38,6 @@ func buildPicker(weights multicity.RankingWeights, leg2Date string) (*search.Pic
 	mcStrategy := multicity.NewStrategy(mcSearcher, leg2Date)
 
 	picker := search.NewPicker(llmClient, directStrategy, nearbyStrategy, mcStrategy)
+	picker.SetRanker(ranker)
 	return picker, llmClient, raw, ranker, nil
 }

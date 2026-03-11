@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"booker/llm"
+	"booker/types"
 )
 
 // fakeStrategy implements Strategy for testing.
@@ -201,5 +202,71 @@ func TestPicker_LLMReturnsBoth_SingleStrategy(t *testing.T) {
 	}
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "direct")
+	}
+}
+
+// fakeRanker assigns incrementing scores to itineraries.
+type fakeRanker struct{ called bool }
+
+func (r *fakeRanker) Rank(_ context.Context, itins []Itinerary) ([]Itinerary, error) {
+	r.called = true
+	for i := range itins {
+		itins[i].Score = float64(len(itins) - i)
+	}
+	return itins, nil
+}
+
+// fakeSearchStrategy returns canned itineraries.
+type fakeSearchStrategy struct {
+	name  string
+	itins []Itinerary
+}
+
+func (f *fakeSearchStrategy) Name() string        { return f.name }
+func (f *fakeSearchStrategy) Description() string { return f.name + " strategy" }
+func (f *fakeSearchStrategy) Search(_ context.Context, _ Request) ([]Itinerary, error) {
+	return f.itins, nil
+}
+
+func TestPicker_BothPassesRankerToComposite(t *testing.T) {
+	s1 := &fakeSearchStrategy{
+		name: "direct",
+		itins: []Itinerary{
+			{TotalPrice: types.Money{Amount: 500, Currency: "USD"}},
+		},
+	}
+	s2 := &fakeSearchStrategy{
+		name: "multicity",
+		itins: []Itinerary{
+			{TotalPrice: types.Money{Amount: 700, Currency: "USD"}},
+		},
+	}
+	ranker := &fakeRanker{}
+	mock := &mockLLM{response: `{"strategy": "both", "reason": "compare"}`}
+	p := NewPicker(mock, s1, s2)
+	p.ranker = ranker
+
+	strategy, err := p.Pick(context.Background(), Request{Context: "compare options"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strategy.Name() != "composite" {
+		t.Fatalf("got strategy %q, want composite", strategy.Name())
+	}
+
+	results, err := strategy.Search(context.Background(), Request{})
+	if err != nil {
+		t.Fatalf("search error: %v", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("got %d results, want 2", len(results))
+	}
+	if !ranker.called {
+		t.Error("ranker was not called — composite strategy should use picker's ranker")
+	}
+	for _, r := range results {
+		if r.Score == 0 {
+			t.Error("expected non-zero score after ranking")
+		}
 	}
 }

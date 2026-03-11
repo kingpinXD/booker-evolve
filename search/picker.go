@@ -20,11 +20,18 @@ type ChatCompleter interface {
 type Picker struct {
 	llm        ChatCompleter
 	strategies []Strategy
+	ranker     Ranker
 }
 
 // NewPicker creates a strategy picker. Pass all available strategies.
 func NewPicker(llmClient ChatCompleter, strategies ...Strategy) *Picker {
 	return &Picker{llm: llmClient, strategies: strategies}
+}
+
+// SetRanker configures the ranker used by CompositeStrategy when the LLM
+// picks "both" mode. Without a ranker, merged results are only deduplicated.
+func (p *Picker) SetRanker(r Ranker) {
+	p.ranker = r
 }
 
 // Pick analyzes the request context and returns the most appropriate strategy.
@@ -90,7 +97,7 @@ func (p *Picker) pickWithLLM(ctx context.Context, req Request) (Strategy, error)
 	}
 
 	if result.Strategy == "both" {
-		return NewCompositeStrategy(nil, p.strategies...), nil
+		return NewCompositeStrategy(p.ranker, p.strategies...), nil
 	}
 
 	for _, s := range p.strategies {

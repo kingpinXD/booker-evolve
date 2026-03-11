@@ -1,53 +1,54 @@
 # TODO
 
-Carried from: Day 43 (all completed)
+Carried from: Day 44 (all completed)
 
-## Tasks 115-119: Day 43 tasks
-**Status:** completed -- Kiwi doc cleanup, India-Australia stopovers, eco ranking profile, Indian airport clusters, display extraction
+## Tasks 120-124: Day 44 tasks
+**Status:** completed -- Dynamic profile switching, StripCodeFences dedup, NearbySearcher SortBy fix, user context to ranker, red-eye departure time override
 
 ---
 
-## Task 120: Fix chat profile switching (dynamic ranker per search)
+## Task 125: Wire ranker to composite strategy
 **Status:** done
-**Plan:** Add SetWeights to Ranker, share one Ranker between direct+multicity strategies, define weightsUpdater interface for chatLoop, update weights before each search when profile changes.
-- [x] Write test: changing profile mid-chat changes ranking weights used
-- [x] Add SetWeights method to Ranker
-- [x] Share single Ranker between direct and multicity (changed NewSearcher signature)
-- [x] Wire profileWeights(params.Profile) into chatLoop before each search via weightsUpdater
-- [x] Integration test: profile switch mid-chat triggers correct weight updates
+**Plan:**
+- [x] Write test: picker with "both" response creates composite that ranks results
+- [x] Add Ranker field to Picker + SetRanker method
+- [x] Pass ranker to NewCompositeStrategy in pickWithLLM "both" branch
+- [x] Update buildPicker in cmd/infra.go to call SetRanker
+- [x] Verify existing picker tests still pass
 - [x] Verify build + test + vet + lint pass
 
-## Task 121: Extract StripCodeFences helper to deduplicate 4 call sites
-**Status:** done
-**Plan:** Add StripCodeFences to llm/client.go, write 6-case table test, replace 4 call sites with single function calls.
-- [x] Write test for llm.StripCodeFences (json fences, plain fences, no fences, nested, empty, fence-only)
-- [x] Add StripCodeFences to llm/client.go
-- [x] Replace 4 call sites: chat.go (x2), picker.go, ranker.go
-- [x] Verify all existing tests pass
+## Task 126: Consolidate itinRoute and deduplicate to search package
+**Status:** pending
+**Plan:**
+- [ ] Export ItinRoute and DeduplicateItineraries in search package (composite.go or new file)
+- [ ] Update composite.go to use exported functions
+- [ ] Update nearby/nearby.go to use exported functions
+- [ ] Remove duplicate unexported functions from both files
+- [ ] Verify all existing tests pass unchanged
+- [ ] Verify build + test + vet + lint pass
 
-## Task 122: Fix NearbySearcher ignoring SortBy
-**Status:** done
-**Plan:** Replace hardcoded sort.Slice by price with search.SortResults(merged, req.SortBy). Add test with SortBy="duration".
-- [x] Write test: NearbySearcher with SortBy="duration" returns duration-sorted results
-- [x] Replace hardcoded price sort with search.SortResults(merged, req.SortBy)
-- [x] Verify existing nearby tests pass
+## Task 127: Add "score" sort mode to SortResults
+**Status:** pending
+**Plan:**
+- [ ] Write test: SortResults with "score" sorts by Score descending
+- [ ] Write test: SortResults with "score" and all-zero scores is stable
+- [ ] Add "score" case to SortResults switch in filter.go
+- [ ] Update chat system prompt sort_by description to include "score"
+- [ ] Update refinementHint to mention sort_by "score"
+- [ ] Update --sort-by flag description in cmd/search.go
+- [ ] Verify build + test + vet pass
 
-## Task 123: Thread user Context to multicity ranker
-**Status:** done
-**Plan:** Add Context to SearchParams, thread from toSearchParams, add UserContext field to Ranker, append USER PREFERENCES to buildRankingPrompt.
-- [x] Write test: buildRankingPrompt includes context when non-empty
-- [x] Write test: buildRankingPrompt unchanged when context is empty
-- [x] Add Context field to SearchParams
-- [x] Map req.Context to SearchParams.Context in toSearchParams
-- [x] Add UserContext field to Ranker, pass to buildRankingPrompt
-- [x] Verify build + test + vet pass
+## Task 128: Fix round-trip max_price to check total itinerary price
+**Status:** pending
+**Plan:**
+- [ ] Write test: round-trip with max_price, verify total price filtering
+- [ ] Add total-price filter after combineRoundTrip in direct.go Search method
+- [ ] Verify existing round-trip tests still pass
+- [ ] Verify build + test + vet pass
 
-## Task 124: Respect departure time preferences in CombineLegs red-eye filter
-**Status:** done
-**Plan:** Add DepartureAfter/DepartureBefore to CombineParams, skip red-eye check when either is set, thread from SearchParams in multicity.go.
-- [x] Write test: CombineLegs with DepartureAfter="01:00" allows 02:00 leg2 departures
-- [x] Write test: CombineLegs without explicit times still rejects red-eye
-- [x] Add DepartureAfter/DepartureBefore to CombineParams
-- [x] Skip isRedEye check when user has explicit departure time constraints
-- [x] Thread DepartureAfter/DepartureBefore from SearchParams to CombineParams in multicity.go
-- [x] Verify build + test + vet + lint pass
+## Task 129: Clean stale Kiwi references in search and filter docs
+**Status:** pending
+**Plan:**
+- [ ] Update search/search.go line 34 "currently Kiwi only" to SerpAPI
+- [ ] Update filter.go line 139 Kiwi reference to SerpAPI
+- [ ] Verify build + vet clean

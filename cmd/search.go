@@ -437,6 +437,11 @@ func legDeparture(itin search.Itinerary, legIdx int) string {
 	return segs[0].DepartureTime.Format(outputDateTimeFmt)
 }
 
+// isNextDay returns true if the arrival date is after the departure date.
+func isNextDay(dep, arr time.Time) bool {
+	return arr.YearDay() != dep.YearDay() || arr.Year() != dep.Year()
+}
+
 func legArrival(itin search.Itinerary, legIdx int) string {
 	if legIdx >= len(itin.Legs) {
 		return ""
@@ -445,7 +450,17 @@ func legArrival(itin search.Itinerary, legIdx int) string {
 	if len(segs) == 0 {
 		return ""
 	}
-	return segs[len(segs)-1].ArrivalTime.Format(outputDateTimeFmt)
+	dep := segs[0].DepartureTime
+	arr := segs[len(segs)-1].ArrivalTime
+	s := arr.Format(outputDateTimeFmt)
+	if isNextDay(dep, arr) {
+		days := (arr.YearDay() - dep.YearDay())
+		if arr.Year() != dep.Year() {
+			days += 365 // approximate; good enough for display
+		}
+		s += fmt.Sprintf(" (+%d)", days)
+	}
+	return s
 }
 
 func legCarbon(itin search.Itinerary, legIdx int) string {
@@ -551,6 +566,7 @@ type jsonLeg struct {
 	Aircraft        string `json:"aircraft,omitempty"`
 	Legroom         string `json:"legroom,omitempty"`
 	SeatsLeft       int    `json:"seats_left,omitempty"`
+	ArrivalNextDay  bool   `json:"arrival_next_day,omitempty"`
 }
 
 // jsonItinerary is the JSON representation of a search result.
@@ -628,6 +644,10 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				destCity = segs[len(segs)-1].DestinationCity
 				destName = segs[len(segs)-1].DestinationName
 			}
+			nextDay := false
+			if len(segs) > 0 {
+				nextDay = isNextDay(segs[0].DepartureTime, segs[len(segs)-1].ArrivalTime)
+			}
 			legs = append(legs, jsonLeg{
 				Airlines:        legAirlines(itin, idx),
 				AirlineCode:     airlineCode,
@@ -649,6 +669,7 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				Aircraft:        legAircraft(itin, idx),
 				Legroom:         legLegroom(itin, idx),
 				SeatsLeft:       legSeatsLeft(itin, idx),
+				ArrivalNextDay:  nextDay,
 			})
 		}
 

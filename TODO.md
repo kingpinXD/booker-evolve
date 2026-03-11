@@ -1,68 +1,64 @@
 # TODO
 
-Carried from: Day 33 (all completed)
-
-## Tasks 75-79: Day 33 tasks
-**Status:** completed -- post-fetch sorting, connection risk tags, sort_by in chat, JSON enrichment, avoid airline filter
-
----
+Carried from: Day 34 (all completed)
 
 ## Tasks 80-84: Day 34 tasks
 **Status:** completed -- avoid-airlines in chat, multicity in chat, arrival time filter, max duration filter, cmd helper coverage
 
-## Pre-task: Commit stale gofmt fix
-**Status:** done
-- [x] Commit ranker_test.go gofmt alignment fix from Session 33
+---
 
-## Task 80: Wire AvoidAirlines into chat conversation
-**Status:** done
-**Plan:** Add avoid_airlines to tripParams, wire through all 5 chat pipeline stages (parse/merge/build/prompt/hint), add tests.
-- [x] Add AvoidAirlines string to tripParams struct
-- [x] Wire into parsePartialParams
-- [x] Wire into mergeParams
-- [x] Wire into buildRequestFromParams
-- [x] Add to system prompt
-- [x] Add to refinement hint
-- [x] Write tests for parse/merge/build/prompt
+## Tasks 85-89: Day 35 tasks
+**Status:** pending
 
-## Task 81: Wire multicity/leg2_date into chat conversation
+## Task 85: Next-day arrival indicator
 **Status:** done
-**Plan:** Add Leg2Date to tripParams and search.Request. Wire through chat pipeline. Update multicity Strategy to prefer req.Leg2Date over constructor default. Also wire AvoidAirlines through to multicity Strategy (was missing).
-- [x] Add Leg2Date string to tripParams
-- [x] Add Leg2Date to search.Request
-- [x] Wire into parsePartialParams, mergeParams, buildRequestFromParams
-- [x] Update system prompt with leg2_date guidance
-- [x] Update refinement hint
-- [x] Modify multicity.Strategy to prefer req.Leg2Date over default
-- [x] Wire AvoidAirlines through toSearchParams (was missing)
-- [x] Write tests (chat + strategy override/fallback)
+**Plan:** Add isNextDay(dep, arr) helper comparing dates. Modify legArrival to append " (+N)" when arrival date > departure date. Add arrival_next_day bool to jsonLeg. Test with same-day and next-day flights. Files: cmd/search.go, cmd/search_test.go.
+- [x] Write test for next-day detection helper
+- [x] Implement helper to detect arrival date > departure date
+- [x] Modify legArrival to append (+N) marker
+- [x] Add arrival_next_day boolean to jsonLeg
+- [x] Write tests for table and JSON output with next-day arrivals
+- [x] Verify existing tests still pass
 
-## Task 82: Arrival time filter (ArrivalBefore/ArrivalAfter)
-**Status:** done
-**Plan:** Add FilterByArrivalTime in filter.go using parseHHMM. Add ArrivalAfter/ArrivalBefore to search.Request. Wire through direct, multicity, CLI, and chat.
-- [x] Add ArrivalBefore/ArrivalAfter to search.Request
-- [x] Implement FilterByArrivalTime in filter.go
-- [x] Write unit tests for FilterByArrivalTime
-- [x] Wire into direct pipeline
-- [x] Wire into multicity stages (FILTER + 4b)
-- [x] Add --arrival-after/--arrival-before CLI flags
-- [x] Wire into chat tripParams (parse/merge/build/prompt/hint)
+## Task 86: Operating carrier display (codeshare indicator)
+**Status:** pending
+**Plan:** to be filled during implementation
+- [ ] Write test for codeshare display format "AC (op. UA)"
+- [ ] Modify legAirlines to show operating carrier when different
+- [ ] Add operating_carrier to jsonLeg struct
+- [ ] Populate operating_carrier in buildJSONItineraries
+- [ ] Write tests for non-codeshare case (no change)
+- [ ] Verify existing tests still pass
 
-## Task 83: Max duration filter
-**Status:** done
-**Plan:** Add FilterByMaxDuration in filter.go. Add MaxDuration to search.Request. Wire through direct, multicity, CLI (--max-duration), and chat (max_duration_hours).
-- [x] Add MaxDuration to search.Request
-- [x] Implement FilterByMaxDuration in filter.go
-- [x] Write unit tests for FilterByMaxDuration
-- [x] Wire into direct pipeline
-- [x] Wire into multicity stages (FILTER + 4b)
-- [x] Add --max-duration CLI flag
-- [x] Wire into chat tripParams (max_duration_hours)
+## Task 87: Richer result summary in chat history
+**Status:** pending
+**Plan:** to be filled during implementation
+- [ ] Write test with 5+ results expecting top 3 in summary
+- [ ] Write test with 1-2 results for graceful degradation
+- [ ] Modify resultSummaryForChat to include top 3 results
+- [ ] Include price, airline, duration, stops per result
+- [ ] Verify 0-result case unchanged
+- [ ] Verify existing chat tests still pass
 
-## Task 84: Coverage for low-coverage cmd helpers
-**Status:** done
-**Plan:** Add edge-case tests for empty segments and out-of-bounds paths in cmd helpers.
-- [x] Add edge-case tests for legAircraft, legLegroom, legBookingURL (empty segs + OOB)
-- [x] Add edge-case tests for legCabin, legArrival, legDeparture (empty segs)
-- [x] Add edge-case tests for legSeatsLeft (OOB)
-- [x] Add edge-case tests for formatPriceInsights (PriceLevel-only, zero range)
+## Task 88: Preferred airlines filter (positive filter)
+**Status:** pending
+**Plan:** to be filled during implementation
+- [ ] Write FilterByPreferredAirlines tests (empty keeps all, single code, multiple codes, operating carrier match)
+- [ ] Implement FilterByPreferredAirlines in filter.go
+- [ ] Add PreferredAirlines to search.Request
+- [ ] Wire into direct pipeline
+- [ ] Wire into multicity stages (FILTER + 4b)
+- [ ] Add --preferred-airlines CLI flag
+- [ ] Wire into chat tripParams (parse/merge/build/prompt/hint)
+- [ ] Write chat tests
+
+## Task 89: Ranker LLM response caching
+**Status:** pending
+**Plan:** to be filled during implementation
+- [ ] Write test: identical itineraries + weights -> cache hit (mock LLM called once)
+- [ ] Write test: different itineraries -> cache miss
+- [ ] Write test: different weights -> cache miss
+- [ ] Implement cache key generation (hash sorted candidates + weights)
+- [ ] Add in-memory cache map to Ranker struct
+- [ ] Short-circuit Rank() on cache hit
+- [ ] Remove TODO comment from ranker.go

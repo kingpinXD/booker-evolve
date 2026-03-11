@@ -940,7 +940,81 @@ func TestBuildJSONItineraries_ScorePresent(t *testing.T) {
 	}
 }
 
-// --- multi-leg CO2 columns ---
+// --- isNextDay ---
+
+func TestIsNextDay_SameDay(t *testing.T) {
+	dep := time.Date(2026, 4, 10, 8, 0, 0, 0, time.UTC)
+	arr := time.Date(2026, 4, 10, 15, 0, 0, 0, time.UTC)
+	if isNextDay(dep, arr) {
+		t.Error("isNextDay should be false for same-day arrival")
+	}
+}
+
+func TestIsNextDay_NextDay(t *testing.T) {
+	dep := time.Date(2026, 4, 10, 22, 0, 0, 0, time.UTC)
+	arr := time.Date(2026, 4, 11, 6, 0, 0, 0, time.UTC)
+	if !isNextDay(dep, arr) {
+		t.Error("isNextDay should be true for next-day arrival")
+	}
+}
+
+func TestIsNextDay_TwoDaysLater(t *testing.T) {
+	dep := time.Date(2026, 4, 10, 8, 0, 0, 0, time.UTC)
+	arr := time.Date(2026, 4, 12, 14, 0, 0, 0, time.UTC)
+	if !isNextDay(dep, arr) {
+		t.Error("isNextDay should be true for multi-day arrival")
+	}
+}
+
+// --- legArrival next-day marker ---
+
+func TestLegArrival_NextDayMarker(t *testing.T) {
+	// Departure at 22:00, arrival 14h later = next day 12:00.
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime.Add(14*time.Hour), 14*time.Hour, 450, nil))
+	// dep = Apr 10 22:00, arr = Apr 11 12:00
+	got := legArrival(itin, 0)
+	if !strings.Contains(got, "(+1)") {
+		t.Errorf("legArrival should contain (+1) for next-day arrival, got %q", got)
+	}
+}
+
+func TestLegArrival_SameDayNoMarker(t *testing.T) {
+	// Departure at 08:00, arrival 7h later = same day 15:00.
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	got := legArrival(itin, 0)
+	if strings.Contains(got, "(+1)") {
+		t.Errorf("legArrival should NOT contain (+1) for same-day arrival, got %q", got)
+	}
+}
+
+// --- JSON arrival_next_day ---
+
+func TestBuildJSONItineraries_ArrivalNextDay(t *testing.T) {
+	// Next-day arrival: depart 22:00, arrive 14h later.
+	leg := makeLeg("BA", "JFK", "LHR", basetime.Add(14*time.Hour), 14*time.Hour, 450, nil)
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatal("unexpected results structure")
+	}
+	if !results[0].Legs[0].ArrivalNextDay {
+		t.Error("arrival_next_day should be true for next-day arrival")
+	}
+}
+
+func TestBuildJSONItineraries_ArrivalNextDay_SameDay(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if results[0].Legs[0].ArrivalNextDay {
+		t.Error("arrival_next_day should be false for same-day arrival")
+	}
+	// Also verify omitempty: false should be omitted.
+	data, _ := json.Marshal(results[0].Legs[0])
+	if strings.Contains(string(data), "arrival_next_day") {
+		t.Error("arrival_next_day should be omitted when false")
+	}
+}
 
 // --- legSeatsLeft ---
 

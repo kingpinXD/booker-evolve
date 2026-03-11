@@ -512,3 +512,6 @@ Key outcomes:
 5. Data consistency test validates all stopover data, catching errors when new routes are added.
 
 12 new tests total. All build gates pass.
+
+## Day 43, Task 1 -- Update stale Kiwi references in multicity pipeline docs
+Replaced 5 "Kiwi" references in multicity.go package-level doc comments with accurate SerpAPI descriptions. Removed the stale TODO about Kiwi's 20-result limit (no longer applicable). Pure documentation change, build+vet clean.

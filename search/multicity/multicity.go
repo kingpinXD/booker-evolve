@@ -14,9 +14,9 @@
 //
 // Stage 2 — FETCH:
 //
-//	Hit the Kiwi RapidAPI for each leg. The one-way endpoint returns the
-//	cheapest flights across all future dates (it does NOT filter by date).
-//	We get up to 20 results per leg per stopover city.
+//	Hit the SerpAPI Google Flights endpoint for each leg. One-way searches
+//	return flights for the specified departure date (with optional flex days).
+//	Results are cached to minimize API calls.
 //
 // Stage 3 — FILTER (three passes):
 //
@@ -24,10 +24,10 @@
 //	    through airports affected by the Middle East airspace closures.
 //	    See search/filter.go for the full block list.
 //
-//	3b. Date window: The Kiwi API returns flights across ALL dates. We
-//	    post-filter leg1 to the user's departure window (target ± flex days).
-//	    Leg2 is NOT date-filtered here — the combiner handles it by checking
-//	    that leg2 departs within [leg1_arrival + minStay, leg1_arrival + maxStay].
+//	3b. Date window: Post-filter leg1 to the user's departure window
+//	    (target ± flex days). Leg2 is NOT date-filtered here — the combiner
+//	    handles it by checking that leg2 departs within
+//	    [leg1_arrival + minStay, leg1_arrival + maxStay].
 //
 //	3c. Layover quality (in combiner): Reject legs with airport layovers
 //	    > 6 hours or < 1 hour. See combiner.go.
@@ -48,20 +48,14 @@
 //
 // # Date Handling
 //
-// The Kiwi one-way API does NOT accept departure date parameters — it
-// returns the best prices across all future dates. We handle dates by:
+// SerpAPI Google Flights accepts a departure date parameter. Flex-date
+// searches issue one request per date in the [target - flexDays, target +
+// flexDays] window. The combiner then only pairs leg1+leg2 where the gap
+// falls within the stopover city's min/max stay range.
 //
-//  1. Fetching all results from Kiwi (up to 20 per route)
-//  2. Post-filtering leg1 to [targetDate - flexDays, targetDate + flexDays]
-//  3. The combiner then only pairs leg1+leg2 where the gap is 2-4 days
-//
-// This means leg2 dates are implicitly constrained by leg1 arrival + stopover.
+// Leg2 dates are implicitly constrained by leg1 arrival + stopover duration.
 //
 // # Current Limitations
-//
-// TODO(iterate): The Kiwi API limit of 20 results per route means we may
-// miss good options that fall outside the top-20 cheapest. Consider
-// fetching with sortBy=QUALITY as a second pass.
 //
 // TODO(iterate): Search each stopover city independently. A smarter
 // approach: use the LLM to first pick 3-4 most promising stopover cities.

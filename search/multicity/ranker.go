@@ -93,6 +93,10 @@ type Ranker struct {
 	cache   map[string][]RankResult
 	hits    int
 	misses  int
+
+	// UserContext is the user's natural language preferences (e.g. "I hate
+	// long layovers"). Set before calling Rank to include in the prompt.
+	UserContext string
 }
 
 // NewRanker creates a ranker with the given weights profile.
@@ -143,7 +147,7 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 	}
 	r.misses++
 
-	prompt := buildRankingPrompt(candidates)
+	prompt := buildRankingPrompt(candidates, r.UserContext)
 	sysPrompt := buildSystemPrompt(r.weights)
 
 	messages := []llm.Message{
@@ -241,8 +245,9 @@ outside the JSON. Each element must have:
 }
 
 // buildRankingPrompt creates a human-readable summary of itineraries
-// for the LLM to evaluate.
-func buildRankingPrompt(itineraries []search.Itinerary) string {
+// for the LLM to evaluate. When userContext is non-empty, it is appended
+// as a USER PREFERENCES section so the LLM can factor user intent into scoring.
+func buildRankingPrompt(itineraries []search.Itinerary, userContext string) string {
 	var b strings.Builder
 	b.WriteString("Please rank these itineraries:\n\n")
 
@@ -318,6 +323,9 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 			}
 		}
 		b.WriteString("\n")
+	}
+	if userContext != "" {
+		fmt.Fprintf(&b, "\nUSER PREFERENCES: %s\n", userContext)
 	}
 	return b.String()
 }

@@ -125,7 +125,7 @@ func TestBuildRankingPrompt(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !containsAll(prompt, "ITINERARY 0", "LEG 1", "LEG 2", "AA100", "BA200", "$500.00", "STOPOVER: London") {
 		t.Errorf("prompt missing expected content: %s", prompt)
 	}
@@ -172,7 +172,7 @@ func TestBuildRankingPrompt_AllianceTags(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	// AC is Star Alliance, BA is OneWorld.
 	if !containsAll(prompt, "[Star Alliance]", "[OneWorld]") {
 		t.Errorf("prompt missing alliance tags, got:\n%s", prompt)
@@ -205,7 +205,7 @@ func TestBuildRankingPrompt_UnknownAirlineNoTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	// Unknown airline should have no alliance tag.
 	for _, tag := range []string{"[Star Alliance]", "[OneWorld]", "[SkyTeam]"} {
 		if searchString(prompt, tag) {
@@ -252,7 +252,7 @@ func TestBuildRankingPrompt_StopoverNotes(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !containsAll(prompt, "Cathay Pacific hub", "Great food") {
 		t.Errorf("prompt missing stopover notes, got:\n%s", prompt)
 	}
@@ -295,7 +295,7 @@ func TestBuildRankingPrompt_StopoverNoNotes(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	// With no notes, the stopover line should still be present but no notes line.
 	if !containsAll(prompt, "STOPOVER: Hong Kong") {
 		t.Errorf("prompt should still show stopover, got:\n%s", prompt)
@@ -379,7 +379,7 @@ func TestBuildRankingPrompt_RedEyeTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "[Red-eye]") {
 		t.Errorf("prompt should contain [Red-eye] for 03:30 departure, got:\n%s", prompt)
 	}
@@ -409,7 +409,7 @@ func TestBuildRankingPrompt_OvernightTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "[Overnight]") {
 		t.Errorf("prompt should contain [Overnight] for overnight segment, got:\n%s", prompt)
 	}
@@ -439,7 +439,7 @@ func TestBuildRankingPrompt_NoOvernightTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if searchString(prompt, "[Overnight]") {
 		t.Errorf("prompt should not contain [Overnight] for daytime segment, got:\n%s", prompt)
 	}
@@ -469,7 +469,7 @@ func TestBuildRankingPrompt_LegroomTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "[Legroom: 32 in]") {
 		t.Errorf("prompt should contain [Legroom: 32 in], got:\n%s", prompt)
 	}
@@ -498,7 +498,7 @@ func TestBuildRankingPrompt_NoLegroomTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if searchString(prompt, "[Legroom:") {
 		t.Errorf("prompt should not contain [Legroom:] when legroom is empty, got:\n%s", prompt)
 	}
@@ -528,7 +528,7 @@ func TestBuildRankingPrompt_AircraftTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "[Aircraft: Boeing 787]") {
 		t.Errorf("prompt should contain [Aircraft: Boeing 787], got:\n%s", prompt)
 	}
@@ -557,7 +557,7 @@ func TestBuildRankingPrompt_NoAircraftTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if searchString(prompt, "[Aircraft:") {
 		t.Errorf("prompt should not contain [Aircraft:] when aircraft is empty, got:\n%s", prompt)
 	}
@@ -587,7 +587,7 @@ func TestBuildRankingPrompt_CarbonLine(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "CO2: 150kg") {
 		t.Errorf("prompt should contain CO2: 150kg, got:\n%s", prompt)
 	}
@@ -616,7 +616,7 @@ func TestBuildRankingPrompt_NoCarbonLine(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if searchString(prompt, "CO2:") {
 		t.Errorf("prompt should not contain CO2: when CarbonKg is 0, got:\n%s", prompt)
 	}
@@ -648,7 +648,7 @@ func TestBuildRankingPrompt_CarbonBenchmark(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "CO2: 1106kg (+17% vs typical)") {
 		t.Errorf("prompt should contain benchmark comparison, got:\n%s", prompt)
 	}
@@ -679,7 +679,7 @@ func TestBuildRankingPrompt_CarbonTypicalOnly(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "CO2: 949kg (typical: 949kg)") {
 		t.Errorf("prompt should show typical when DiffPct is 0 but typical is known, got:\n%s", prompt)
 	}
@@ -709,7 +709,7 @@ func TestBuildRankingPrompt_SeatsTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "[Seats: 4 left]") {
 		t.Errorf("prompt should contain [Seats: 4 left], got:\n%s", prompt)
 	}
@@ -738,7 +738,7 @@ func TestBuildRankingPrompt_NoSeatsTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if searchString(prompt, "[Seats:") {
 		t.Errorf("prompt should not contain [Seats:] when SeatsLeft is 0, got:\n%s", prompt)
 	}
@@ -766,7 +766,7 @@ func TestBuildRankingPrompt_EmptyCityNames(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	// Empty city names should NOT produce "(→)" noise.
 	if searchString(prompt, "(→)") {
 		t.Errorf("prompt should not contain empty city parenthetical (→), got:\n%s", prompt)
@@ -800,7 +800,7 @@ func TestBuildRankingPrompt_WithCityNames(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "(Delhi→Hong Kong)") {
 		t.Errorf("prompt should contain (Delhi→Hong Kong), got:\n%s", prompt)
 	}
@@ -840,7 +840,7 @@ func TestBuildRankingPrompt_RiskyConnection(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "[Risky connection: 45m]") {
 		t.Errorf("prompt should contain [Risky connection: 45m] for 45min layover, got:\n%s", prompt)
 	}
@@ -880,7 +880,7 @@ func TestBuildRankingPrompt_TightConnection(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if !searchString(prompt, "[Tight connection: 75m]") {
 		t.Errorf("prompt should contain [Tight connection: 75m] for 75min layover, got:\n%s", prompt)
 	}
@@ -920,7 +920,7 @@ func TestBuildRankingPrompt_NoConnectionTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if searchString(prompt, "[Risky connection:") {
 		t.Errorf("prompt should not contain [Risky connection:] for 120min layover, got:\n%s", prompt)
 	}
@@ -1192,8 +1192,69 @@ func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 		},
 	}
 
-	prompt := buildRankingPrompt(itineraries)
+	prompt := buildRankingPrompt(itineraries, "")
 	if searchString(prompt, "[Red-eye]") {
 		t.Errorf("prompt should not contain [Red-eye] for 10:00 departure, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_WithUserContext(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries, "I hate long layovers and prefer window seats")
+	if !searchString(prompt, "USER PREFERENCES:") {
+		t.Errorf("prompt should contain USER PREFERENCES section, got:\n%s", prompt)
+	}
+	if !searchString(prompt, "I hate long layovers and prefer window seats") {
+		t.Errorf("prompt should contain user context text, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_EmptyUserContext(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries, "")
+	if searchString(prompt, "USER PREFERENCES") {
+		t.Errorf("prompt should not contain USER PREFERENCES when context is empty, got:\n%s", prompt)
 	}
 }

@@ -149,6 +149,11 @@ type SearchParams struct {
 	// Empty means no filter.
 	PreferredAirlines string
 
+	// Context is the user's natural language preferences (e.g. "I hate long
+	// layovers"). Forwarded to the LLM ranker so it can factor user intent
+	// into scoring. Empty means no additional context.
+	Context string
+
 	// MinStopover overrides the default minimum stopover duration.
 	// 0 means use the stopover city's default (typically 48h).
 	MinStopover time.Duration
@@ -469,6 +474,7 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 	// Send top candidates to the LLM for intelligent scoring.
 	// Falls back to price-sorted results if LLM fails.
 	// ---------------------------------------------------------------
+	s.ranker.UserContext = params.Context
 	ranked, err := s.ranker.Rank(ctx, allItineraries)
 	if err != nil {
 		log.Printf("[multicity] LLM ranking failed, falling back to price sort: %v", err)

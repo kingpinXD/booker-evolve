@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"booker/types"
@@ -253,6 +254,41 @@ func FilterZeroPrices(flights []types.Flight) []types.Flight {
 		}
 	}
 	return filtered
+}
+
+// FilterByAvoidAirlines removes flights where any segment's Airline or
+// OperatingCarrier matches the comma-separated avoid list. Empty string keeps all.
+func FilterByAvoidAirlines(flights []types.Flight, avoid string) []types.Flight {
+	if avoid == "" {
+		return flights
+	}
+	codes := make(map[string]bool)
+	for _, c := range strings.Split(avoid, ",") {
+		if c = strings.TrimSpace(c); c != "" {
+			codes[c] = true
+		}
+	}
+	if len(codes) == 0 {
+		return flights
+	}
+	filtered := make([]types.Flight, 0, len(flights))
+	for _, f := range flights {
+		if !flightMatchesAvoid(f, codes) {
+			filtered = append(filtered, f)
+		}
+	}
+	return filtered
+}
+
+func flightMatchesAvoid(f types.Flight, codes map[string]bool) bool {
+	for _, segments := range [][]types.Segment{f.Outbound, f.Return} {
+		for _, seg := range segments {
+			if codes[seg.Airline] || codes[seg.OperatingCarrier] {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // SortResults sorts itineraries in place by the given mode.

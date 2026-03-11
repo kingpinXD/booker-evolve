@@ -142,6 +142,10 @@ type SearchParams struct {
 	// DepartureBefore filters flights departing after this time-of-day ("HH:MM").
 	// Empty means no constraint.
 	DepartureBefore string
+
+	// AvoidAirlines is a comma-separated list of IATA codes to exclude.
+	// Empty means no filter.
+	AvoidAirlines string
 }
 
 // Searcher orchestrates the multi-city halt search pipeline.
@@ -356,7 +360,11 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 		depTime1 := before1t - len(pairs[i].leg1)
 		depTime2 := before2t - len(pairs[i].leg2)
 
-		// 3f: date window (leg1 only)
+		// 3f: avoid airlines
+		pairs[i].leg1 = search.FilterByAvoidAirlines(pairs[i].leg1, params.AvoidAirlines)
+		pairs[i].leg2 = search.FilterByAvoidAirlines(pairs[i].leg2, params.AvoidAirlines)
+
+		// 3g: date window (leg1 only)
 		beforeDate := len(pairs[i].leg1)
 		pairs[i].leg1 = search.FilterByDateRange(pairs[i].leg1, dateEarliest, dateLatest)
 		dateDrop := beforeDate - len(pairs[i].leg1)
@@ -426,6 +434,14 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 				continue
 			}
 			if len(search.FilterByDepartureTime([]types.Flight{leg2}, params.DepartureAfter, params.DepartureBefore)) == 0 {
+				continue
+			}
+		}
+		if params.AvoidAirlines != "" {
+			if len(search.FilterByAvoidAirlines([]types.Flight{leg1}, params.AvoidAirlines)) == 0 {
+				continue
+			}
+			if len(search.FilterByAvoidAirlines([]types.Flight{leg2}, params.AvoidAirlines)) == 0 {
 				continue
 			}
 		}

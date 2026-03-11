@@ -379,6 +379,52 @@ func TestSortResults_Empty(t *testing.T) {
 	SortResults([]Itinerary{}, "duration")
 }
 
+// --- FilterByAvoidAirlines ---
+
+func TestFilterByAvoidAirlines_MatchesAirline(t *testing.T) {
+	ac := types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Airline: "AC"}}}
+	ba := types.Flight{Price: types.Money{Amount: 600, Currency: "USD"}, Outbound: []types.Segment{{Airline: "BA"}}}
+	result := FilterByAvoidAirlines([]types.Flight{ac, ba}, "BA")
+	if len(result) != 1 || result[0].Price.Amount != 500 {
+		t.Errorf("FilterByAvoidAirlines(BA): got %d flights, want 1 (AC only)", len(result))
+	}
+}
+
+func TestFilterByAvoidAirlines_MatchesOperatingCarrier(t *testing.T) {
+	f := types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Airline: "AC", OperatingCarrier: "UA"}}}
+	result := FilterByAvoidAirlines([]types.Flight{f}, "UA")
+	if len(result) != 0 {
+		t.Errorf("FilterByAvoidAirlines(UA operating): got %d, want 0", len(result))
+	}
+}
+
+func TestFilterByAvoidAirlines_NoMatch(t *testing.T) {
+	ac := types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Airline: "AC"}}}
+	ba := types.Flight{Price: types.Money{Amount: 600, Currency: "USD"}, Outbound: []types.Segment{{Airline: "BA"}}}
+	result := FilterByAvoidAirlines([]types.Flight{ac, ba}, "LH")
+	if len(result) != 2 {
+		t.Errorf("FilterByAvoidAirlines(LH): got %d, want 2 (no match)", len(result))
+	}
+}
+
+func TestFilterByAvoidAirlines_EmptyString(t *testing.T) {
+	flights := []types.Flight{{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Airline: "AC"}}}}
+	result := FilterByAvoidAirlines(flights, "")
+	if len(result) != 1 {
+		t.Errorf("FilterByAvoidAirlines(empty): got %d, want 1 (no filter)", len(result))
+	}
+}
+
+func TestFilterByAvoidAirlines_MultipleAirlines(t *testing.T) {
+	ac := types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Airline: "AC"}}}
+	ba := types.Flight{Price: types.Money{Amount: 600, Currency: "USD"}, Outbound: []types.Segment{{Airline: "BA"}}}
+	lh := types.Flight{Price: types.Money{Amount: 700, Currency: "USD"}, Outbound: []types.Segment{{Airline: "LH"}}}
+	result := FilterByAvoidAirlines([]types.Flight{ac, ba, lh}, "BA,LH")
+	if len(result) != 1 || result[0].Price.Amount != 500 {
+		t.Errorf("FilterByAvoidAirlines(BA,LH): got %d, want 1 (AC only)", len(result))
+	}
+}
+
 func TestFilterZeroPrices(t *testing.T) {
 	zero := types.Flight{Price: types.Money{Amount: 0, Currency: "USD"}}
 	valid := types.Flight{Price: types.Money{Amount: 100, Currency: "USD"}}

@@ -8,7 +8,7 @@ Carried from: Day 31 (all completed)
 ---
 
 ## Task 75: Post-fetch sorting in direct strategy + CLI flag
-**Status:** in-progress
+**Status:** done
 **Plan:** Add SortBy to search.Request. Implement SortResults in filter.go (price/duration/departure). Wire into direct.go after ranker. Add --sort-by CLI flag. Files: search/strategy.go, search/filter.go, search/filter_test.go, search/direct/direct.go, cmd/search.go.
 - [ ] Write test: SortResults sorts by price ascending (default)
 - [ ] Write test: SortResults sorts by duration ascending
@@ -51,8 +51,8 @@ Carried from: Day 31 (all completed)
 - [ ] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 79: Avoid airline filter
-**Status:** pending
-**Plan:** [to be filled during implementation]
+**Status:** in-progress
+**Plan:** Add AvoidAirlines string to search.Request. Implement FilterByAvoidAirlines in filter.go (splits comma-separated codes, checks Airline and OperatingCarrier). Wire into direct.go filter pipeline and multicity.go. Add --avoid-airlines CLI flag. Files: search/strategy.go, search/filter.go, search/filter_test.go, search/direct/direct.go, cmd/search.go, search/multicity/multicity.go.
 - [ ] Write test: FilterByAvoidAirlines removes flight matching airline code
 - [ ] Write test: FilterByAvoidAirlines removes flight matching operating carrier
 - [ ] Write test: FilterByAvoidAirlines passes through non-matching flights

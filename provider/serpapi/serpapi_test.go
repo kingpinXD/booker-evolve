@@ -110,6 +110,10 @@ func TestSearch_OneWay(t *testing.T) {
 	if got := captured.Get(config.SerpAPIParamClass); got != config.SerpAPIClassEconomy {
 		t.Errorf("travel_class = %q, want %q", got, config.SerpAPIClassEconomy)
 	}
+	// MaxStops defaults to 0 (direct-only), so stops=0 should be present.
+	if got := captured.Get(config.SerpAPIParamStops); got != "0" {
+		t.Errorf("stops = %q, want %q", got, "0")
+	}
 
 	// Verify flights returned.
 	if len(flights) != 2 {
@@ -123,6 +127,64 @@ func TestSearch_OneWay(t *testing.T) {
 	}
 	if flights[0].Provider != config.ProviderSerpAPI {
 		t.Errorf("provider = %q, want %q", flights[0].Provider, config.ProviderSerpAPI)
+	}
+}
+
+func TestSearch_DirectOnlyStopsParam(t *testing.T) {
+	var captured url.Values
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(cannedOneWayResponse)
+	}))
+	defer ts.Close()
+
+	p := newTestProvider(ts.URL)
+	dep, _ := time.Parse("2006-01-02", "2026-04-10")
+	req := types.SearchRequest{
+		Origin:        "JFK",
+		Destination:   "LHR",
+		DepartureDate: dep,
+		Passengers:    1,
+		MaxStops:      0, // direct-only
+	}
+
+	_, err := p.Search(context.Background(), req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if got := captured.Get(config.SerpAPIParamStops); got != "0" {
+		t.Errorf("stops = %q, want %q", got, "0")
+	}
+}
+
+func TestSearch_NonDirectNoStopsParam(t *testing.T) {
+	var captured url.Values
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(cannedOneWayResponse)
+	}))
+	defer ts.Close()
+
+	p := newTestProvider(ts.URL)
+	dep, _ := time.Parse("2006-01-02", "2026-04-10")
+	req := types.SearchRequest{
+		Origin:        "JFK",
+		Destination:   "LHR",
+		DepartureDate: dep,
+		Passengers:    1,
+		MaxStops:      1, // allow 1 stop
+	}
+
+	_, err := p.Search(context.Background(), req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if captured.Has(config.SerpAPIParamStops) {
+		t.Errorf("stops param should be absent for MaxStops=1, got %q", captured.Get(config.SerpAPIParamStops))
 	}
 }
 

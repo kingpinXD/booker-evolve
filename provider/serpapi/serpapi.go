@@ -58,6 +58,10 @@ func (p *Provider) Search(ctx context.Context, req types.SearchRequest) ([]types
 		config.SerpAPIParamCountry:   "us",
 	}
 
+	if req.MaxStops == 0 {
+		params[config.SerpAPIParamStops] = "0"
+	}
+
 	url, err := httpclient.BuildURL(p.cfg.BaseURL, config.SerpAPISearchPath, params)
 	if err != nil {
 		return nil, fmt.Errorf("building URL: %w", err)

@@ -742,6 +742,68 @@ func TestBuildRankingPrompt_NoSeatsTag(t *testing.T) {
 	}
 }
 
+func TestBuildRankingPrompt_EmptyCityNames(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "CX100", Origin: "DEL", Destination: "HKG",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Cathay Pacific",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	// Empty city names should NOT produce "(→)" noise.
+	if searchString(prompt, "(→)") {
+		t.Errorf("prompt should not contain empty city parenthetical (→), got:\n%s", prompt)
+	}
+	// Airport codes should still be present.
+	if !searchString(prompt, "DEL→HKG") {
+		t.Errorf("prompt should contain airport codes DEL→HKG, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_WithCityNames(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "CX100", Origin: "DEL", Destination: "HKG",
+							OriginCity: "Delhi", DestinationCity: "Hong Kong",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Cathay Pacific",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "(Delhi→Hong Kong)") {
+		t.Errorf("prompt should contain (Delhi→Hong Kong), got:\n%s", prompt)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

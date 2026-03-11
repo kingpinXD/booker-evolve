@@ -218,10 +218,14 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 				if seg.SeatsLeft > 0 {
 					airlineInfo += fmt.Sprintf(" [Seats: %d left]", seg.SeatsLeft)
 				}
-				fmt.Fprintf(&b, "    %s %s→%s (%s→%s) depart %s arrive %s [%s] %s\n",
+				cityInfo := ""
+				if seg.OriginCity != "" || seg.DestinationCity != "" {
+					cityInfo = fmt.Sprintf(" (%s→%s)", seg.OriginCity, seg.DestinationCity)
+				}
+				fmt.Fprintf(&b, "    %s %s→%s%s depart %s arrive %s [%s] %s\n",
 					seg.FlightNumber,
 					seg.Origin, seg.Destination,
-					seg.OriginCity, seg.DestinationCity,
+					cityInfo,
 					seg.DepartureTime.Format("Jan 02 15:04"),
 					seg.ArrivalTime.Format("Jan 02 15:04"),
 					formatDuration(seg.Duration),

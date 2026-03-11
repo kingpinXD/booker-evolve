@@ -443,6 +443,16 @@ func filterSuggestion(p tripParams) string {
 		". Try relaxing some of these constraints."
 }
 
+// priceInsightHint formats a message about typical prices for the route.
+// Returns empty string when no insights are available.
+func priceInsightHint(pi search.PriceInsights) string {
+	if pi.PriceLevel == "" {
+		return ""
+	}
+	return fmt.Sprintf("Typical prices for this route: $%.0f-$%.0f (price level: %s)",
+		pi.TypicalPriceRange[0], pi.TypicalPriceRange[1], pi.PriceLevel)
+}
+
 // zeroResultsSuggestion returns proactive suggestions when a search returns no
 // results, including nearby airports and flex-date advice.
 func zeroResultsSuggestion(params tripParams) string {
@@ -594,6 +604,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 			}
 			if hint := zeroResultsSuggestion(params); hint != "" {
 				_, _ = fmt.Fprintln(out, hint)
+			}
+			if insights != nil {
+				if hint := priceInsightHint(insights.LastPriceInsights()); hint != "" {
+					_, _ = fmt.Fprintln(out, hint)
+				}
 			}
 			continue
 		}

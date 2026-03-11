@@ -575,3 +575,15 @@ Completed all 5 planned tasks: wired shared ranker to CompositeStrategy so "both
 
 ### Session 47, Task 1 -- Return strategy reasoning from Picker.Pick
 Changed Pick signature from (Strategy, error) to (Strategy, string, error). LLM path returns the parsed reason from pickerResult JSON. Fallback paths return descriptive strings ("only one strategy registered", "default for single-leg route", "LLM unavailable, using default"). cmd/search.go shows "Strategy: direct (reason)" and cmd/chat.go shows "Using direct strategy (reason)". All existing picker tests updated for new signature with reason assertions. Chat test verifies reason appears in output.
+
+### Session 47, Task 2 -- Test printJSONWithInsights
+Added 5 test cases in display_test.go covering printJSONWithInsights: valid PriceInsights populates price_insights key, empty PriceInsights omits it, results count matches input, empty results handled, and field value verification. Ran in parallel worktree, needed gofmt fix after rebase.
+
+### Session 47, Task 4 -- Add DEL/BOM to FRA stopover routes
+Added India-Frankfurt corridor: DELToFRAStopovers (DOH, AUH, DXB, IST, BAH, KWI) and BOMToFRAStopovers (DOH, AUH, DXB, IST, BAH) via Gulf carrier hubs. 4 test cases verify bidirectional lookup. Ran in parallel worktree, clean rebase.
+
+### Session 47, Task 5 -- Test filter edge cases
+Added 5 tests for firstDeparture and flightPassesTimeOfDay edge cases: zero-legs returns zero time, empty-outbound returns zero time, empty-outbound departure check returns false, invalid HH:MM format returns true (graceful degradation), empty-outbound arrival check returns false. Ran in parallel worktree, clean rebase.
+
+### Session 47, Task 3 -- Thread PriceInsights into zero-results chat suggestion
+Added priceInsightHint(pi) helper that formats "Typical prices for this route: $X-$Y (price level: Z)" from PriceInsights. Wired into chatLoop zero-results block after existing zeroResultsSuggestion. Returns empty when PriceLevel is empty. 4 new tests: unit tests for helper with/without data, integration tests for chatLoop zero-results with/without insights provider.

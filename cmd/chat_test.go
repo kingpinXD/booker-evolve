@@ -1713,3 +1713,80 @@ Let me search with eco ranking.`,
 		t.Errorf("second SetWeights should be WeightsEco, got %+v", wu.calls[1])
 	}
 }
+
+func TestPriceInsightHint_WithData(t *testing.T) {
+	pi := search.PriceInsights{
+		PriceLevel:        "low",
+		LowestPrice:       450,
+		TypicalPriceRange: [2]float64{500, 900},
+	}
+	got := priceInsightHint(pi)
+	if !strings.Contains(got, "$500") || !strings.Contains(got, "$900") {
+		t.Errorf("expected typical price range in hint, got: %s", got)
+	}
+	if !strings.Contains(got, "low") {
+		t.Errorf("expected price level in hint, got: %s", got)
+	}
+}
+
+func TestPriceInsightHint_Empty(t *testing.T) {
+	got := priceInsightHint(search.PriceInsights{})
+	if got != "" {
+		t.Errorf("expected empty hint for empty insights, got: %q", got)
+	}
+}
+
+func TestChatLoop_ZeroResultsShowsPriceInsights(t *testing.T) {
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	fakeStrat := &fakeSearchStrategy{results: nil}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	pi := &mockPriceInsighter{
+		insights: search.PriceInsights{
+			PriceLevel:        "typical",
+			LowestPrice:       600,
+			TypicalPriceRange: [2]float64{700, 1200},
+		},
+	}
+
+	in := strings.NewReader("find flights\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, pi, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	if !strings.Contains(output, "$700") || !strings.Contains(output, "$1200") {
+		t.Errorf("expected price range in zero-results output, got:\n%s", output)
+	}
+}
+
+func TestChatLoop_ZeroResultsNoPriceInsights(t *testing.T) {
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	fakeStrat := &fakeSearchStrategy{results: nil}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\nquit\n")
+	var out strings.Builder
+
+	// nil insights provider — no price data available.
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	if strings.Contains(output, "Typical prices") {
+		t.Errorf("unexpected price insight in output when no provider, got:\n%s", output)
+	}
+}

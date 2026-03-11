@@ -21,38 +21,38 @@ Carried from: Day 46 (all completed)
 - [x] Verify build + test + vet pass
 
 ## Task 131: Test printJSONWithInsights
-**Status:** pending
-**Plan:**
-- [ ] Write test: printJSONWithInsights with valid PriceInsights produces price_insights key
-- [ ] Write test: printJSONWithInsights with empty PriceInsights omits price_insights
-- [ ] Write test: printJSONWithInsights results array matches input count
-- [ ] Verify build + test + vet pass
+**Status:** done
+**Plan:** Added 5 test cases in display_test.go covering valid/empty PriceInsights and result count.
+- [x] Write test: printJSONWithInsights with valid PriceInsights produces price_insights key
+- [x] Write test: printJSONWithInsights with empty PriceInsights omits price_insights
+- [x] Write test: printJSONWithInsights results array matches input count
+- [x] Verify build + test + vet pass
 
 ## Task 132: Thread PriceInsights into zero-results chat suggestion
-**Status:** pending
-**Plan:**
-- [ ] Write test: zero-results output includes price range when insights have data
-- [ ] Write test: zero-results output omits price info when no insights
-- [ ] Add priceInsightHint helper in chat.go
-- [ ] Thread PriceInsights into chatLoop zero-results block
-- [ ] Verify build + test + vet pass
+**Status:** done
+**Plan:** Added priceInsightHint helper, wired into chatLoop zero-results block after zeroResultsSuggestion. Shows "Typical prices for this route: $X-$Y (price level: Z)" when insights available.
+- [x] Write test: zero-results output includes price range when insights have data
+- [x] Write test: zero-results output omits price info when no insights
+- [x] Add priceInsightHint helper in chat.go
+- [x] Thread PriceInsights into chatLoop zero-results block
+- [x] Verify build + test + vet pass
 
 ## Task 133: Add DEL/BOM to FRA stopover routes
-**Status:** pending
-**Plan:**
-- [ ] Write tests for StopoversForRoute DEL-FRA and FRA-DEL
-- [ ] Write tests for StopoversForRoute BOM-FRA and FRA-BOM
-- [ ] Add DELToFRAStopovers slice (DOH, AUH, DXB, IST, BAH, KWI)
-- [ ] Add BOMToFRAStopovers slice (DOH, AUH, DXB, IST, BAH)
-- [ ] Register both in stopoversMap
-- [ ] Verify existing consistency test passes
-- [ ] Verify build + test + vet pass
+**Status:** done
+**Plan:** Added DELToFRAStopovers (6 cities) and BOMToFRAStopovers (5 cities) via Gulf hubs. 4 test cases for bidirectional lookup.
+- [x] Write tests for StopoversForRoute DEL-FRA and FRA-DEL
+- [x] Write tests for StopoversForRoute BOM-FRA and FRA-BOM
+- [x] Add DELToFRAStopovers slice (DOH, AUH, DXB, IST, BAH, KWI)
+- [x] Add BOMToFRAStopovers slice (DOH, AUH, DXB, IST, BAH)
+- [x] Register both in stopoversMap
+- [x] Verify existing consistency test passes
+- [x] Verify build + test + vet pass
 
 ## Task 134: Test filter edge cases (firstDeparture, flightPassesTimeOfDay)
-**Status:** pending
-**Plan:**
-- [ ] Write test: firstDeparture with 0 legs returns zero time
-- [ ] Write test: firstDeparture with empty outbound segments
-- [ ] Write test: flightPassesTimeOfDay with empty Outbound returns false
-- [ ] Write test: flightPassesTimeOfDay with invalid HH:MM returns true
-- [ ] Verify build + test + vet pass
+**Status:** done
+**Plan:** Added 5 test cases covering zero-legs, empty-outbound, invalid-time-format paths.
+- [x] Write test: firstDeparture with 0 legs returns zero time
+- [x] Write test: firstDeparture with empty outbound segments
+- [x] Write test: flightPassesTimeOfDay with empty Outbound returns false
+- [x] Write test: flightPassesTimeOfDay with invalid HH:MM returns true
+- [x] Verify build + test + vet pass

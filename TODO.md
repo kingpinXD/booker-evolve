@@ -29,13 +29,14 @@ Carried from: Day 48 (all completed)
 - [ ] Verify build + test + vet pass
 
 ## Task 142: Flex-date departure date in chat result summary
-**Status:** pending
+**Status:** done
 **Plan:** Show departure date in top-3 entries when FlexDays > 0.
-- [ ] Write test: resultSummaryForChat with FlexDays > 0 includes departure date
-- [ ] Write test: resultSummaryForChat with FlexDays = 0 omits departure date
-- [ ] Modify resultSummaryForChat to accept FlexDays indicator
-- [ ] Format departure date as "Mon Jan 2" short form in each entry
-- [ ] Verify build + test + vet pass
+- [x] Write test: resultSummaryForChat with FlexDays > 0 includes departure date
+- [x] Write test: resultSummaryForChat with FlexDays = 0 omits departure date
+- [x] Write test: resultSummaryForChat with FlexDays > 0 and empty segments (no crash)
+- [x] Modify resultSummaryForChat to include date from segment DepartureTime when FlexDays > 0
+- [x] Format departure date as "Jan 2" short form in each entry
+- [x] Verify build + test + vet pass
 
 ## Task 143: India-Tokyo stopover routes
 **Status:** pending

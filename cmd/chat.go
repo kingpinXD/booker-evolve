@@ -240,8 +240,12 @@ func resultSummaryForChat(results []search.Itinerary, params tripParams) string 
 			airline = seg.Airline
 		}
 		layoverInfo := formatLayoverSummary(r.Legs[0].Flight.Outbound)
-		fmt.Fprintf(&b, " %d) %s, %s, %s, $%.0f.",
-			i+1, airline, formatFlightDuration(r.Legs[0].Flight.TotalDuration), layoverInfo, r.TotalPrice.Amount)
+		dateStr := ""
+		if params.FlexDays > 0 && !seg.DepartureTime.IsZero() {
+			dateStr = seg.DepartureTime.Format("Jan 2") + ", "
+		}
+		fmt.Fprintf(&b, " %d) %s, %s%s, %s, $%.0f.",
+			i+1, airline, dateStr, formatFlightDuration(r.Legs[0].Flight.TotalDuration), layoverInfo, r.TotalPrice.Amount)
 		if r.Reasoning != "" {
 			fmt.Fprintf(&b, " Reason: %s.", r.Reasoning)
 		}

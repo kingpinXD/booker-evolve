@@ -469,6 +469,58 @@ func TestResultSummaryForChat_Empty(t *testing.T) {
 	}
 }
 
+func TestResultSummaryForChat_FlexDaysShowsDate(t *testing.T) {
+	dep := time.Date(2025, 6, 16, 8, 0, 0, 0, time.UTC)
+	itin := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 850, Currency: "USD"},
+			TotalDuration: 14*time.Hour + 30*time.Minute,
+			Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", DepartureTime: dep}},
+		}}},
+		TotalPrice: types.Money{Amount: 850, Currency: "USD"},
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", FlexDays: 3}
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+
+	// With FlexDays > 0, the departure date should appear.
+	if !strings.Contains(summary, "Jun 16") {
+		t.Errorf("flex-date summary should include departure date 'Jun 16', got: %s", summary)
+	}
+}
+
+func TestResultSummaryForChat_NoFlexDaysOmitsDate(t *testing.T) {
+	dep := time.Date(2025, 6, 15, 8, 0, 0, 0, time.UTC)
+	itin := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 850, Currency: "USD"},
+			TotalDuration: 14*time.Hour + 30*time.Minute,
+			Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", DepartureTime: dep}},
+		}}},
+		TotalPrice: types.Money{Amount: 850, Currency: "USD"},
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+
+	// With FlexDays == 0, no date should appear before the airline name.
+	if strings.Contains(summary, "Jun 15") {
+		t.Errorf("non-flex summary should not include departure date, got: %s", summary)
+	}
+}
+
+func TestResultSummaryForChat_FlexDaysEmptySegments(t *testing.T) {
+	// No outbound segments — should not crash.
+	itin := search.Itinerary{
+		Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}}}},
+		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", FlexDays: 2}
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+
+	if !strings.Contains(summary, "500") {
+		t.Errorf("summary should contain price even with empty segments, got: %s", summary)
+	}
+}
+
 func TestInferProfile(t *testing.T) {
 	tests := []struct {
 		name     string

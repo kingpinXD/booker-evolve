@@ -616,3 +616,6 @@ Completed all 5 tasks with zero reverts and zero API calls. resultSummaryForChat
 
 ### Session 49, Task 1 -- Request-aware Picker fallback
 Refactored fallback() to accept Request and inspect Leg2Date: returns "multicity" when Leg2Date is set, "direct" otherwise. Updated reason strings to be accurate. Added 4 new tests (Leg2Date, ReturnDate, plain single-leg, Leg2Date without multicity strategy). All 15 picker tests pass.
+
+### Session 49, Task 3 -- Flex-date departure date in chat summary
+When FlexDays > 0, resultSummaryForChat now includes "Jan 2" formatted departure date in each top-3 entry so users can distinguish which date each option flies on. Zero-time DepartureTime and FlexDays=0 handled gracefully. Added 3 new tests.

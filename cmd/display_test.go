@@ -290,6 +290,73 @@ func TestBuildJSONItineraries_SingleSegmentLeg(t *testing.T) {
 	}
 }
 
+// --- legCarbon ---
+
+func carbonItin(carbonKg, diffPct int) search.Itinerary {
+	return search.Itinerary{
+		Legs: []search.Leg{{
+			Flight: types.Flight{
+				Outbound: []types.Segment{{
+					Airline:       "BA",
+					Origin:        "JFK",
+					Destination:   "LHR",
+					DepartureTime: basetime,
+					ArrivalTime:   basetime.Add(7 * time.Hour),
+				}},
+				TotalDuration: 7 * time.Hour,
+				Price:         types.Money{Amount: 450, Currency: "USD"},
+				CarbonKg:      carbonKg,
+				CarbonDiffPct: diffPct,
+			},
+		}},
+		TotalPrice:  types.Money{Amount: 450, Currency: "USD"},
+		TotalTravel: 7 * time.Hour,
+	}
+}
+
+func TestLegCarbon_WithPositiveDiff(t *testing.T) {
+	got := legCarbon(carbonItin(150, 5), 0)
+	if got != "150kg (+5%)" {
+		t.Errorf("legCarbon = %q, want %q", got, "150kg (+5%)")
+	}
+}
+
+func TestLegCarbon_WithNegativeDiff(t *testing.T) {
+	got := legCarbon(carbonItin(120, -12), 0)
+	if got != "120kg (-12%)" {
+		t.Errorf("legCarbon = %q, want %q", got, "120kg (-12%)")
+	}
+}
+
+func TestLegCarbon_WithZeroDiff(t *testing.T) {
+	got := legCarbon(carbonItin(130, 0), 0)
+	if got != "130kg" {
+		t.Errorf("legCarbon = %q, want %q", got, "130kg")
+	}
+}
+
+func TestLegCarbon_NoCarbonData(t *testing.T) {
+	got := legCarbon(carbonItin(0, 0), 0)
+	if got != "" {
+		t.Errorf("legCarbon = %q, want empty", got)
+	}
+}
+
+func TestBuildJSONItineraries_CarbonDiffPct(t *testing.T) {
+	itin := carbonItin(150, -8)
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+	if len(results) != 1 {
+		t.Fatalf("results count = %d, want 1", len(results))
+	}
+	leg := results[0].Legs[0]
+	if leg.CarbonKg != 150 {
+		t.Errorf("carbon_kg = %d, want 150", leg.CarbonKg)
+	}
+	if leg.CarbonDiffPct != -8 {
+		t.Errorf("carbon_diff_percent = %d, want -8", leg.CarbonDiffPct)
+	}
+}
+
 func TestBuildJSONItineraries_SegmentsOmittedWhenEmpty(t *testing.T) {
 	// A leg with no segments should produce no segments key in JSON.
 	itin := search.Itinerary{

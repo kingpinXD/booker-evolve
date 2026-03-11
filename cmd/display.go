@@ -338,7 +338,14 @@ func legCarbon(itin search.Itinerary, legIdx int) string {
 	if legIdx >= len(itin.Legs) || itin.Legs[legIdx].Flight.CarbonKg == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%dkg", itin.Legs[legIdx].Flight.CarbonKg)
+	f := itin.Legs[legIdx].Flight
+	if f.CarbonDiffPct > 0 {
+		return fmt.Sprintf("%dkg (+%d%%)", f.CarbonKg, f.CarbonDiffPct)
+	}
+	if f.CarbonDiffPct < 0 {
+		return fmt.Sprintf("%dkg (%d%%)", f.CarbonKg, f.CarbonDiffPct)
+	}
+	return fmt.Sprintf("%dkg", f.CarbonKg)
 }
 
 func legBookingURL(itin search.Itinerary, legIdx int) string {

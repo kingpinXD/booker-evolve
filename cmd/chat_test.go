@@ -324,7 +324,8 @@ func TestResultSummaryForChat_Empty(t *testing.T) {
 }
 
 func TestChatSystemPrompt(t *testing.T) {
-	prompt := chatSystemPrompt()
+	now := time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC)
+	prompt := chatSystemPrompt(now)
 	if prompt == "" {
 		t.Fatal("system prompt should not be empty")
 	}
@@ -341,6 +342,18 @@ func TestChatSystemPrompt(t *testing.T) {
 	// Must mention direct_only optional field.
 	if !strings.Contains(prompt, "direct_only") {
 		t.Error("system prompt should mention direct_only option")
+	}
+	// Must contain the injected date.
+	if !strings.Contains(prompt, "2025-07-15") {
+		t.Error("system prompt should contain the provided date")
+	}
+}
+
+func TestChatSystemPrompt_ContainsDate(t *testing.T) {
+	now := time.Date(2026, 1, 20, 14, 30, 0, 0, time.UTC)
+	prompt := chatSystemPrompt(now)
+	if !strings.Contains(prompt, "Today's date is 2026-01-20") {
+		t.Errorf("system prompt should contain 'Today's date is 2026-01-20', got start: %s", prompt[:80])
 	}
 }
 
@@ -822,7 +835,7 @@ func TestBuildRequestFromParams_FlexDays(t *testing.T) {
 }
 
 func TestChatSystemPrompt_FlexDays(t *testing.T) {
-	prompt := chatSystemPrompt()
+	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
 	if !strings.Contains(prompt, "flex_days") {
 		t.Error("system prompt should mention flex_days")
 	}

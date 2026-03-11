@@ -54,8 +54,10 @@ type tripParams struct {
 }
 
 // chatSystemPrompt returns the system prompt for the chat conversation.
-func chatSystemPrompt() string {
-	return `You are a flight booking assistant. Help the user plan their trip by gathering the following information through natural conversation:
+// The provided time is injected so the LLM knows "today" for relative dates.
+func chatSystemPrompt(now time.Time) string {
+	return fmt.Sprintf("Today's date is %s.\n\n", now.Format("2006-01-02")) +
+		`You are a flight booking assistant. Help the user plan their trip by gathering the following information through natural conversation:
 
 Required:
 - origin: departure airport IATA code (e.g. "DEL", "JFK")
@@ -341,7 +343,7 @@ func runChat(cmd *cobra.Command, _ []string) error {
 // chatLoop runs the multi-turn conversation. Separated from runChat for testability.
 func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *search.Picker, in io.Reader, out io.Writer) error {
 	history := []llm.Message{
-		{Role: llm.RoleSystem, Content: chatSystemPrompt()},
+		{Role: llm.RoleSystem, Content: chatSystemPrompt(time.Now())},
 	}
 
 	scanner := bufio.NewScanner(in)

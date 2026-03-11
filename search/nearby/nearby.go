@@ -6,7 +6,6 @@ package nearby
 
 import (
 	"context"
-	"sort"
 	"sync"
 
 	"booker/search"
@@ -33,8 +32,8 @@ func (s *Searcher) Description() string {
 }
 
 // Search expands origin/destination to include cluster airports, fans out
-// delegate searches concurrently, then merges, deduplicates, sorts by price,
-// and caps at MaxResults.
+// delegate searches concurrently, then merges, deduplicates, sorts by
+// req.SortBy (defaulting to price), and caps at MaxResults.
 func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Itinerary, error) {
 	origins := expandCode(req.Origin)
 	dests := expandCode(req.Destination)
@@ -82,9 +81,7 @@ func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Iti
 
 	merged = deduplicate(merged)
 
-	sort.Slice(merged, func(i, j int) bool {
-		return merged[i].TotalPrice.Amount < merged[j].TotalPrice.Amount
-	})
+	search.SortResults(merged, req.SortBy)
 
 	if req.MaxResults > 0 && len(merged) > req.MaxResults {
 		merged = merged[:req.MaxResults]

@@ -46,17 +46,22 @@ func (m *mockStrategy) getCalls() []search.Request {
 }
 
 func makeItin(origin, dest string, price float64) search.Itinerary {
+	return makeItinWithDuration(origin, dest, price, 10*time.Hour)
+}
+
+func makeItinWithDuration(origin, dest string, price float64, dur time.Duration) search.Itinerary {
 	return search.Itinerary{
 		Legs: []search.Leg{{
 			Flight: types.Flight{
 				Outbound: []types.Segment{
 					{Origin: origin, Destination: dest},
 				},
-				Price: types.Money{Amount: price, Currency: "USD"},
+				Price:         types.Money{Amount: price, Currency: "USD"},
+				TotalDuration: dur,
 			},
 		}},
 		TotalPrice:  types.Money{Amount: price, Currency: "USD"},
-		TotalTravel: 10 * time.Hour,
+		TotalTravel: dur,
 	}
 }
 
@@ -318,5 +323,51 @@ func TestSearcher_PartialDelegateErrors(t *testing.T) {
 	}
 	if len(results) == 0 {
 		t.Error("expected some results from non-failing pairs")
+	}
+}
+
+func TestSearcher_SortByDuration(t *testing.T) {
+	// Return itineraries where the cheapest flight has the longest duration.
+	// With SortBy="duration", the shortest duration should come first even
+	// though it has a higher price.
+	delegate := &mockStrategy{
+		name: "direct",
+		resultFn: func(req search.Request) []search.Itinerary {
+			durations := map[string]time.Duration{
+				"JFK": 15 * time.Hour, // expensive but long
+				"EWR": 8 * time.Hour,  // mid price, shortest
+				"LGA": 12 * time.Hour, // cheapest but mid duration
+			}
+			prices := map[string]float64{
+				"JFK": 900, "EWR": 600, "LGA": 400,
+			}
+			dur := durations[req.Origin]
+			p := prices[req.Origin]
+			return []search.Itinerary{makeItinWithDuration(req.Origin, "DEL", p, dur)}
+		},
+	}
+
+	s := NewSearcher(delegate)
+	results, err := s.Search(context.Background(), search.Request{
+		Origin:      "JFK",
+		Destination: "DEL",
+		SortBy:      "duration",
+		MaxResults:  10,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 results, got %d", len(results))
+	}
+	if !sort.SliceIsSorted(results, func(i, j int) bool {
+		return results[i].TotalTravel < results[j].TotalTravel
+	}) {
+		t.Errorf("results not sorted by duration; got durations: %v, %v, %v",
+			results[0].TotalTravel, results[1].TotalTravel, results[2].TotalTravel)
+	}
+	// The cheapest (LGA $400) should NOT be first if sorting by duration.
+	if results[0].TotalPrice.Amount == 400 {
+		t.Error("cheapest result is first — SortBy=duration was ignored")
 	}
 }

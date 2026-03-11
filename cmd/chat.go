@@ -301,6 +301,15 @@ func refinementHint() string {
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }
 
+// truncateHistory keeps the first system message and the most recent maxRecent
+// non-system messages, dropping older messages to prevent token overflow.
+func truncateHistory(history []llm.Message, maxRecent int) []llm.Message {
+	if len(history) <= maxRecent+1 {
+		return history
+	}
+	return append([]llm.Message{history[0]}, history[len(history)-maxRecent:]...)
+}
+
 func runChat(cmd *cobra.Command, _ []string) error {
 	if !viper.GetBool(keyVerbose) {
 		log.SetOutput(io.Discard)
@@ -344,6 +353,7 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		}
 
 		history = append(history, llm.Message{Role: llm.RoleUser, Content: userInput})
+		history = truncateHistory(history, maxHistoryMessages)
 
 		response, err := llmClient.ChatCompletion(ctx, history)
 		if err != nil {

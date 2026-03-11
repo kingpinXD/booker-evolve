@@ -45,8 +45,9 @@ const (
 	defaultMaxStops   = -1
 	defaultMaxResults = 5
 	defaultProfile    = "budget"
-	defaultCurrency   = "CAD"
-	defaultTimeout    = 5 * time.Minute
+	defaultCurrency    = "CAD"
+	defaultTimeout     = 5 * time.Minute
+	maxHistoryMessages = 20
 )
 
 // Date/time formats for output.

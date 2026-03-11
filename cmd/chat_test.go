@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -657,6 +658,114 @@ func TestProfileWeights(t *testing.T) {
 				t.Errorf("profileWeights(%q) != profileWeights(%q)", tt.profile, tt.want)
 			}
 		})
+	}
+}
+
+func TestTruncateHistory_PreservesSystemPrompt(t *testing.T) {
+	// Build history: system prompt + 30 user/assistant messages.
+	history := []llm.Message{
+		{Role: llm.RoleSystem, Content: "You are a flight assistant."},
+	}
+	for i := 0; i < 30; i++ {
+		history = append(history, llm.Message{
+			Role:    llm.RoleUser,
+			Content: fmt.Sprintf("message %d", i),
+		})
+	}
+
+	got := truncateHistory(history, 20)
+
+	// Should be system prompt + last 20 messages = 21 total.
+	if len(got) != 21 {
+		t.Fatalf("len = %d, want 21", len(got))
+	}
+	if got[0].Role != llm.RoleSystem {
+		t.Errorf("first message role = %q, want %q", got[0].Role, llm.RoleSystem)
+	}
+	if got[0].Content != "You are a flight assistant." {
+		t.Errorf("system prompt content changed")
+	}
+	// First non-system message should be message 10 (skipped 0-9).
+	if got[1].Content != "message 10" {
+		t.Errorf("got[1].Content = %q, want %q", got[1].Content, "message 10")
+	}
+	// Last message should be message 29.
+	if got[20].Content != "message 29" {
+		t.Errorf("got[20].Content = %q, want %q", got[20].Content, "message 29")
+	}
+}
+
+func TestTruncateHistory_ShortHistoryUnchanged(t *testing.T) {
+	history := []llm.Message{
+		{Role: llm.RoleSystem, Content: "system prompt"},
+		{Role: llm.RoleUser, Content: "hello"},
+		{Role: llm.RoleAssistant, Content: "hi"},
+		{Role: llm.RoleUser, Content: "search"},
+		{Role: llm.RoleAssistant, Content: "results"},
+		{Role: llm.RoleUser, Content: "thanks"},
+	}
+
+	got := truncateHistory(history, 20)
+
+	if len(got) != len(history) {
+		t.Fatalf("len = %d, want %d (unchanged)", len(got), len(history))
+	}
+	for i := range history {
+		if got[i] != history[i] {
+			t.Errorf("message[%d] changed: got %+v, want %+v", i, got[i], history[i])
+		}
+	}
+}
+
+func TestChatLoop_HistoryTruncation(t *testing.T) {
+	// Generate enough LLM responses to build >20 non-system messages.
+	// Each search cycle adds: user, assistant (with JSON), assistant (summary), system (hint).
+	// So 6 search cycles = 6 user + 6 assistant + 6 summary + 6 hint = 24 non-system messages.
+	// Plus 1 extra user+assistant for final conversational turn = 26 non-system.
+	var responses []string
+	for i := 0; i < 6; i++ {
+		responses = append(responses, fmt.Sprintf(
+			`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-%02d"}
+Searching.`, 15+i))
+	}
+	// Final conversational response (no JSON).
+	responses = append(responses, "Anything else I can help with?")
+
+	mock := &chatMockLLM{responses: responses, captureHistory: true}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	// 6 search inputs + 1 conversational + quit.
+	var inputLines []string
+	for i := 0; i < 6; i++ {
+		inputLines = append(inputLines, fmt.Sprintf("search %d", i))
+	}
+	inputLines = append(inputLines, "what else?", "quit")
+	in := strings.NewReader(strings.Join(inputLines, "\n") + "\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// The last LLM call should have at most maxHistoryMessages+1 messages
+	// (1 system + maxHistoryMessages recent).
+	lastCall := mock.historyLog[len(mock.historyLog)-1]
+	maxAllowed := maxHistoryMessages + 1
+	if len(lastCall) > maxAllowed {
+		t.Errorf("last LLM call history len = %d, want <= %d", len(lastCall), maxAllowed)
+	}
+	// System prompt must still be first.
+	if lastCall[0].Role != llm.RoleSystem {
+		t.Errorf("first message role = %q, want %q", lastCall[0].Role, llm.RoleSystem)
 	}
 }
 

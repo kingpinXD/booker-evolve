@@ -183,3 +183,7 @@ Added legArrival helper returning last segment's ArrivalTime. Added "Arrival" co
 
 ### Session 23, Task 5 -- Lint, gofmt sweep, and build gate
 All gates clean after rebasing both worktree branches: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.
+
+## Session 22 -- 04:33 -- Chat UX and table display improvements
+
+Completed all 4 planned tasks plus lint sweep in 5 commits with zero reverts and zero API calls. All feature tasks ran as parallel worktree agents. (1) Added flex_days field to chat tripParams so users can control date flexibility in conversation -- wired through buildRequestFromParams, mergeParams, parsePartialParams, system prompt, and refinement hint. (2) Injected today's date into chatSystemPrompt via time.Time parameter so the LLM can resolve temporal references like "next Friday". (3) Enhanced stops column to show layover durations (e.g. "1 (2h 30m)") using segment LayoverDuration data that was already populated but never surfaced. (4) Added arrival time column to table output using last segment's ArrivalTime. Coverage at 83.3% across 15 packages. All build gates pass.

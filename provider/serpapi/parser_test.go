@@ -460,6 +460,46 @@ func TestParseFlightGroup_CarbonEmissions_Zero(t *testing.T) {
 	}
 }
 
+func TestParseSegments_Overnight(t *testing.T) {
+	segs := []FlightSegment{{
+		DepartureAirport: Airport{ID: "DEL", Time: "2026-03-24 23:00"},
+		ArrivalAirport:   Airport{ID: "BKK", Time: "2026-03-25 05:00"},
+		Duration:         360,
+		Airline:          "Thai Airways",
+		FlightNumber:     "TG 316",
+		TravelClass:      "Economy",
+		Overnight:        true,
+	}}
+
+	result, err := parseSegments(segs, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !result[0].Overnight {
+		t.Error("segment should be marked Overnight")
+	}
+}
+
+func TestParseSegments_NotOvernight(t *testing.T) {
+	segs := []FlightSegment{{
+		DepartureAirport: Airport{ID: "DEL", Time: "2026-03-24 10:00"},
+		ArrivalAirport:   Airport{ID: "BKK", Time: "2026-03-24 16:00"},
+		Duration:         360,
+		Airline:          "Thai Airways",
+		FlightNumber:     "TG 316",
+		TravelClass:      "Economy",
+		Overnight:        false,
+	}}
+
+	result, err := parseSegments(segs, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result[0].Overnight {
+		t.Error("segment should not be marked Overnight")
+	}
+}
+
 func TestParsePriceInsights(t *testing.T) {
 	resp := &Response{
 		PriceInsights: PriceInsights{

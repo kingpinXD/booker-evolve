@@ -196,6 +196,9 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 				if isRedEye(seg.DepartureTime) {
 					airlineInfo += " [Red-eye]"
 				}
+				if seg.Overnight {
+					airlineInfo += " [Overnight]"
+				}
 				fmt.Fprintf(&b, "    %s %s→%s (%s→%s) depart %s arrive %s [%s] %s\n",
 					seg.FlightNumber,
 					seg.Origin, seg.Destination,

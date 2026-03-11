@@ -86,6 +86,7 @@ func parseSegments(segs []FlightSegment, layovers []Layover) ([]types.Segment, e
 			Duration:        time.Duration(seg.Duration) * time.Minute,
 			CabinClass:      mapCabinClass(seg.TravelClass),
 			LayoverDuration: layoverDur,
+			Overnight:       seg.Overnight,
 		})
 	}
 	return out, nil

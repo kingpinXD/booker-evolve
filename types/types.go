@@ -100,6 +100,7 @@ type Segment struct {
 	CabinClass       CabinClass
 	OperatingCarrier string        // if different from marketing carrier
 	LayoverDuration  time.Duration // time until next segment (0 if last)
+	Overnight        bool          // flight spans overnight per provider data
 }
 
 // Money represents a price with its currency.

@@ -383,6 +383,66 @@ func TestBuildRankingPrompt_RedEyeTag(t *testing.T) {
 	}
 }
 
+func TestBuildRankingPrompt_OvernightTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 23, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+							Overnight: true,
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "[Overnight]") {
+		t.Errorf("prompt should contain [Overnight] for overnight segment, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_NoOvernightTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+							Overnight: false,
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if searchString(prompt, "[Overnight]") {
+		t.Errorf("prompt should not contain [Overnight] for daytime segment, got:\n%s", prompt)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

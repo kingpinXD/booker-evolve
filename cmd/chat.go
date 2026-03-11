@@ -671,6 +671,30 @@ func formatComparison(results []search.Itinerary, indices []int) string {
 	return b.String()
 }
 
+// stopoverSuggestion returns a tip suggesting multi-city routing via stopover
+// cities if the route has known stopovers. Returns empty for multi-city trips
+// (leg2Date non-empty) since the user already has a stopover planned.
+func stopoverSuggestion(origin, dest, leg2Date string) string {
+	if leg2Date != "" {
+		return ""
+	}
+	stopovers := multicity.StopoversForRoute(origin, dest)
+	if len(stopovers) == 0 {
+		return ""
+	}
+	// Show up to 3 city names.
+	n := len(stopovers)
+	if n > 3 {
+		n = 3
+	}
+	var cities []string
+	for _, s := range stopovers[:n] {
+		cities = append(cities, s.City)
+	}
+	return fmt.Sprintf("Tip: Flying via %s often saves money on this route. Try setting leg2_date to search multi-city.",
+		strings.Join(cities, " or "))
+}
+
 func runChat(cmd *cobra.Command, _ []string) error {
 	if !viper.GetBool(keyVerbose) {
 		log.SetOutput(io.Discard)
@@ -825,6 +849,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 			if s := formatPriceInsights(pi); s != "" {
 				_, _ = fmt.Fprintln(out, s)
 			}
+		}
+
+		// Suggest multi-city routing for single-leg trips with known stopovers.
+		if tip := stopoverSuggestion(params.Origin, params.Destination, params.Leg2Date); tip != "" {
+			_, _ = fmt.Fprintln(out, tip)
 		}
 
 		// Add result summary and refinement guidance to conversation history

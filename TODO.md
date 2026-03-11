@@ -22,8 +22,8 @@ Carried from: Day 49 (all completed)
 - [ ] Verify build, test, vet pass
 
 ## Task 146: Proactive stopover suggestion in chat
-**Status:** pending
-**Plan:** to be filled during implementation
+**Status:** done
+**Plan:** Add stopoverSuggestion(origin, dest, leg2Date) helper that checks StopoversForRoute. Wire into chatLoop after results display for single-leg trips only. Files: cmd/chat.go, cmd/chat_test.go.
 - [ ] Write stopoverSuggestion(origin, dest, leg2Date) helper
 - [ ] Write unit tests for stopoverSuggestion
 - [ ] Wire into chatLoop after results display (single-leg only)

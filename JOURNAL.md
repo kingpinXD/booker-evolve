@@ -635,3 +635,6 @@ All 5 planned tasks completed. Fixed a correctness bug where Picker fallback alw
 
 ## Session 50, Task 1 -- Result caching and comparison in chat
 Added lastResults cache in chatLoop, keyword detection (looksLikeComparison/looksLikeDetail), parseOptionIndices, formatComparison, and formatOptionDetail. Comparison/detail requests are intercepted before LLM call, returning instant structured responses. 7 new tests including 2 integration tests verifying no extra LLM calls on compare/detail.
+
+## Session 50, Task 2 -- Proactive stopover suggestion in chat
+Added stopoverSuggestion helper that checks StopoversForRoute and displays a tip after results for single-leg trips. Shows up to 3 stopover city names and suggests setting leg2_date. Suppressed when leg2Date is already set (multi-city). 5 new tests including 2 chatLoop integration tests.

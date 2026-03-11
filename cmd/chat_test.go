@@ -2303,3 +2303,100 @@ Searching for flights.`,
 		t.Errorf("expected 1 LLM call (detail should be intercepted), got %d", len(mock.historyLog))
 	}
 }
+
+// --- Stopover suggestion tests ---
+
+func TestStopoverSuggestion_KnownRoute(t *testing.T) {
+	// DEL->YYZ has known stopover cities.
+	tip := stopoverSuggestion("DEL", "YYZ", "")
+	if tip == "" {
+		t.Fatal("expected stopover suggestion for DEL->YYZ")
+	}
+	if !strings.Contains(tip, "Tip:") {
+		t.Errorf("suggestion should start with 'Tip:', got: %s", tip)
+	}
+	// Should mention at least one stopover city name.
+	if !strings.Contains(tip, "Hong Kong") && !strings.Contains(tip, "Bangkok") && !strings.Contains(tip, "Singapore") {
+		t.Errorf("suggestion should mention a stopover city, got: %s", tip)
+	}
+}
+
+func TestStopoverSuggestion_UnknownRoute(t *testing.T) {
+	// Route with no specific stopovers still gets fallback hubs.
+	tip := stopoverSuggestion("AMD", "LAX", "")
+	if tip == "" {
+		t.Fatal("expected fallback stopover suggestion for unknown route")
+	}
+}
+
+func TestStopoverSuggestion_WithLeg2Date(t *testing.T) {
+	// When leg2_date is set, user already has a multi-city trip — no suggestion.
+	tip := stopoverSuggestion("DEL", "YYZ", "2025-07-01")
+	if tip != "" {
+		t.Errorf("expected no suggestion when leg2_date is set, got: %s", tip)
+	}
+}
+
+func TestChatLoop_StopoverSuggestionShown(t *testing.T) {
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 800, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	if !strings.Contains(output, "Tip:") {
+		t.Errorf("expected stopover suggestion tip in output, got:\n%s", output)
+	}
+}
+
+func TestChatLoop_NoStopoverSuggestionForMultiCity(t *testing.T) {
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15","leg2_date":"2025-06-20"}
+Searching for multi-city.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs: []search.Leg{
+					{Flight: types.Flight{Price: types.Money{Amount: 400, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "BKK"}}}},
+					{Flight: types.Flight{Price: types.Money{Amount: 400, Currency: "USD"}, Outbound: []types.Segment{{Origin: "BKK", Destination: "YYZ"}}}},
+				},
+				TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	// Should NOT show stopover suggestion for multi-city trip.
+	if strings.Contains(output, "Tip:") && strings.Contains(output, "leg2_date") {
+		t.Errorf("should not show stopover suggestion for multi-city trip, got:\n%s", output)
+	}
+}

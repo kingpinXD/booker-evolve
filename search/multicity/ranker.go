@@ -2,6 +2,7 @@ package multicity
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -10,6 +11,12 @@ import (
 	"booker/llm"
 	"booker/search"
 )
+
+// rankerLLM abstracts the LLM chat completion call so Ranker can be tested
+// with a mock. The concrete implementation is *llm.Client.
+type rankerLLM interface {
+	ChatCompletion(ctx context.Context, messages []llm.Message) (string, error)
+}
 
 // MaxItinerariesToRank is the maximum number of candidates to send
 // to the LLM. Sending too many wastes tokens and confuses the model.
@@ -64,18 +71,19 @@ var (
 // soft preferences that are hard to encode as simple rules.
 //
 // The LLM receives a structured summary of each itinerary and returns
-// a JSON array of scores with reasoning.
-//
-// TODO(iterate): Cache LLM responses for identical itinerary sets.
+// a JSON array of scores with reasoning. Identical candidate sets
+// (same routes, prices, durations, and weights) return cached scores
+// without an additional LLM call.
 type Ranker struct {
-	llm     *llm.Client
+	llm     rankerLLM
 	weights RankingWeights
+	cache   map[string][]RankResult
 }
 
 // NewRanker creates a ranker with the given weights profile.
 // Pass WeightsBudget, WeightsComfort, or WeightsBalanced — or a custom RankingWeights.
-func NewRanker(llmClient *llm.Client, weights RankingWeights) *Ranker {
-	return &Ranker{llm: llmClient, weights: weights}
+func NewRanker(llmClient rankerLLM, weights RankingWeights) *Ranker {
+	return &Ranker{llm: llmClient, weights: weights, cache: make(map[string][]RankResult)}
 }
 
 // RankResult is a single scored itinerary from the LLM.
@@ -99,6 +107,19 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 		candidates = candidates[:MaxItinerariesToRank]
 	}
 
+	key := cacheKey(candidates, r.weights)
+
+	// Check cache before calling LLM.
+	if cached, ok := r.cache[key]; ok {
+		for _, res := range cached {
+			if res.Index >= 0 && res.Index < len(candidates) {
+				candidates[res.Index].Score = res.Score
+				candidates[res.Index].Reasoning = res.Reasoning
+			}
+		}
+		return applySortByScore(candidates), nil
+	}
+
 	prompt := buildRankingPrompt(candidates)
 	sysPrompt := buildSystemPrompt(r.weights)
 
@@ -117,6 +138,8 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 		return nil, fmt.Errorf("parsing LLM ranking response: %w", err)
 	}
 
+	r.cache[key] = results
+
 	// Apply scores back to itineraries.
 	for _, res := range results {
 		if res.Index >= 0 && res.Index < len(candidates) {
@@ -125,9 +148,13 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 		}
 	}
 
-	// Sort by score descending (best first).
-	sorted := make([]search.Itinerary, len(candidates))
-	copy(sorted, candidates)
+	return applySortByScore(candidates), nil
+}
+
+// applySortByScore returns a copy of itineraries sorted by score descending.
+func applySortByScore(itineraries []search.Itinerary) []search.Itinerary {
+	sorted := make([]search.Itinerary, len(itineraries))
+	copy(sorted, itineraries)
 	for i := 0; i < len(sorted); i++ {
 		for j := i + 1; j < len(sorted); j++ {
 			if sorted[j].Score > sorted[i].Score {
@@ -135,8 +162,27 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 			}
 		}
 	}
+	return sorted
+}
 
-	return sorted, nil
+// cacheKey builds a deterministic hash from the candidate itineraries and weights.
+// It uses route, price, and duration per leg to form a unique key.
+func cacheKey(itineraries []search.Itinerary, w RankingWeights) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "w:%d/%d/%d/%d/%d/%d;", w.Cost, w.AirlineConsistency, w.LayoverQuality, w.FlightDuration, w.StopoverCity, w.Schedule)
+	for i, itin := range itineraries {
+		fmt.Fprintf(&b, "i%d:%.2f/%s;", i, itin.TotalPrice.Amount, itin.TotalPrice.Currency)
+		for j, leg := range itin.Legs {
+			seg := leg.Flight.Outbound
+			var route string
+			if len(seg) > 0 {
+				route = seg[0].Origin + "-" + seg[len(seg)-1].Destination
+			}
+			fmt.Fprintf(&b, "l%d:%s/%.2f/%d;", j, route, leg.Flight.Price.Amount, int(leg.Flight.TotalDuration.Minutes()))
+		}
+	}
+	h := sha256.Sum256([]byte(b.String()))
+	return fmt.Sprintf("%x", h[:16])
 }
 
 // buildSystemPrompt generates the LLM system prompt with the given weights.

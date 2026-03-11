@@ -1,9 +1,11 @@
 package multicity
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"booker/llm"
 	"booker/search"
 	"booker/types"
 )
@@ -924,6 +926,91 @@ func TestBuildRankingPrompt_NoConnectionTag(t *testing.T) {
 	}
 	if searchString(prompt, "[Tight connection:") {
 		t.Errorf("prompt should not contain [Tight connection:] for 120min layover, got:\n%s", prompt)
+	}
+}
+
+// countingLLM tracks how many times ChatCompletion is called.
+type countingLLM struct {
+	calls    int
+	response string
+}
+
+func (m *countingLLM) ChatCompletion(_ context.Context, _ []llm.Message) (string, error) {
+	m.calls++
+	return m.response, nil
+}
+
+func makeTestItineraries(price float64, origin, dest string) []search.Itinerary {
+	dep := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	return []search.Itinerary{{
+		TotalPrice:  types.Money{Amount: price, Currency: "USD"},
+		TotalTravel: 6 * time.Hour,
+		TotalTrip:   6 * time.Hour,
+		Legs: []search.Leg{{
+			Flight: types.Flight{
+				Price: types.Money{Amount: price, Currency: "USD"},
+				Outbound: []types.Segment{{
+					FlightNumber: "AA100", Origin: origin, Destination: dest,
+					OriginCity: "CityA", DestinationCity: "CityB",
+					DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+					Duration: 6 * time.Hour, AirlineName: "Test Air",
+				}},
+			},
+		}},
+	}}
+}
+
+func TestRankCache_HitSkipsLLM(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+
+	itins := makeTestItineraries(500, "JFK", "LHR")
+	ctx := context.Background()
+
+	if _, err := ranker.Rank(ctx, itins); err != nil {
+		t.Fatalf("first Rank: %v", err)
+	}
+	if _, err := ranker.Rank(ctx, itins); err != nil {
+		t.Fatalf("second Rank: %v", err)
+	}
+	if mock.calls != 1 {
+		t.Errorf("expected 1 LLM call (cache hit), got %d", mock.calls)
+	}
+}
+
+func TestRankCache_DifferentItinerariesMiss(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+
+	ctx := context.Background()
+	if _, err := ranker.Rank(ctx, makeTestItineraries(500, "JFK", "LHR")); err != nil {
+		t.Fatalf("first Rank: %v", err)
+	}
+	if _, err := ranker.Rank(ctx, makeTestItineraries(700, "SFO", "NRT")); err != nil {
+		t.Fatalf("second Rank: %v", err)
+	}
+	if mock.calls != 2 {
+		t.Errorf("expected 2 LLM calls (cache miss), got %d", mock.calls)
+	}
+}
+
+func TestRankCache_DifferentWeightsMiss(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	itins := makeTestItineraries(500, "JFK", "LHR")
+	ctx := context.Background()
+
+	budget := NewRanker(mock, WeightsBudget)
+	if _, err := budget.Rank(ctx, itins); err != nil {
+		t.Fatalf("budget Rank: %v", err)
+	}
+
+	comfort := NewRanker(mock, WeightsComfort)
+	if _, err := comfort.Rank(ctx, itins); err != nil {
+		t.Fatalf("comfort Rank: %v", err)
+	}
+
+	if mock.calls != 2 {
+		t.Errorf("expected 2 LLM calls (different weights), got %d", mock.calls)
 	}
 }
 

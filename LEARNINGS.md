@@ -113,3 +113,11 @@ Renaming Strategy.leg2Date to Strategy.defaultLeg2Date broke strategy_test.go wh
 ## Lesson: Parallel worktree agents work well for disjoint package work
 
 Session 35 ran Tasks 87 (cmd/chat.go only) and 89 (search/multicity/ranker.go only) as parallel worktree agents while main worked on Tasks 85+86+88 sequentially. Both parallel agents completed successfully with no merge conflicts. The key constraint is strict file disjointness -- the chat task touched chat.go/chat_test.go and the ranker task touched ranker.go/ranker_test.go, with zero overlap. Rebasing both branches into main after the sequential tasks completed cleanly. This pattern saves significant wall-clock time on 5-task sessions.
+
+## Lesson: Verify parsed data is actually populated before adding display features
+
+Session 36 planned to add baggage display (BagsIncluded) to the table and JSON output. During implementation, discovered that BagsIncluded is only populated by the inactive Kiwi provider -- SerpAPI doesn't return bag data at all. The field would always be zero for all real users. Before planning a "display parsed data" task, grep for where the data is actually set (not just defined) and verify the active provider populates it. This saved wasted effort by pivoting to flight number display instead.
+
+## Lesson: Worktree agents may not commit -- copy uncommitted changes via file copy
+
+Session 36 worktree agents completed their tasks but did not create commits on their branches. The worktree branches showed the same commit as the base. The changes existed as uncommitted modifications in the worktree directories. To integrate: cp the modified files from the worktree dir to the main repo, verify tests pass, then commit on main. This is simpler than trying to commit in the worktree and cherry-pick.

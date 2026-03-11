@@ -1,64 +1,60 @@
 # TODO
 
-Carried from: Day 34 (all completed)
+Carried from: Day 35 (all completed)
 
-## Tasks 80-84: Day 34 tasks
-**Status:** completed -- avoid-airlines in chat, multicity in chat, arrival time filter, max duration filter, cmd helper coverage
+## Tasks 85-89: Day 35 tasks
+**Status:** completed -- next-day arrival, codeshare display, richer chat summary, preferred airlines filter, ranker LLM caching
 
 ---
 
-## Tasks 85-89: Day 35 tasks
-**Status:** pending
+## Tasks 90-94: Day 36 tasks
+**Status:** completed -- per-leg cabin columns, flight number JSON, fallback hub stopovers, combiner red-eye filter, multi-leg trip summary
 
-## Task 85: Next-day arrival indicator
+## Task 90: Multi-leg per-leg cabin class columns
 **Status:** done
-**Plan:** Add isNextDay(dep, arr) helper comparing dates. Modify legArrival to append " (+N)" when arrival date > departure date. Add arrival_next_day bool to jsonLeg. Test with same-day and next-day flights. Files: cmd/search.go, cmd/search_test.go.
-- [x] Write test for next-day detection helper
-- [x] Implement helper to detect arrival date > departure date
-- [x] Modify legArrival to append (+N) marker
-- [x] Add arrival_next_day boolean to jsonLeg
-- [x] Write tests for table and JSON output with next-day arrivals
+**Plan:** Fix multi-leg table to show "Leg 1 Cabin" / "Leg 2 Cabin" instead of single "Cabin" showing only leg 0. Same pattern as CO2 per-leg fix. Files: cmd/search.go, cmd/search_test.go.
+- [x] Write test verifying multi-leg table has two cabin columns
+- [x] Change header from "Cabin" to "Leg 1 Cabin", "Leg 2 Cabin"
+- [x] Change row from legCabin(itin, 0) to legCabin(itin, 0), legCabin(itin, 1)
+- [x] Verify single-leg table still has single "Cabin" column
 - [x] Verify existing tests still pass
 
-## Task 86: Operating carrier display (codeshare indicator)
+## Task 91: Flight number in JSON output
 **Status:** done
-**Plan:** Modify legAirlines to append "(op. XX)" when OperatingCarrier differs from Airline. Add operating_carrier to jsonLeg. Test codeshare and non-codeshare segments. Files: cmd/search.go, cmd/search_test.go.
-- [x] Write test for codeshare display format "AC (op. UA)"
-- [x] Modify legAirlines to show operating carrier when different
-- [x] Add operating_carrier to jsonLeg struct
-- [x] Populate operating_carrier in buildJSONItineraries
-- [x] Write tests for non-codeshare case (no change)
+**Plan:** Add flight_number to jsonLeg (first segment's FlightNumber). Original plan was bags display but BagsIncluded only populated by inactive Kiwi provider. Files: cmd/search.go, cmd/search_test.go.
+- [x] Write test for flight_number in JSON output
+- [x] Write test for flight_number omitempty when empty
+- [x] Add FlightNumber to jsonLeg struct
+- [x] Populate in buildJSONItineraries
 - [x] Verify existing tests still pass
 
-## Task 87: Richer result summary in chat history
+## Task 92: Fallback global hub stopovers
 **Status:** done
-**Plan:** Expand resultSummaryForChat to show top 3 results (price, airline, duration, stops). Graceful degradation for <3 results.
-- [x] Write test with 5+ results expecting top 3 in summary
-- [x] Write test with 1-2 results for graceful degradation
-- [x] Modify resultSummaryForChat to include top 3 results
-- [x] Include price, airline, duration, stops per result
-- [x] Verify 0-result case unchanged
-- [x] Verify existing chat tests still pass
+**Plan:** Add GlobalFallbackHubs slice (8 well-connected hubs). Modify StopoversForRoute to return filtered fallback hubs when route-specific stopovers are nil. Filter out origin/destination airports. Files: search/multicity/stopovers.go, search/multicity/stopovers_test.go, search/multicity/search_test.go.
+- [x] Write test: known routes return specific stopovers (unchanged)
+- [x] Write test: unknown route returns fallback hubs
+- [x] Write test: fallback hubs exclude origin and destination airports
+- [x] Define GlobalFallbackHubs slice
+- [x] Modify StopoversForRoute to return filtered fallbacks
+- [x] Update search_test.go for new behavior (unknown routes now use fallbacks)
+- [x] Verify existing tests still pass
 
-## Task 88: Preferred airlines filter (positive filter)
+## Task 93: Combiner red-eye leg filtering
 **Status:** done
-**Plan:** Add FilterByPreferredAirlines (keep only matching flights, checks Airline+OperatingCarrier). Wire through Request, direct, multicity, CLI, chat. Mirror FilterByAvoidAirlines pattern inverted.
-- [x] Write FilterByPreferredAirlines tests (empty keeps all, single code, multiple codes, operating carrier match)
-- [x] Implement FilterByPreferredAirlines in filter.go
-- [x] Add PreferredAirlines to search.Request
-- [x] Wire into direct pipeline
-- [x] Wire into multicity stages (FILTER + 4b)
-- [x] Add --preferred-airlines CLI flag
-- [x] Wire into chat tripParams (parse/merge/build/prompt/hint)
-- [x] Write chat tests
+**Plan:** Reuse existing isRedEye from ranker.go (same package). Skip combinations where leg2 departure is 00:00-04:59. Files: search/multicity/combiner.go, search/multicity/combiner_test.go.
+- [x] Write test: red-eye leg2 departure (02:00) rejected
+- [x] Write test: normal leg2 departure (10:00) passes
+- [x] Write test: edge cases (05:00 OK, 04:59 rejected, 00:00 rejected)
+- [x] Add red-eye check in CombineLegs loop (reuses ranker's isRedEye)
+- [x] Update TODO comment in combiner.go
+- [x] Verify existing combiner tests still pass
 
-## Task 89: Ranker LLM response caching
+## Task 94: Multi-leg trip summary footer
 **Status:** done
-**Plan:** SHA-256 cache key from weights + itinerary data. In-memory map on Ranker. Short-circuit Rank() on cache hit.
-- [x] Write test: identical itineraries + weights -> cache hit (mock LLM called once)
-- [x] Write test: different itineraries -> cache miss
-- [x] Write test: different weights -> cache miss
-- [x] Implement cache key generation (hash sorted candidates + weights)
-- [x] Add in-memory cache map to Ranker struct
-- [x] Short-circuit Rank() on cache hit
-- [x] Remove TODO comment from ranker.go
+**Plan:** Enhance priceSummary to show total trip duration range for multi-leg itineraries. Files: cmd/search.go, cmd/search_test.go.
+- [x] Write test: multi-leg priceSummary includes duration range
+- [x] Write test: single-leg priceSummary unchanged
+- [x] Write test: single result shows duration without range
+- [x] Add formatTripDuration helper (Xd Yh format)
+- [x] Extend priceSummary with TotalTrip range for multi-leg
+- [x] Verify existing tests still pass

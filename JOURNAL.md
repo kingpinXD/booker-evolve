@@ -388,3 +388,22 @@ Added in-memory cache to Ranker keyed by SHA-256 hash of weights + itinerary dat
 ## Session 35 -- 12:32 -- New display features, preferred airlines filter, ranker caching
 
 Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Used parallel worktree agents for Tasks 3 (chat summary) and 5 (ranker caching) while working on Tasks 1+2+4 sequentially on main. Key outcomes: (1) Users see next-day arrival markers (+N) and codeshare info (op. XX) in table/JSON output. (2) Chat LLM gets richer context with top-3 result summaries instead of just the cheapest. (3) New preferred_airlines positive filter complements existing avoid_airlines for full airline control. (4) Ranker caches LLM responses keyed by SHA-256 of weights+itineraries, saving tokens and latency on repeated rankings. 29 new tests total. All build gates pass.
+
+### Session 36, Task 1 -- Multi-leg per-leg cabin class columns
+Fixed multi-leg table to show "Leg 1 Cabin" / "Leg 2 Cabin" instead of single "Cabin" showing only leg 0. Same bug pattern as the CO2 per-leg fix from Day 28. 1 new test.
+
+### Session 36, Task 2 -- Flight number in JSON output
+Added flight_number (omitempty) to jsonLeg, populated from first segment's FlightNumber. Original plan was bags display but BagsIncluded is only populated by inactive Kiwi provider -- SerpAPI doesn't return bag data. 2 new tests.
+
+### Session 36, Task 3 -- Fallback global hub stopovers
+StopoversForRoute now returns filtered global hubs (IST, SIN, HKG, NRT, LHR, CDG, ICN, BKK) when no route-specific stopovers exist. Origin/destination airports excluded from fallback list. This enables multicity search for any route, not just the 3 hardcoded corridors. Updated search_test.go to reflect new behavior. 5 new tests.
+
+### Session 36, Task 4 -- Combiner red-eye leg filtering
+CombineLegs now rejects combinations where leg2 departs between 00:00-04:59. Reuses existing isRedEye helper from ranker.go (same package). 5 new subtests.
+
+### Session 36, Task 5 -- Multi-leg trip summary footer
+priceSummary now appends total trip duration range for multi-leg itineraries. Added formatTripDuration helper for compact "Xd Yh" display. Single-leg results unchanged. 3 new tests.
+
+## Session 36 -- Multi-leg display fixes, fallback stopovers, combiner quality
+
+Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Used parallel worktree agents for Tasks 3 (stopovers) and 4 (combiner) while working on Tasks 1, 2, 5 sequentially on main. Task 91 was pivoted from bags display to flight number JSON (BagsIncluded only populated by inactive Kiwi provider). Key outcomes: (1) Multi-leg table now shows per-leg cabin class columns. (2) JSON output includes flight numbers for programmatic consumers. (3) Multicity search now works for any route via 8 global fallback hubs. (4) Combiner hard-filters red-eye leg2 departures. (5) Multi-leg price summary includes trip duration range. 16 new tests total. All build gates pass.

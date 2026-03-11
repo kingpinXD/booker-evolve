@@ -380,6 +380,43 @@ func parsePartialParams(response string) (tripParams, bool) {
 	return tripParams{}, false
 }
 
+// inferProfile scans recent user messages for preference keywords and returns
+// a ranking profile name. Returns empty string when no clear signal is detected.
+func inferProfile(history []llm.Message) string {
+	var budget, comfort, eco int
+	for _, msg := range history {
+		if msg.Role != llm.RoleUser {
+			continue
+		}
+		lower := strings.ToLower(msg.Content)
+		for _, kw := range []string{"cheapest", "budget", "save money", "lowest price", "low cost"} {
+			if strings.Contains(lower, kw) {
+				budget++
+			}
+		}
+		for _, kw := range []string{"comfortable", "comfort", "hate layover", "short layover", "business class", "first class"} {
+			if strings.Contains(lower, kw) {
+				comfort++
+			}
+		}
+		for _, kw := range []string{"eco", "green", "carbon", "environment", "emission"} {
+			if strings.Contains(lower, kw) {
+				eco++
+			}
+		}
+	}
+	switch {
+	case budget > 0 && budget >= comfort && budget >= eco:
+		return "budget"
+	case comfort > 0 && comfort >= eco:
+		return "comfort"
+	case eco > 0:
+		return "eco"
+	default:
+		return ""
+	}
+}
+
 // profileWeights maps a profile name to the corresponding ranking weights.
 // Unknown or empty profiles default to budget.
 func profileWeights(name string) multicity.RankingWeights {
@@ -571,6 +608,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		if !found {
 			_, _ = fmt.Fprintln(out, response)
 			continue
+		}
+
+		// Infer profile from conversation when LLM didn't set one explicitly.
+		if params.Profile == "" {
+			params.Profile = inferProfile(history)
 		}
 
 		lastParams = params

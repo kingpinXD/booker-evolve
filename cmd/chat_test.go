@@ -469,6 +469,109 @@ func TestResultSummaryForChat_Empty(t *testing.T) {
 	}
 }
 
+func TestInferProfile(t *testing.T) {
+	tests := []struct {
+		name     string
+		messages []llm.Message
+		want     string
+	}{
+		{
+			name: "budget keywords",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "find me the cheapest flights to London"},
+			},
+			want: "budget",
+		},
+		{
+			name: "save money",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "I want to save money on this trip"},
+			},
+			want: "budget",
+		},
+		{
+			name: "lowest price",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "show the lowest price options"},
+			},
+			want: "budget",
+		},
+		{
+			name: "comfort keywords",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "I want something comfortable with short layovers"},
+			},
+			want: "comfort",
+		},
+		{
+			name: "business class",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "looking for business class flights"},
+			},
+			want: "comfort",
+		},
+		{
+			name: "hate layovers",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "I hate layovers, prefer direct"},
+			},
+			want: "comfort",
+		},
+		{
+			name: "eco keywords",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "I care about the environment and carbon footprint"},
+			},
+			want: "eco",
+		},
+		{
+			name: "green travel",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "looking for the greenest option"},
+			},
+			want: "eco",
+		},
+		{
+			name: "no signal",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "fly me from Delhi to Toronto next month"},
+			},
+			want: "",
+		},
+		{
+			name:     "empty messages",
+			messages: nil,
+			want:     "",
+		},
+		{
+			name: "only system/assistant messages ignored",
+			messages: []llm.Message{
+				{Role: llm.RoleSystem, Content: "you are a travel agent"},
+				{Role: llm.RoleAssistant, Content: "I'll find the cheapest flights"},
+			},
+			want: "",
+		},
+		{
+			name: "scans multiple user messages",
+			messages: []llm.Message{
+				{Role: llm.RoleUser, Content: "I'm planning a trip"},
+				{Role: llm.RoleAssistant, Content: "Where to?"},
+				{Role: llm.RoleUser, Content: "somewhere cheap, budget friendly"},
+			},
+			want: "budget",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := inferProfile(tt.messages)
+			if got != tt.want {
+				t.Errorf("inferProfile() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestChatSystemPrompt(t *testing.T) {
 	now := time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC)
 	prompt := chatSystemPrompt(now)
@@ -1747,6 +1850,44 @@ Let me search with eco ranking.`,
 	}
 	if wu.calls[1] != multicity.WeightsEco {
 		t.Errorf("second SetWeights should be WeightsEco, got %+v", wu.calls[1])
+	}
+}
+
+func TestChatLoop_InfersProfileFromConversation(t *testing.T) {
+	// LLM returns search params WITHOUT a profile field.
+	// User message contains "cheapest" -> inferProfile should detect "budget".
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for the cheapest flights.`,
+		"Done.",
+	}
+	mock := &chatMockLLM{responses: responses}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	wu := &mockWeightsUpdater{}
+	in := strings.NewReader("find me the cheapest flights to Toronto\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, wu, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// inferProfile should detect "budget" from "cheapest" in user message,
+	// and SetWeights should be called with WeightsBudget.
+	if len(wu.calls) != 1 {
+		t.Fatalf("expected 1 SetWeights call from inferred profile, got %d", len(wu.calls))
+	}
+	if wu.calls[0] != multicity.WeightsBudget {
+		t.Errorf("SetWeights should be WeightsBudget (inferred), got %+v", wu.calls[0])
 	}
 }
 

@@ -16,16 +16,16 @@ Carried from: Day 47 (all completed)
 - [x] Verify build + test + vet pass
 
 ## Task 136: Auto-infer ranking profile from conversation context
-**Status:** pending
+**Status:** done
 **Plan:** Add inferProfile function scanning user messages for preference keywords.
-- [ ] Write test: inferProfile returns "budget" for cheapest/save money keywords
-- [ ] Write test: inferProfile returns "comfort" for comfortable/hate layovers keywords
-- [ ] Write test: inferProfile returns "eco" for eco/green/carbon keywords
-- [ ] Write test: inferProfile returns "" for ambiguous or no signals
-- [ ] Implement inferProfile function in chat.go
-- [ ] Wire into chatLoop: use inferred profile when LLM doesn't set one
-- [ ] Write integration test: chatLoop applies inferred profile
-- [ ] Verify build + test + vet pass
+- [x] Write test: inferProfile returns "budget" for cheapest/save money keywords
+- [x] Write test: inferProfile returns "comfort" for comfortable/hate layovers keywords
+- [x] Write test: inferProfile returns "eco" for eco/green/carbon keywords
+- [x] Write test: inferProfile returns "" for ambiguous or no signals
+- [x] Implement inferProfile function in chat.go
+- [x] Wire into chatLoop: use inferred profile when LLM doesn't set one
+- [x] Write integration test: chatLoop applies inferred profile
+- [x] Verify build + test + vet pass
 
 ## Task 137: India to Southeast Asia stopover routes
 **Status:** pending

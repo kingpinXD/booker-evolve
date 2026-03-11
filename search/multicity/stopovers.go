@@ -322,8 +322,47 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("DEL", "YVR"): DELToYVRStopovers,
 }
 
+// GlobalFallbackHubs are well-connected hub airports used as stopover
+// candidates when no route-specific stopovers are configured.
+var GlobalFallbackHubs = []StopoverCity{
+	{City: "Istanbul", Airport: "IST", KiwiID: "Airport:IST", Region: "europe",
+		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
+		Notes: "Turkish Airlines mega-hub with global connectivity."},
+	{City: "Singapore", Airport: "SIN", KiwiID: "Airport:SIN", Region: "southeast_asia",
+		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
+		Notes: "Singapore Airlines hub, major Asia-Pacific crossroads."},
+	{City: "Hong Kong", Airport: "HKG", KiwiID: "Airport:HKG", Region: "east_asia",
+		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
+		Notes: "Cathay Pacific hub with extensive long-haul network."},
+	{City: "Tokyo", Airport: "NRT", KiwiID: "Airport:NRT", Region: "east_asia",
+		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
+		Notes: "ANA/JAL hub, key Pacific gateway."},
+	{City: "London", Airport: "LHR", KiwiID: "Airport:LHR", Region: "europe",
+		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
+		Notes: "BA hub, largest European long-haul airport."},
+	{City: "Paris", Airport: "CDG", KiwiID: "Airport:CDG", Region: "europe",
+		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
+		Notes: "Air France hub with global reach."},
+	{City: "Seoul", Airport: "ICN", KiwiID: "Airport:ICN", Region: "east_asia",
+		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
+		Notes: "Korean Air hub, strong Americas and Asia connectivity."},
+	{City: "Bangkok", Airport: "BKK", KiwiID: "Airport:BKK", Region: "southeast_asia",
+		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
+		Notes: "Thai Airways hub, affordable Southeast Asia gateway."},
+}
+
 // StopoversForRoute returns the candidate stopover cities for a given
-// origin-destination pair. Returns nil for unknown routes.
+// origin-destination pair. When no route-specific stopovers exist, it
+// returns the global fallback hubs with origin/destination airports excluded.
 func StopoversForRoute(origin, destination string) []StopoverCity {
-	return stopoversMap[routeKey(origin, destination)]
+	if route := stopoversMap[routeKey(origin, destination)]; route != nil {
+		return route
+	}
+	var hubs []StopoverCity
+	for _, h := range GlobalFallbackHubs {
+		if h.Airport != origin && h.Airport != destination {
+			hubs = append(hubs, h)
+		}
+	}
+	return hubs
 }

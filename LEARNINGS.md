@@ -77,3 +77,7 @@ When writing tests for airport cluster data, test both directions: (1) a known c
 ## Lesson: Verify SerpAPI field availability before planning tasks
 
 SerpAPI provides many fields (carbon_emissions, legroom, etc.) that aren't in our response struct yet. Before planning a "display X" task, check both (1) the SerpAPI docs for field existence and (2) the response struct + parser to see if parsing is needed. Tasks that only need display are quick (cabin class was already parsed). Tasks that need end-to-end parsing (carbon emissions: response.go + parser.go + types.go + display) take 3x longer but are still straightforward.
+
+## Lesson: Watch for integer division truncation in unit conversions
+
+When converting between units (grams to kg, cents to dollars, etc.) using integer types, division truncates toward zero. CarbonKg = grams/1000 gave 0 for 800 grams. Use rounding: (grams+500)/1000 yields the nearest integer. Always add a test for values just below the divisor boundary (e.g., 800g, 499g) to catch this early.

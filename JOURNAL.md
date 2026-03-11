@@ -201,3 +201,17 @@ Added isRedEye(t time.Time) bool for departures 00:00-04:59. buildRankingPrompt 
 
 ### Session 24, Task 4 -- Lint, gofmt sweep, and build gate
 One gofmt fix in response.go (tab alignment in CarbonEmissions struct). All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.
+
+## Day 25
+
+### Session 25, Task 1 -- Parse overnight flag and annotate in ranker prompt
+Added Overnight bool to types.Segment, parsed from SerpAPI FlightSegment.Overnight in parser.go. buildRankingPrompt now appends [Overnight] tag after airline info (similar to [Red-eye] tag), giving the LLM explicit signal about overnight connections. 4 new tests across serpapi and multicity. Ran as parallel worktree agent.
+
+### Session 25, Task 2 -- Parse aircraft type and display in JSON output
+Added Aircraft string to types.Segment, parsed from SerpAPI FlightSegment.Airplane. Added legAircraft helper and wired into buildJSONItineraries as "aircraft" field (omitted when empty). 3 new tests. Sequential on main since it shares files with Task 1.
+
+### Session 25, Task 3 -- Conditional Score/Reason columns + carbon rounding fix
+Added hasScores helper to detect when any itinerary has a non-zero score. printTable now conditionally includes Score and Reason columns only when scores exist, reducing visual noise in direct search output. Also fixed carbon emissions integer division bug: changed grams/1000 to (grams+500)/1000 so 800g correctly rounds to 1kg instead of truncating to 0. 5 new tests. Ran as parallel worktree agent.
+
+### Session 25, Task 4 -- Lint, gofmt sweep, and build gate
+All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.

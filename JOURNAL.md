@@ -184,6 +184,20 @@ Added legArrival helper returning last segment's ArrivalTime. Added "Arrival" co
 ### Session 23, Task 5 -- Lint, gofmt sweep, and build gate
 All gates clean after rebasing both worktree branches: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.
 
-## Session 22 -- 04:33 -- Chat UX and table display improvements
+## Session 23 -- Chat UX and table display improvements
 
 Completed all 4 planned tasks plus lint sweep in 5 commits with zero reverts and zero API calls. All feature tasks ran as parallel worktree agents. (1) Added flex_days field to chat tripParams so users can control date flexibility in conversation -- wired through buildRequestFromParams, mergeParams, parsePartialParams, system prompt, and refinement hint. (2) Injected today's date into chatSystemPrompt via time.Time parameter so the LLM can resolve temporal references like "next Friday". (3) Enhanced stops column to show layover durations (e.g. "1 (2h 30m)") using segment LayoverDuration data that was already populated but never surfaced. (4) Added arrival time column to table output using last segment's ArrivalTime. Coverage at 83.3% across 15 packages. All build gates pass.
+
+## Day 24
+
+### Session 24, Task 1 -- Display cabin class in table and JSON output
+Added legCabin helper returning string(first segment's CabinClass). Added "Cabin" column to single-leg and multi-leg table layouts. Added cabin_class field to jsonLeg struct. 4 new tests. Ran as parallel worktree agent.
+
+### Session 24, Task 2 -- Parse and display carbon emissions from SerpAPI
+Added CarbonEmissions struct to SerpAPI response.go (this_flight, typical_for_this_route, difference_percent). Added CarbonKg field to types.Flight. Parser converts grams to kg. Added legCarbon helper and "CO2" column to table, carbon_kg to JSON. 8 new tests across serpapi and cmd. Ran as parallel worktree agent.
+
+### Session 24, Task 3 -- Add red-eye detection to ranker prompt
+Added isRedEye(t time.Time) bool for departures 00:00-04:59. buildRankingPrompt now appends [Red-eye] tag after airline info for red-eye flights, giving the LLM explicit signal to penalize. 6 new tests. Ran as parallel worktree agent.
+
+### Session 24, Task 4 -- Lint, gofmt sweep, and build gate
+One gofmt fix in response.go (tab alignment in CarbonEmissions struct). All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.

@@ -73,3 +73,7 @@ Extracting buildPicker into cmd/infra.go reduced both runSearch and runChat by ~
 ## Lesson: Test airport cluster membership bidirectionally
 
 When writing tests for airport cluster data, test both directions: (1) a known code returns the expected siblings, and (2) every code in every cluster maps back to the correct number of siblings. The consistency test (TestNearbyAirports_AllClusters) caught a potential off-by-one before it shipped. Consistency checks on reference data are cheap and high-value.
+
+## Lesson: Verify SerpAPI field availability before planning tasks
+
+SerpAPI provides many fields (carbon_emissions, legroom, etc.) that aren't in our response struct yet. Before planning a "display X" task, check both (1) the SerpAPI docs for field existence and (2) the response struct + parser to see if parsing is needed. Tasks that only need display are quick (cabin class was already parsed). Tasks that need end-to-end parsing (carbon emissions: response.go + parser.go + types.go + display) take 3x longer but are still straightforward.

@@ -271,48 +271,154 @@ Searching for flights.`,
 	}
 }
 
-func TestResultSummaryForChat(t *testing.T) {
-	itins := []search.Itinerary{
-		{
+func TestResultSummaryForChat_Top3(t *testing.T) {
+	// 5 results: summary should show top 3 with price, airline, duration, stops.
+	makeSummaryItin := func(airline, airlineName, origin, dest string, dur time.Duration, price float64, segments int) search.Itinerary {
+		segs := make([]types.Segment, segments)
+		segs[0] = types.Segment{Origin: origin, Destination: dest, Airline: airline, AirlineName: airlineName}
+		for i := 1; i < segments; i++ {
+			segs[i] = types.Segment{Airline: airline}
+		}
+		return search.Itinerary{
 			Legs: []search.Leg{{Flight: types.Flight{
-				Price:         types.Money{Amount: 500, Currency: "USD"},
-				TotalDuration: 14*time.Hour + 30*time.Minute,
-				Outbound:      []types.Segment{{Origin: "DEL", Destination: "YYZ", Airline: "AC", AirlineName: "Air Canada"}},
+				Price:         types.Money{Amount: price, Currency: "USD"},
+				TotalDuration: dur,
+				Outbound:      segs,
 			}}},
-			TotalPrice: types.Money{Amount: 500, Currency: "USD"},
-		},
-		{TotalPrice: types.Money{Amount: 800, Currency: "USD"}},
-		{TotalPrice: types.Money{Amount: 1200, Currency: "USD"}},
+			TotalPrice: types.Money{Amount: price, Currency: "USD"},
+		}
+	}
+
+	itins := []search.Itinerary{
+		makeSummaryItin("AC", "Air Canada", "DEL", "YYZ", 14*time.Hour+30*time.Minute, 500, 1),
+		makeSummaryItin("BA", "British Airways", "DEL", "YYZ", 16*time.Hour, 650, 2),
+		makeSummaryItin("LH", "Lufthansa", "DEL", "YYZ", 18*time.Hour, 700, 1),
+		makeSummaryItin("EK", "Emirates", "DEL", "YYZ", 20*time.Hour, 900, 3),
+		makeSummaryItin("QR", "Qatar Airways", "DEL", "YYZ", 22*time.Hour, 1200, 1),
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Cabin: "economy"}
 	summary := resultSummaryForChat(itins, params)
 
 	// Price range and count.
-	if !strings.Contains(summary, "3") {
-		t.Errorf("summary should contain result count, got: %s", summary)
+	if !strings.Contains(summary, "5") {
+		t.Errorf("summary should contain result count 5, got: %s", summary)
 	}
 	if !strings.Contains(summary, "500") {
-		t.Errorf("summary should contain cheapest price, got: %s", summary)
+		t.Errorf("summary should contain min price, got: %s", summary)
 	}
 	if !strings.Contains(summary, "1200") {
-		t.Errorf("summary should contain most expensive price, got: %s", summary)
+		t.Errorf("summary should contain max price, got: %s", summary)
 	}
-	// Top result details.
-	if !strings.Contains(summary, "DEL") || !strings.Contains(summary, "YYZ") {
-		t.Errorf("summary should contain route, got: %s", summary)
-	}
+
+	// Top 3 results should each have airline, duration, stops, and price.
+	// Result 1: Air Canada, 14h30m, 0 stops, $500
 	if !strings.Contains(summary, "Air Canada") {
-		t.Errorf("summary should contain airline name, got: %s", summary)
+		t.Errorf("summary should contain 1st airline, got: %s", summary)
 	}
 	if !strings.Contains(summary, "14h30m") {
-		t.Errorf("summary should contain duration, got: %s", summary)
+		t.Errorf("summary should contain 1st duration, got: %s", summary)
 	}
-	// Search params context.
+	if !strings.Contains(summary, "0 stop") {
+		t.Errorf("summary should contain 0 stops for nonstop flight, got: %s", summary)
+	}
+
+	// Result 2: British Airways, 16h, 1 stop, $650
+	if !strings.Contains(summary, "British Airways") {
+		t.Errorf("summary should contain 2nd airline, got: %s", summary)
+	}
+	if !strings.Contains(summary, "16h") {
+		t.Errorf("summary should contain 2nd duration, got: %s", summary)
+	}
+	if !strings.Contains(summary, "1 stop") {
+		t.Errorf("summary should contain 1 stop, got: %s", summary)
+	}
+
+	// Result 3: Lufthansa, 18h, 0 stops, $700
+	if !strings.Contains(summary, "Lufthansa") {
+		t.Errorf("summary should contain 3rd airline, got: %s", summary)
+	}
+	if !strings.Contains(summary, "18h") {
+		t.Errorf("summary should contain 3rd duration, got: %s", summary)
+	}
+	if !strings.Contains(summary, "700") {
+		t.Errorf("summary should contain 3rd price, got: %s", summary)
+	}
+
+	// 4th and 5th should NOT appear.
+	if strings.Contains(summary, "Emirates") {
+		t.Errorf("summary should not contain 4th result airline, got: %s", summary)
+	}
+	if strings.Contains(summary, "Qatar") {
+		t.Errorf("summary should not contain 5th result airline, got: %s", summary)
+	}
+
+	// Search params context still present.
 	if !strings.Contains(summary, "2025-06-15") {
 		t.Errorf("summary should contain departure date, got: %s", summary)
 	}
 	if !strings.Contains(summary, "economy") {
 		t.Errorf("summary should contain cabin class, got: %s", summary)
+	}
+}
+
+func TestResultSummaryForChat_TwoResults(t *testing.T) {
+	// 2 results: should show both, not crash looking for a 3rd.
+	itin1 := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Origin: "DEL", Destination: "YYZ", Airline: "AC", AirlineName: "Air Canada"}},
+		}}},
+		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+	}
+	itin2 := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 800, Currency: "USD"},
+			TotalDuration: 18 * time.Hour,
+			Outbound: []types.Segment{
+				{Origin: "DEL", Destination: "LHR", Airline: "BA", AirlineName: "British Airways"},
+				{Origin: "LHR", Destination: "YYZ", Airline: "BA"},
+			},
+		}}},
+		TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	summary := resultSummaryForChat([]search.Itinerary{itin1, itin2}, params)
+
+	if !strings.Contains(summary, "2 results") {
+		t.Errorf("summary should say 2 results, got: %s", summary)
+	}
+	if !strings.Contains(summary, "Air Canada") {
+		t.Errorf("summary should contain 1st airline, got: %s", summary)
+	}
+	if !strings.Contains(summary, "British Airways") {
+		t.Errorf("summary should contain 2nd airline, got: %s", summary)
+	}
+}
+
+func TestResultSummaryForChat_OneResult(t *testing.T) {
+	itin := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Origin: "DEL", Destination: "YYZ", Airline: "AC", AirlineName: "Air Canada"}},
+		}}},
+		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+
+	if !strings.Contains(summary, "1 result") {
+		t.Errorf("summary should say 1 result, got: %s", summary)
+	}
+	if !strings.Contains(summary, "Air Canada") {
+		t.Errorf("summary should contain airline, got: %s", summary)
+	}
+	if !strings.Contains(summary, "14h") {
+		t.Errorf("summary should contain duration, got: %s", summary)
+	}
+	if !strings.Contains(summary, "0 stop") {
+		t.Errorf("summary should contain stops, got: %s", summary)
 	}
 }
 

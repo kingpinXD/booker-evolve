@@ -192,8 +192,8 @@ func buildRequestFromParams(p tripParams) search.Request {
 }
 
 // resultSummaryForChat builds a summary of search results for the conversation
-// history, including top result details and search parameters so the LLM can
-// explain recommendations and answer "why that one?" questions.
+// history, including top 3 results with price, airline, duration, and stops so
+// the LLM can explain recommendations and answer comparison questions.
 func resultSummaryForChat(results []search.Itinerary, params tripParams) string {
 	if len(results) == 0 {
 		return "No results found."
@@ -210,21 +210,34 @@ func resultSummaryForChat(results []search.Itinerary, params tripParams) string 
 	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "I found %d results. Prices range from $%.0f to $%.0f USD.", len(results), minPrice, maxPrice)
+	word := "results"
+	if len(results) == 1 {
+		word = "result"
+	}
+	fmt.Fprintf(&b, "I found %d %s. Prices range from $%.0f to $%.0f USD.", len(results), word, minPrice, maxPrice)
 
-	// Top result details.
-	top := results[0]
-	if len(top.Legs) > 0 && len(top.Legs[0].Flight.Outbound) > 0 {
-		seg := top.Legs[0].Flight.Outbound[0]
+	// Top N result details (up to 3).
+	n := len(results)
+	if n > 3 {
+		n = 3
+	}
+	for i := 0; i < n; i++ {
+		r := results[i]
+		if len(r.Legs) == 0 || len(r.Legs[0].Flight.Outbound) == 0 {
+			continue
+		}
+		seg := r.Legs[0].Flight.Outbound[0]
 		airline := seg.AirlineName
 		if airline == "" {
 			airline = seg.Airline
 		}
-		fmt.Fprintf(&b, " Top result: %s->%s on %s", seg.Origin, seg.Destination, airline)
-		if top.Legs[0].Flight.TotalDuration > 0 {
-			fmt.Fprintf(&b, ", %s", formatFlightDuration(top.Legs[0].Flight.TotalDuration))
+		stops := itineraryStops(r)
+		stopWord := "stops"
+		if stops == 1 {
+			stopWord = "stop"
 		}
-		fmt.Fprintf(&b, ", $%.0f.", top.TotalPrice.Amount)
+		fmt.Fprintf(&b, " %d) %s, %s, %d %s, $%.0f.",
+			i+1, airline, formatFlightDuration(r.Legs[0].Flight.TotalDuration), stops, stopWord, r.TotalPrice.Amount)
 	}
 
 	// Search params context.

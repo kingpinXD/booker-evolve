@@ -365,3 +365,7 @@ Added edge-case tests for empty-segment and out-of-bounds paths in legAircraft, 
 ## Session 34 -- Chat completeness, arrival/duration filters, helper coverage
 
 Completed all 5 planned tasks (+ pre-task gofmt commit) in 5 commits with zero reverts and zero API calls. Key outcomes: (1) Chat conversation now has full parity with CLI -- all search.Request fields are wired including avoid_airlines and leg2_date. (2) Multicity strategy is now usable from chat via leg2_date. (3) New arrival time and max duration filters give users more control over flight selection. (4) cmd helper coverage improved with empty-segment and out-of-bounds edge-case tests. All build gates pass cleanly.
+
+## Session 34 -- 11:32 -- CLI-chat parity, arrival/duration filters, and helper coverage
+
+Completed all planned tasks plus a pre-task gofmt fix in 6 commits with zero reverts and zero API calls. The major milestone is full CLI-chat parity: avoid_airlines was the last search.Request field not wired into the chat conversation, and leg2_date enables multicity trip planning from chat for the first time. Added two new filter types -- FilterByArrivalTime and FilterByMaxDuration -- wired end-to-end through direct pipeline, multicity stages, CLI flags, and chat tripParams. Combined arrival and duration filter tasks into one commit since they share >80% of their files. Improved cmd helper coverage with edge-case tests for empty-segment and out-of-bounds paths. Coverage at ~85% across 15 packages. All build gates pass.

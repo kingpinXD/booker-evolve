@@ -499,3 +499,16 @@ Replaced O(n^2) selection sort in applySortByScore with sort.Slice (idiomatic Go
 
 ### Session 41, Task 3 -- Stopover data consistency validation test
 Added TestStopoverDataConsistency: validates all stopoversMap entries and GlobalFallbackHubs. Checks IATA code format (3 uppercase), origin/dest exclusion, MinStay < MaxStay, and required fields (City, Notes, Region). All 9 routes + 8 fallback hubs pass. Catches data errors when adding new routes.
+
+## Session 41 -- Bidirectional routes, US West Coast expansion, ranker refactor, chat suggestions
+
+Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Used parallel worktrees for tasks 110 (ranker) and 113 (chat) while working sequentially on tasks 111, 112, 114 (stopovers) on main.
+
+Key outcomes:
+1. StopoversForRoute now supports bidirectional lookup -- 9 routes become 18 directions automatically.
+2. Added India-US West Coast corridor (DEL/BOM to SFO) with curated stopovers.
+3. Ranker refactored: O(n^2) sort replaced with sort.Slice, duplicate code extracted into applyScores.
+4. Chat now proactively suggests nearby airports and flex-date alternatives when zero results found.
+5. Data consistency test validates all stopover data, catching errors when new routes are added.
+
+12 new tests total. All build gates pass.

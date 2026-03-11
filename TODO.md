@@ -11,6 +11,9 @@ Carried from: Day 40 (all completed)
 ## Tasks 105-109: Day 40 tasks
 **Status:** completed -- consolidate time-of-day filters, add single-flight predicates, India-UK stopovers, ranker cache stats, chat agent personality
 
+## Tasks 110-114: Day 41 tasks
+**Status:** completed -- refactor ranker sort + applyScores, bidirectional route lookup, India-US West Coast stopovers, zero-results chat suggestions, stopover data consistency test
+
 ---
 
 ## Task 110: Refactor ranker sort and extract applyScores helper

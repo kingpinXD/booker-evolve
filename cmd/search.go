@@ -556,6 +556,7 @@ func formatDuration(d time.Duration) string {
 type jsonLeg struct {
 	Airlines         string `json:"airlines"`
 	AirlineCode      string `json:"airline_code,omitempty"`
+	FlightNumber     string `json:"flight_number,omitempty"`
 	OperatingCarrier string `json:"operating_carrier,omitempty"`
 	CabinClass       string `json:"cabin_class,omitempty"`
 	Origin           string `json:"origin"`
@@ -641,13 +642,14 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 		for idx, leg := range itin.Legs {
 			segs := leg.Flight.Outbound
 			origin, dest, dep, arr := "", "", "", ""
-			airlineCode, opCarrier, originCity, destCity, originName, destName := "", "", "", "", "", ""
+			airlineCode, flightNum, opCarrier, originCity, destCity, originName, destName := "", "", "", "", "", "", ""
 			if len(segs) > 0 {
 				origin = segs[0].Origin
 				dest = segs[len(segs)-1].Destination
 				dep = segs[0].DepartureTime.Format(time.RFC3339)
 				arr = segs[len(segs)-1].ArrivalTime.Format(time.RFC3339)
 				airlineCode = segs[0].Airline
+				flightNum = segs[0].FlightNumber
 				opCarrier = segs[0].OperatingCarrier
 				originCity = segs[0].OriginCity
 				originName = segs[0].OriginName
@@ -661,6 +663,7 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 			legs = append(legs, jsonLeg{
 				Airlines:         legAirlines(itin, idx),
 				AirlineCode:      airlineCode,
+				FlightNumber:     flightNum,
 				OperatingCarrier: opCarrier,
 				CabinClass:       legCabin(itin, idx),
 				Origin:           origin,

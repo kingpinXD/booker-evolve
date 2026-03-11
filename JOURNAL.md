@@ -518,3 +518,12 @@ Replaced 5 "Kiwi" references in multicity.go package-level doc comments with acc
 
 ## Day 43, Task 3 -- Add eco ranking profile (carbon-weighted)
 Added WeightsEco profile (Carbon 30%, Cost 20%, FlightDuration 20%, rest 30%) to ranker.go with new Carbon field on RankingWeights. buildSystemPrompt conditionally includes "CARBON EMISSIONS" criterion when Carbon > 0, so existing profiles are unaffected. Registered "eco" in profiles map, updated chat system prompt, flag description, and refinement hint. cacheKey includes Carbon weight. Tests: WeightsEco sums to 100, eco prompt includes CARBON, budget prompt does not, eco differs from budget in profileWeights.
+
+## Day 43, Task 2 -- Add India-Australia stopover routes (DEL/BOM to SYD)
+Added DELToSYDStopovers (6 cities: SIN, BKK, KUL, HKG, NRT, KIX) and BOMToSYDStopovers (5 cities: SIN, BKK, KUL, HKG, NRT) via Southeast Asia corridor. Registered in stopoversMap; bidirectional lookup gives 4 directions automatically. 4 new tests including reverse lookups. Run in parallel worktree.
+
+## Day 43, Task 4 -- Add Indian airport clusters (DEL, BOM metro areas)
+Added Delhi (DEL+JAI) and Mumbai (BOM+PNQ) clusters to airports.go enabling NearbySearcher to expand from India's primary origin airports. Updated 2 downstream tests that assumed DEL/BOM were clusterless. Run in parallel worktree.
+
+## Day 43, Task 5 -- Extract display formatting from cmd/search.go into cmd/display.go
+Moved 25 display/formatting functions and 4 JSON types from search.go to display.go. search.go went from 768 to 197 lines. Pure refactor, no behavior changes. All existing tests pass unchanged, lint clean.

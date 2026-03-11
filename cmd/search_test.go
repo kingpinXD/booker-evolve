@@ -579,6 +579,126 @@ func TestFormatStops_NoLayoverData(t *testing.T) {
 	}
 }
 
+// --- legCabin ---
+
+func TestLegCabin_ReturnsCabinFromFirstSegment(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.Outbound[0].CabinClass = types.CabinBusiness
+	itin := makeItin(leg)
+	got := legCabin(itin, 0)
+	if got != "business" {
+		t.Errorf("legCabin = %q, want %q", got, "business")
+	}
+}
+
+func TestLegCabin_OutOfBounds(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	got := legCabin(itin, 5)
+	if got != "" {
+		t.Errorf("legCabin = %q, want empty for out-of-bounds index", got)
+	}
+}
+
+// --- printTable cabin column ---
+
+func TestPrintTable_CabinColumn(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.Outbound[0].CabinClass = types.CabinBusiness
+	itins := []search.Itinerary{makeItin(leg)}
+	out := capturePrintTable(itins, "USD")
+
+	if !strings.Contains(out, "CABIN") {
+		t.Error("table output missing CABIN header")
+	}
+	if !strings.Contains(out, "business") {
+		t.Error("table output missing cabin class value")
+	}
+}
+
+// --- JSON cabin_class ---
+
+func TestBuildJSONItineraries_CabinClass(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.Outbound[0].CabinClass = types.CabinPremiumEconomy
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatal("unexpected results structure")
+	}
+	if results[0].Legs[0].CabinClass != "premium_economy" {
+		t.Errorf("cabin_class = %q, want %q", results[0].Legs[0].CabinClass, "premium_economy")
+	}
+}
+
+// --- legCarbon ---
+
+func TestLegCarbon_WithEmissions(t *testing.T) {
+	leg := makeLeg("AC", "DEL", "YYZ", basetime, 14*time.Hour, 850, nil)
+	leg.Flight.CarbonKg = 1106
+	itin := makeItin(leg)
+	got := legCarbon(itin, 0)
+	if got != "1106kg" {
+		t.Errorf("legCarbon = %q, want %q", got, "1106kg")
+	}
+}
+
+func TestLegCarbon_Zero(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	got := legCarbon(itin, 0)
+	if got != "" {
+		t.Errorf("legCarbon = %q, want empty for zero emissions", got)
+	}
+}
+
+func TestLegCarbon_OutOfBounds(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	got := legCarbon(itin, 5)
+	if got != "" {
+		t.Errorf("legCarbon = %q, want empty for out-of-bounds index", got)
+	}
+}
+
+func TestPrintTable_CO2Column(t *testing.T) {
+	leg := makeLeg("AC", "DEL", "YYZ", basetime, 14*time.Hour, 850, nil)
+	leg.Flight.CarbonKg = 1106
+	itins := []search.Itinerary{makeItin(leg)}
+	out := capturePrintTable(itins, "USD")
+
+	if !strings.Contains(out, "CO2") {
+		t.Error("table output missing CO2 header")
+	}
+	if !strings.Contains(out, "1106kg") {
+		t.Errorf("table output missing carbon value, got:\n%s", out)
+	}
+}
+
+func TestBuildJSONItineraries_CarbonKg(t *testing.T) {
+	leg := makeLeg("AC", "DEL", "YYZ", basetime, 14*time.Hour, 850, nil)
+	leg.Flight.CarbonKg = 1106
+	itin := makeItin(leg)
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatalf("unexpected results shape")
+	}
+	if results[0].Legs[0].CarbonKg != 1106 {
+		t.Errorf("CarbonKg = %d, want 1106", results[0].Legs[0].CarbonKg)
+	}
+}
+
+func TestBuildJSONItineraries_CarbonKg_OmitEmpty(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	data, err := json.Marshal(results[0].Legs[0])
+	if err != nil {
+		t.Fatalf("json.Marshal error: %v", err)
+	}
+	if bytes.Contains(data, []byte(`"carbon_kg"`)) {
+		t.Error("zero carbon_kg should be omitted from JSON with omitempty")
+	}
+}
+
 // --- formatPriceInsights ---
 
 func TestFormatPriceInsights_WithData(t *testing.T) {

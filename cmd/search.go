@@ -188,15 +188,15 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 	if multiLeg {
 		t.AppendHeader(table.Row{
 			"#", "Score", "Price", "Route",
-			"Leg 1 Airlines", "Leg 2 Airlines",
+			"Leg 1 Airlines", "Leg 2 Airlines", "Cabin",
 			"Leg 1 Departure", "Leg 1 Arrival",
 			"Leg 2 Departure", "Leg 2 Arrival",
-			"Stopover", "Stops", "Duration", "Reason", "Book",
+			"Stopover", "Stops", "Duration", "CO2", "Reason", "Book",
 		})
 	} else {
 		t.AppendHeader(table.Row{
 			"#", "Score", "Price", "Route",
-			"Airlines", "Departure", "Arrival", "Stops", "Duration", "Reason", "Book",
+			"Airlines", "Cabin", "Departure", "Arrival", "Stops", "Duration", "CO2", "Reason", "Book",
 		})
 	}
 
@@ -213,6 +213,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				routeString(itin),
 				legAirlines(itin, 0),
 				legAirlines(itin, 1),
+				legCabin(itin, 0),
 				legDeparture(itin, 0),
 				legArrival(itin, 0),
 				legDeparture(itin, 1),
@@ -220,6 +221,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				stopoverString(itin),
 				stops,
 				dur,
+				legCarbon(itin, 0),
 				itin.Reasoning,
 				legBookingURL(itin, 0),
 			})
@@ -230,10 +232,12 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				fmt.Sprintf("%s%.0f", currencySymbol(cur), converted.Amount),
 				routeString(itin),
 				legAirlines(itin, 0),
+				legCabin(itin, 0),
 				legDeparture(itin, 0),
 				legArrival(itin, 0),
 				stops,
 				dur,
+				legCarbon(itin, 0),
 				itin.Reasoning,
 				legBookingURL(itin, 0),
 			})
@@ -297,6 +301,17 @@ func routeString(itin search.Itinerary) string {
 	return route
 }
 
+func legCabin(itin search.Itinerary, legIdx int) string {
+	if legIdx >= len(itin.Legs) {
+		return ""
+	}
+	segs := itin.Legs[legIdx].Flight.Outbound
+	if len(segs) == 0 {
+		return ""
+	}
+	return string(segs[0].CabinClass)
+}
+
 func legAirlines(itin search.Itinerary, legIdx int) string {
 	if legIdx >= len(itin.Legs) {
 		return ""
@@ -340,6 +355,13 @@ func legArrival(itin search.Itinerary, legIdx int) string {
 		return ""
 	}
 	return segs[len(segs)-1].ArrivalTime.Format(outputDateTimeFmt)
+}
+
+func legCarbon(itin search.Itinerary, legIdx int) string {
+	if legIdx >= len(itin.Legs) || itin.Legs[legIdx].Flight.CarbonKg == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%dkg", itin.Legs[legIdx].Flight.CarbonKg)
 }
 
 func legBookingURL(itin search.Itinerary, legIdx int) string {
@@ -419,10 +441,12 @@ func formatDuration(d time.Duration) string {
 // jsonLeg is the JSON representation of a single flight leg.
 type jsonLeg struct {
 	Airlines   string `json:"airlines"`
+	CabinClass string `json:"cabin_class,omitempty"`
 	Origin     string `json:"origin"`
 	Dest       string `json:"destination"`
 	Departure  string `json:"departure"`
 	Duration   string `json:"duration"`
+	CarbonKg   int    `json:"carbon_kg,omitempty"`
 	BookingURL string `json:"booking_url,omitempty"`
 }
 
@@ -496,10 +520,12 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 			}
 			legs = append(legs, jsonLeg{
 				Airlines:   legAirlines(itin, idx),
+				CabinClass: legCabin(itin, idx),
 				Origin:     origin,
 				Dest:       dest,
 				Departure:  dep,
 				Duration:   formatDuration(leg.Flight.TotalDuration),
+				CarbonKg:   leg.Flight.CarbonKg,
 				BookingURL: leg.Flight.BookingURL,
 			})
 		}

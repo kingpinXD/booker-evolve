@@ -491,5 +491,8 @@ Added reverse direction lookup to StopoversForRoute: when origin->dest not found
 ### Session 41, Task 2 -- Add India-US West Coast stopovers (DEL/BOM to SFO)
 Added DELToSFOStopovers (6 cities: NRT, ICN, HKG, BKK, SIN, IST) and BOMToSFOStopovers (5 cities: NRT, HKG, BKK, SIN, IST). Primary corridor via East Asia Pacific routing. Total route-specific corridors: 9 (was 7). 2 new tests.
 
+### Session 41, Task 4 -- Refactor ranker sort and extract applyScores
+Replaced O(n^2) selection sort in applySortByScore with sort.Slice (idiomatic Go). Extracted duplicate score-application loop from Rank() into applyScores helper. 2 new tests. Implemented in parallel worktree; gofmt fix needed after merge (expected per LEARNINGS).
+
 ### Session 41, Task 3 -- Stopover data consistency validation test
 Added TestStopoverDataConsistency: validates all stopoversMap entries and GlobalFallbackHubs. Checks IATA code format (3 uppercase), origin/dest exclusion, MinStay < MaxStay, and required fields (City, Notes, Region). All 9 routes + 8 fallback hubs pass. Catches data errors when adding new routes.

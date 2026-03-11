@@ -1061,6 +1061,57 @@ func TestRankerCacheStats_Empty(t *testing.T) {
 	}
 }
 
+func TestApplySortByScore(t *testing.T) {
+	itins := []search.Itinerary{
+		{Score: 30, TotalPrice: types.Money{Amount: 100, Currency: "USD"}},
+		{Score: 90, TotalPrice: types.Money{Amount: 200, Currency: "USD"}},
+		{Score: 50, TotalPrice: types.Money{Amount: 300, Currency: "USD"}},
+	}
+
+	sorted := applySortByScore(itins)
+
+	// Should return a new slice sorted by score descending.
+	if len(sorted) != 3 {
+		t.Fatalf("got %d items, want 3", len(sorted))
+	}
+	if sorted[0].Score != 90 || sorted[1].Score != 50 || sorted[2].Score != 30 {
+		t.Errorf("got scores [%.0f, %.0f, %.0f], want [90, 50, 30]",
+			sorted[0].Score, sorted[1].Score, sorted[2].Score)
+	}
+
+	// Original slice should be unchanged.
+	if itins[0].Score != 30 || itins[1].Score != 90 || itins[2].Score != 50 {
+		t.Error("applySortByScore should not mutate original slice")
+	}
+}
+
+func TestApplyScores(t *testing.T) {
+	candidates := []search.Itinerary{
+		{TotalPrice: types.Money{Amount: 100, Currency: "USD"}},
+		{TotalPrice: types.Money{Amount: 200, Currency: "USD"}},
+		{TotalPrice: types.Money{Amount: 300, Currency: "USD"}},
+	}
+
+	results := []RankResult{
+		{Index: 0, Score: 85, Reasoning: "cheap"},
+		{Index: 2, Score: 70, Reasoning: "decent"},
+		{Index: -1, Score: 99, Reasoning: "should be ignored"}, // out of bounds
+		{Index: 10, Score: 99, Reasoning: "should be ignored"}, // out of bounds
+	}
+
+	applyScores(candidates, results)
+
+	if candidates[0].Score != 85 || candidates[0].Reasoning != "cheap" {
+		t.Errorf("candidates[0] = (%.0f, %q), want (85, \"cheap\")", candidates[0].Score, candidates[0].Reasoning)
+	}
+	if candidates[1].Score != 0 || candidates[1].Reasoning != "" {
+		t.Errorf("candidates[1] should be untouched, got (%.0f, %q)", candidates[1].Score, candidates[1].Reasoning)
+	}
+	if candidates[2].Score != 70 || candidates[2].Reasoning != "decent" {
+		t.Errorf("candidates[2] = (%.0f, %q), want (70, \"decent\")", candidates[2].Score, candidates[2].Reasoning)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

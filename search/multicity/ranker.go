@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -119,12 +120,7 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 	// Check cache before calling LLM.
 	if cached, ok := r.cache[key]; ok {
 		r.hits++
-		for _, res := range cached {
-			if res.Index >= 0 && res.Index < len(candidates) {
-				candidates[res.Index].Score = res.Score
-				candidates[res.Index].Reasoning = res.Reasoning
-			}
-		}
+		applyScores(candidates, cached)
 		return applySortByScore(candidates), nil
 	}
 	r.misses++
@@ -148,29 +144,29 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 	}
 
 	r.cache[key] = results
+	applyScores(candidates, results)
 
-	// Apply scores back to itineraries.
+	return applySortByScore(candidates), nil
+}
+
+// applyScores writes LLM rank results back onto the candidate itineraries,
+// skipping any result with an out-of-bounds index.
+func applyScores(candidates []search.Itinerary, results []RankResult) {
 	for _, res := range results {
 		if res.Index >= 0 && res.Index < len(candidates) {
 			candidates[res.Index].Score = res.Score
 			candidates[res.Index].Reasoning = res.Reasoning
 		}
 	}
-
-	return applySortByScore(candidates), nil
 }
 
 // applySortByScore returns a copy of itineraries sorted by score descending.
 func applySortByScore(itineraries []search.Itinerary) []search.Itinerary {
 	sorted := make([]search.Itinerary, len(itineraries))
 	copy(sorted, itineraries)
-	for i := 0; i < len(sorted); i++ {
-		for j := i + 1; j < len(sorted); j++ {
-			if sorted[j].Score > sorted[i].Score {
-				sorted[i], sorted[j] = sorted[j], sorted[i]
-			}
-		}
-	}
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].Score > sorted[j].Score
+	})
 	return sorted
 }
 

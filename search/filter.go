@@ -135,10 +135,9 @@ func FilterFlights(flights []types.Flight) []types.Flight {
 }
 
 // FilterByDateRange keeps only flights whose first departure falls within
-// [earliest, latest]. This is needed because the Kiwi one-way API returns
-// results across ALL future dates, not filtered by a specific date.
-//
-// We apply this post-fetch to narrow results to the user's travel window.
+// [earliest, latest]. When flex-date search is enabled, the provider may
+// return results across a range of dates. We apply this post-fetch to
+// narrow results to the user's travel window.
 func FilterByDateRange(flights []types.Flight, earliest, latest time.Time) []types.Flight {
 	filtered := make([]types.Flight, 0, len(flights))
 	for _, f := range flights {

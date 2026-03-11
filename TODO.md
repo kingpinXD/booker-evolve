@@ -18,14 +18,14 @@ Carried from: Day 44 (all completed)
 - [x] Verify build + test + vet + lint pass
 
 ## Task 126: Consolidate itinRoute and deduplicate to search package
-**Status:** pending
+**Status:** done
 **Plan:**
-- [ ] Export ItinRoute and DeduplicateItineraries in search package (composite.go or new file)
-- [ ] Update composite.go to use exported functions
-- [ ] Update nearby/nearby.go to use exported functions
-- [ ] Remove duplicate unexported functions from both files
-- [ ] Verify all existing tests pass unchanged
-- [ ] Verify build + test + vet + lint pass
+- [x] Export ItinRoute and DeduplicateItineraries in search package (composite.go)
+- [x] Update composite.go to use exported functions
+- [x] Update nearby/nearby.go to use search.DeduplicateItineraries
+- [x] Remove duplicate unexported functions from nearby.go
+- [x] Verify all existing tests pass unchanged
+- [x] Verify build + test + vet + lint pass
 
 ## Task 127: Add "score" sort mode to SortResults
 **Status:** done
@@ -39,16 +39,16 @@ Carried from: Day 44 (all completed)
 - [x] Verify build + test + vet + lint pass
 
 ## Task 128: Fix round-trip max_price to check total itinerary price
-**Status:** pending
+**Status:** done
 **Plan:**
-- [ ] Write test: round-trip with max_price, verify total price filtering
-- [ ] Add total-price filter after combineRoundTrip in direct.go Search method
-- [ ] Verify existing round-trip tests still pass
-- [ ] Verify build + test + vet pass
+- [x] Write test: round-trip with max_price, verify total price filtering
+- [x] Add total-price filter after combineRoundTrip in direct.go Search method
+- [x] Verify existing round-trip tests still pass
+- [x] Verify build + test + vet pass
 
 ## Task 129: Clean stale Kiwi references in search and filter docs
-**Status:** pending
+**Status:** done
 **Plan:**
-- [ ] Update search/search.go line 34 "currently Kiwi only" to SerpAPI
-- [ ] Update filter.go line 139 Kiwi reference to SerpAPI
-- [ ] Verify build + vet clean
+- [x] Update search/search.go line 34 "currently Kiwi only" to SerpAPI
+- [x] Update filter.go line 138-139 Kiwi reference to generic provider description
+- [x] Verify build + test + vet + lint clean

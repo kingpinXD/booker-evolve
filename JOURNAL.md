@@ -554,5 +554,14 @@ Completed all 5 planned tasks in 7 commits with zero reverts and zero API calls.
 ### Session 46, Task 1 -- Wire ranker to composite strategy
 Added Ranker field and SetRanker method to Picker. When LLM picks "both" mode, the shared ranker is now passed to CompositeStrategy instead of nil. buildPicker in infra.go calls SetRanker. New test verifies composite search produces ranked (non-zero score) results.
 
+### Session 46, Task 2 -- Consolidate itinRoute and deduplicate to search package
+Extracted duplicated itinRoute and deduplicate from composite.go and nearby/nearby.go into exported ItinRoute and DeduplicateItineraries in search package. Removed 29 lines of duplication from nearby.go. Pure refactoring, all existing tests pass unchanged. Ran in parallel worktree.
+
 ### Session 46, Task 3 -- Add "score" sort mode to SortResults
 Added "score" case to SortResults (descending, highest first). Two new tests: one verifying correct sort order, one verifying all-zero scores don't panic. Updated chat system prompt, refinement hint, and CLI flag description to mention "score" option.
+
+### Session 46, Task 4 -- Fix round-trip max_price to check total itinerary price
+combineRoundTrip paired outbound and return flights without checking combined total price. Added total-price filter after combineRoundTrip in direct.go Search method. New test verifies $800 max_price filters out $900+ round-trip combos. Ran in parallel worktree.
+
+### Session 46, Task 5 -- Clean stale Kiwi references in search and filter docs
+Updated search/search.go iteration plan from "currently Kiwi only" to "currently SerpAPI only". Updated FilterByDateRange doc comment to remove Kiwi-specific language. Two-line doc change, no behavior changes.

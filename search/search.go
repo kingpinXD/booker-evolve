@@ -31,7 +31,7 @@
 //   - Date flexibility scoring (shift ±3 days to find cheaper combos)
 //   - Airline alliance grouping (prefer same alliance across legs)
 //   - Historical price trends to judge if a price is "good"
-//   - Parallel search across multiple providers (currently Kiwi only)
+//   - Parallel search across multiple providers (currently SerpAPI only)
 package search
 
 import (

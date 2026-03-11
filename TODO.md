@@ -18,15 +18,16 @@ Carried from: Day 48 (all completed)
 - [x] Verify build + test + vet pass
 
 ## Task 141: Segments array in JSON output
-**Status:** pending
+**Status:** done
 **Plan:** Add per-segment detail array to jsonLeg in JSON output.
-- [ ] Define jsonSegment struct with airline, flight_number, origin, destination, departure, arrival, duration, aircraft, legroom, layover_duration, overnight
-- [ ] Add Segments field to jsonLeg (omitempty)
-- [ ] Populate segments in buildJSONItineraries loop
-- [ ] Write test: multi-segment leg produces correct segments array
-- [ ] Write test: single-segment leg produces 1-element array
-- [ ] Verify existing JSON tests still pass
-- [ ] Verify build + test + vet pass
+- [x] Define jsonSegment struct with airline, flight_number, origin, destination, departure, arrival, duration, aircraft, legroom, layover_duration, overnight
+- [x] Add Segments field to jsonLeg (omitempty)
+- [x] Populate segments in buildJSONItineraries loop
+- [x] Write test: multi-segment leg produces correct segments array
+- [x] Write test: single-segment leg produces 1-element array
+- [x] Write test: segments omitted when empty
+- [x] Verify existing JSON tests still pass
+- [x] Verify build + test + vet pass
 
 ## Task 142: Flex-date departure date in chat result summary
 **Status:** done
@@ -39,19 +40,19 @@ Carried from: Day 48 (all completed)
 - [x] Verify build + test + vet pass
 
 ## Task 143: India-Tokyo stopover routes
-**Status:** pending
+**Status:** done
 **Plan:** Add DEL/BOM to NRT stopover corridors.
-- [ ] Write tests for StopoversForRoute DEL-NRT and NRT-DEL
-- [ ] Write tests for StopoversForRoute BOM-NRT and NRT-BOM
-- [ ] Add DELToNRTStopovers slice (BKK, SIN, HKG, TPE, ICN, KUL)
-- [ ] Add BOMToNRTStopovers slice (BKK, SIN, HKG, TPE, ICN)
-- [ ] Register both in stopoversMap
-- [ ] Verify existing consistency test passes
-- [ ] Verify build + test + vet pass
+- [x] Write tests for StopoversForRoute DEL-NRT and NRT-DEL
+- [x] Write tests for StopoversForRoute BOM-NRT and NRT-BOM
+- [x] Add DELToNRTStopovers slice (BKK, SIN, HKG, TPE, ICN, KUL)
+- [x] Add BOMToNRTStopovers slice (BKK, SIN, HKG, TPE, ICN)
+- [x] Register both in stopoversMap
+- [x] Verify existing consistency test passes
+- [x] Verify build + test + vet pass
 
 ## Task 144: Stale worktree cleanup
-**Status:** pending
+**Status:** done
 **Plan:** Remove abandoned worktree directories and git branches.
-- [ ] Remove .claude/worktrees/agent-ade875dc and agent-a69bbfb5
-- [ ] Delete git branches worktree-agent-ade875dc and worktree-agent-a69bbfb5
-- [ ] Verify git worktree list and git branch are clean
+- [x] Remove .claude/worktrees/agent-ade875dc and agent-a69bbfb5
+- [x] Delete git branches worktree-agent-ade875dc and worktree-agent-a69bbfb5
+- [x] Verify git worktree list and git branch are clean

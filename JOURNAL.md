@@ -619,3 +619,12 @@ Refactored fallback() to accept Request and inspect Leg2Date: returns "multicity
 
 ### Session 49, Task 3 -- Flex-date departure date in chat summary
 When FlexDays > 0, resultSummaryForChat now includes "Jan 2" formatted departure date in each top-3 entry so users can distinguish which date each option flies on. Zero-time DepartureTime and FlexDays=0 handled gracefully. Added 3 new tests.
+
+### Session 49, Task 2 -- Segments array in JSON output
+Added jsonSegment struct and Segments []jsonSegment field to jsonLeg in display.go. buildJSONItineraries populates per-segment detail (airline, flight_number, origin, destination, departure, arrival, duration, aircraft, legroom, layover_duration, overnight). Three new tests: multi-segment, single-segment, and empty-segments-omitted. Ran in parallel worktree.
+
+### Session 49, Task 4 -- India-Tokyo stopover routes
+Added DELToNRTStopovers (6 cities: BKK, SIN, KUL, HKG, TPE, ICN) and BOMToNRTStopovers (5 cities: BKK, SIN, HKG, TPE, ICN). Registered in stopoversMap. Four new route tests plus existing consistency test passes. Brings total to 17 route-specific corridors. Ran in parallel worktree.
+
+### Session 49, Task 5 -- Stale worktree cleanup
+Removed two abandoned worktrees from session 48 (.claude/worktrees/agent-ade875dc, agent-a69bbfb5) and their git branches. Used --force since worktrees had modified files. git worktree list and git branch now clean.

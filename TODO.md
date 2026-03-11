@@ -14,12 +14,12 @@ Carried from: Day 40 (all completed)
 ---
 
 ## Task 110: Refactor ranker sort and extract applyScores helper
-**Status:** pending
-**Plan:**
-- [ ] Write test for sort stability with equal scores
-- [ ] Replace bubble sort in applySortByScore with sort.Slice
-- [ ] Extract duplicate score-application loop into applyScores helper
-- [ ] Verify build + test + vet pass
+**Status:** done (parallel agent)
+**Plan:** Replace bubble sort with sort.Slice, extract applyScores to deduplicate score-application loop.
+- [x] Write test for sort order and applyScores
+- [x] Replace bubble sort in applySortByScore with sort.Slice
+- [x] Extract duplicate score-application loop into applyScores helper
+- [x] Verify build + test + vet pass
 
 ## Task 111: Bidirectional route lookup in StopoversForRoute
 **Status:** done
@@ -38,18 +38,17 @@ Carried from: Day 40 (all completed)
 - [x] Verify tests pass
 
 ## Task 113: Zero-results proactive suggestions in chat
-**Status:** pending
-**Plan:**
-- [ ] Write test: zero-results output includes nearby airports when available
-- [ ] Write test: zero-results mentions flex dates
-- [ ] Implement zeroResultsSuggestion helper
-- [ ] Wire into chatLoop zero-results block
-- [ ] Verify build + test + vet pass
+**Status:** done (parallel agent)
+**Plan:** Add zeroResultsSuggestion with nearby airports + flex-date advice, wire into chatLoop.
+- [x] Write tests: nearby airports, flex_days, integration
+- [x] Implement zeroResultsSuggestion helper
+- [x] Wire into chatLoop zero-results block
+- [x] Verify build + test + vet pass
 
 ## Task 114: Stopover data consistency validation test
-**Status:** pending
-**Plan:**
-- [ ] Write test: all route stopovers exclude origin/dest airports
-- [ ] Write test: all IATA codes are 3 uppercase letters
-- [ ] Write test: MinStay < MaxStay, City/Notes non-empty
-- [ ] Verify tests pass
+**Status:** done
+**Plan:** Comprehensive validation of all stopover data: IATA codes, origin/dest exclusion, MinStay/MaxStay, required fields.
+- [x] Write test: all route stopovers exclude origin/dest airports
+- [x] Write test: all IATA codes are 3 uppercase letters
+- [x] Write test: MinStay < MaxStay, City/Notes/Region non-empty
+- [x] Verify tests pass

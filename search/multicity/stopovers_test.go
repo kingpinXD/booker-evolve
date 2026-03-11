@@ -1,6 +1,8 @@
 package multicity
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -292,5 +294,64 @@ func TestStopoversForRoute_BOMToSFO(t *testing.T) {
 	}
 	if airports["SFO"] {
 		t.Error("destination SFO should not be in stopover list")
+	}
+}
+
+// TestStopoverDataConsistency validates all stopover data for correctness.
+func TestStopoverDataConsistency(t *testing.T) {
+	iataRe := regexp.MustCompile(`^[A-Z]{3}$`)
+
+	// Validate route-specific stopovers.
+	for key, stopovers := range stopoversMap {
+		parts := strings.SplitN(key, "\u2192", 2) // "→" unicode
+		if len(parts) != 2 {
+			t.Errorf("invalid route key format: %q", key)
+			continue
+		}
+		origin, dest := parts[0], parts[1]
+
+		for i, s := range stopovers {
+			label := key + "[" + s.Airport + "]"
+
+			if !iataRe.MatchString(s.Airport) {
+				t.Errorf("%s: invalid IATA code %q", label, s.Airport)
+			}
+			if s.Airport == origin {
+				t.Errorf("%s: stopover airport matches origin %s", label, origin)
+			}
+			if s.Airport == dest {
+				t.Errorf("%s: stopover airport matches destination %s", label, dest)
+			}
+			if s.MinStay >= s.MaxStay {
+				t.Errorf("%s: MinStay (%v) >= MaxStay (%v)", label, s.MinStay, s.MaxStay)
+			}
+			if s.City == "" {
+				t.Errorf("%s: empty City at index %d", label, i)
+			}
+			if s.Notes == "" {
+				t.Errorf("%s: empty Notes at index %d", label, i)
+			}
+			if s.Region == "" {
+				t.Errorf("%s: empty Region at index %d", label, i)
+			}
+		}
+	}
+
+	// Validate global fallback hubs.
+	for i, s := range GlobalFallbackHubs {
+		label := "GlobalFallbackHubs[" + s.Airport + "]"
+
+		if !iataRe.MatchString(s.Airport) {
+			t.Errorf("%s: invalid IATA code %q", label, s.Airport)
+		}
+		if s.MinStay >= s.MaxStay {
+			t.Errorf("%s: MinStay (%v) >= MaxStay (%v)", label, s.MinStay, s.MaxStay)
+		}
+		if s.City == "" {
+			t.Errorf("%s: empty City at index %d", label, i)
+		}
+		if s.Notes == "" {
+			t.Errorf("%s: empty Notes at index %d", label, i)
+		}
 	}
 }

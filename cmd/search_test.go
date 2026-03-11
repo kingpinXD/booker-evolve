@@ -998,6 +998,91 @@ func TestBuildJSONItineraries_SeatsLeft_OmitEmpty(t *testing.T) {
 	}
 }
 
+// --- JSON airline_code, origin_city, destination_city, origin_name, destination_name ---
+
+func TestBuildJSONItineraries_AirlineCodeAndCityNames(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.Outbound[0].OriginCity = "New York"
+	leg.Flight.Outbound[0].DestinationCity = "London"
+	leg.Flight.Outbound[0].OriginName = "John F. Kennedy International Airport"
+	leg.Flight.Outbound[0].DestinationName = "Heathrow Airport"
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatal("unexpected results structure")
+	}
+	jl := results[0].Legs[0]
+	if jl.AirlineCode != "BA" {
+		t.Errorf("airline_code = %q, want %q", jl.AirlineCode, "BA")
+	}
+	if jl.OriginCity != "New York" {
+		t.Errorf("origin_city = %q, want %q", jl.OriginCity, "New York")
+	}
+	if jl.DestinationCity != "London" {
+		t.Errorf("destination_city = %q, want %q", jl.DestinationCity, "London")
+	}
+	if jl.OriginName != "John F. Kennedy International Airport" {
+		t.Errorf("origin_name = %q, want %q", jl.OriginName, "John F. Kennedy International Airport")
+	}
+	if jl.DestinationName != "Heathrow Airport" {
+		t.Errorf("destination_name = %q, want %q", jl.DestinationName, "Heathrow Airport")
+	}
+}
+
+func TestBuildJSONItineraries_AirlineCodeAndCityNames_OmitEmpty(t *testing.T) {
+	// makeLeg always sets Airline, so airline_code will be present.
+	// City/airport name fields are empty by default and should be omitted.
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	data, err := json.Marshal(results[0].Legs[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(data)
+	for _, field := range []string{"origin_city", "destination_city", "origin_name", "destination_name"} {
+		if strings.Contains(s, field) {
+			t.Errorf("%s should be omitted when empty", field)
+		}
+	}
+	// airline_code should be present since makeLeg sets Airline="BA".
+	if !strings.Contains(s, "airline_code") {
+		t.Error("airline_code should be present when Airline is set")
+	}
+}
+
+func TestBuildJSONItineraries_CityNames_MultiSegment(t *testing.T) {
+	// Two segments: origin_city from first, destination_city from last.
+	leg := search.Leg{
+		Flight: types.Flight{
+			Outbound: []types.Segment{
+				{Airline: "LH", Origin: "DEL", Destination: "FRA", DepartureTime: basetime, ArrivalTime: basetime.Add(8 * time.Hour), OriginCity: "Delhi", DestinationCity: "Frankfurt", OriginName: "Indira Gandhi Airport", DestinationName: "Frankfurt Airport"},
+				{Airline: "LH", Origin: "FRA", Destination: "YYZ", DepartureTime: basetime.Add(10 * time.Hour), ArrivalTime: basetime.Add(20 * time.Hour), OriginCity: "Frankfurt", DestinationCity: "Toronto", OriginName: "Frankfurt Airport", DestinationName: "Toronto Pearson"},
+			},
+			TotalDuration: 20 * time.Hour,
+			Price:         types.Money{Amount: 600, Currency: "USD"},
+		},
+	}
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	jl := results[0].Legs[0]
+	if jl.AirlineCode != "LH" {
+		t.Errorf("airline_code = %q, want %q", jl.AirlineCode, "LH")
+	}
+	if jl.OriginCity != "Delhi" {
+		t.Errorf("origin_city = %q, want %q (from first segment)", jl.OriginCity, "Delhi")
+	}
+	if jl.DestinationCity != "Toronto" {
+		t.Errorf("destination_city = %q, want %q (from last segment)", jl.DestinationCity, "Toronto")
+	}
+	if jl.OriginName != "Indira Gandhi Airport" {
+		t.Errorf("origin_name = %q, want %q (from first segment)", jl.OriginName, "Indira Gandhi Airport")
+	}
+	if jl.DestinationName != "Toronto Pearson" {
+		t.Errorf("destination_name = %q, want %q (from last segment)", jl.DestinationName, "Toronto Pearson")
+	}
+}
+
 // --- multi-leg CO2 columns ---
 
 func TestPrintTable_MultiLeg_CO2BothLegs(t *testing.T) {

@@ -425,6 +425,138 @@ func TestFilterByAvoidAirlines_MultipleAirlines(t *testing.T) {
 	}
 }
 
+// --- FilterByArrivalTime ---
+
+func TestFilterByArrivalTime_BeforeEvening(t *testing.T) {
+	earlyArr := types.Flight{
+		Price:    types.Money{Amount: 500, Currency: "USD"},
+		Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 14, 0, 0, 0, time.UTC)}},
+	}
+	lateArr := types.Flight{
+		Price:    types.Money{Amount: 600, Currency: "USD"},
+		Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 22, 0, 0, 0, time.UTC)}},
+	}
+	flights := []types.Flight{earlyArr, lateArr}
+
+	result := FilterByArrivalTime(flights, "", "18:00")
+	if len(result) != 1 {
+		t.Fatalf("FilterByArrivalTime(before 18:00): got %d, want 1", len(result))
+	}
+	if result[0].Price.Amount != 500 {
+		t.Errorf("FilterByArrivalTime: kept wrong flight, price=%v", result[0].Price.Amount)
+	}
+}
+
+func TestFilterByArrivalTime_AfterNoon(t *testing.T) {
+	morningArr := types.Flight{
+		Price:    types.Money{Amount: 400, Currency: "USD"},
+		Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 9, 0, 0, 0, time.UTC)}},
+	}
+	afternoonArr := types.Flight{
+		Price:    types.Money{Amount: 600, Currency: "USD"},
+		Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 15, 0, 0, 0, time.UTC)}},
+	}
+	flights := []types.Flight{morningArr, afternoonArr}
+
+	result := FilterByArrivalTime(flights, "12:00", "")
+	if len(result) != 1 {
+		t.Fatalf("FilterByArrivalTime(after 12:00): got %d, want 1", len(result))
+	}
+	if result[0].Price.Amount != 600 {
+		t.Errorf("FilterByArrivalTime: kept wrong flight, price=%v", result[0].Price.Amount)
+	}
+}
+
+func TestFilterByArrivalTime_EmptyBounds(t *testing.T) {
+	flights := []types.Flight{
+		{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 3, 0, 0, 0, time.UTC)}}},
+		{Price: types.Money{Amount: 600, Currency: "USD"}, Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 20, 0, 0, 0, time.UTC)}}},
+	}
+
+	result := FilterByArrivalTime(flights, "", "")
+	if len(result) != 2 {
+		t.Fatalf("FilterByArrivalTime(empty bounds): got %d, want 2", len(result))
+	}
+}
+
+func TestFilterByArrivalTime_InvalidFormat(t *testing.T) {
+	flights := []types.Flight{
+		{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 8, 0, 0, 0, time.UTC)}}},
+	}
+
+	result := FilterByArrivalTime(flights, "invalid", "")
+	if len(result) != 1 {
+		t.Fatalf("FilterByArrivalTime(invalid format): got %d, want 1", len(result))
+	}
+}
+
+func TestFilterByArrivalTime_MultiSegment(t *testing.T) {
+	// Arrival time is based on the LAST segment's arrival.
+	flight := types.Flight{
+		Price: types.Money{Amount: 500, Currency: "USD"},
+		Outbound: []types.Segment{
+			{ArrivalTime: time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)},
+			{ArrivalTime: time.Date(2026, 3, 15, 16, 0, 0, 0, time.UTC)},
+		},
+	}
+
+	// Last segment arrives at 16:00 — should be kept with before=18:00.
+	result := FilterByArrivalTime([]types.Flight{flight}, "", "18:00")
+	if len(result) != 1 {
+		t.Fatalf("FilterByArrivalTime(multi-seg): got %d, want 1", len(result))
+	}
+
+	// Last segment arrives at 16:00 — should be dropped with before=14:00.
+	result = FilterByArrivalTime([]types.Flight{flight}, "", "14:00")
+	if len(result) != 0 {
+		t.Fatalf("FilterByArrivalTime(multi-seg excluded): got %d, want 0", len(result))
+	}
+}
+
+// --- FilterByMaxDuration ---
+
+func TestFilterByMaxDuration_ExcludesLong(t *testing.T) {
+	short := types.Flight{
+		Price:         types.Money{Amount: 500, Currency: "USD"},
+		TotalDuration: 8 * time.Hour,
+	}
+	long := types.Flight{
+		Price:         types.Money{Amount: 400, Currency: "USD"},
+		TotalDuration: 20 * time.Hour,
+	}
+	flights := []types.Flight{short, long}
+
+	result := FilterByMaxDuration(flights, 12*time.Hour)
+	if len(result) != 1 {
+		t.Fatalf("FilterByMaxDuration: got %d, want 1", len(result))
+	}
+	if result[0].Price.Amount != 500 {
+		t.Errorf("FilterByMaxDuration: kept wrong flight")
+	}
+}
+
+func TestFilterByMaxDuration_ZeroMeansNoLimit(t *testing.T) {
+	flights := []types.Flight{
+		{Price: types.Money{Amount: 500, Currency: "USD"}, TotalDuration: 30 * time.Hour},
+	}
+
+	result := FilterByMaxDuration(flights, 0)
+	if len(result) != 1 {
+		t.Fatalf("FilterByMaxDuration(zero=no limit): got %d, want 1", len(result))
+	}
+}
+
+func TestFilterByMaxDuration_ExactBoundary(t *testing.T) {
+	exact := types.Flight{
+		Price:         types.Money{Amount: 500, Currency: "USD"},
+		TotalDuration: 12 * time.Hour,
+	}
+	result := FilterByMaxDuration([]types.Flight{exact}, 12*time.Hour)
+	if len(result) != 1 {
+		t.Fatalf("FilterByMaxDuration(exact boundary): got %d, want 1 (should include equal)", len(result))
+	}
+}
+
 func TestFilterZeroPrices(t *testing.T) {
 	zero := types.Flight{Price: types.Money{Amount: 0, Currency: "USD"}}
 	valid := types.Flight{Price: types.Money{Amount: 100, Currency: "USD"}}

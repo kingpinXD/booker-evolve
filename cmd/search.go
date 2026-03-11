@@ -34,6 +34,9 @@ const (
 	keyCurrency      = "currency"
 	keyContext       = "context"
 	keySortBy        = "sort-by"
+	keyArrivalAfter  = "arrival-after"
+	keyArrivalBefore = "arrival-before"
+	keyMaxDuration   = "max-duration"
 	keyAvoidAirlines = "avoid-airlines"
 	keyFormat        = "format"
 	keyVerbose       = "verbose"
@@ -82,6 +85,9 @@ func init() {
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
 	f.String(keyContext, "", "search context/preferences (e.g. 'cheapest option' or 'want to explore a city on the way')")
 	f.String(keySortBy, "price", "sort results by: price, duration, or departure")
+	f.String(keyArrivalAfter, "", "earliest acceptable arrival time (HH:MM)")
+	f.String(keyArrivalBefore, "", "latest acceptable arrival time (HH:MM)")
+	f.Duration(keyMaxDuration, 0, "max flight duration (e.g. 12h, 8h30m); 0 = no limit")
 	f.String(keyAvoidAirlines, "", "comma-separated IATA codes to exclude (e.g. BA,LH)")
 	f.String(keyFormat, "table", "output format: table or json")
 	f.BoolP(keyVerbose, "v", false, "show debug output from providers, cache, and LLM")
@@ -129,6 +135,9 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		FlexDays:      viper.GetInt(keyFlexDays),
 		MaxStops:      viper.GetInt(keyMaxStops),
 		MaxPrice:      viper.GetFloat64(keyMaxPrice),
+		ArrivalAfter:  viper.GetString(keyArrivalAfter),
+		ArrivalBefore: viper.GetString(keyArrivalBefore),
+		MaxDuration:   viper.GetDuration(keyMaxDuration),
 		SortBy:        viper.GetString(keySortBy),
 		AvoidAirlines: viper.GetString(keyAvoidAirlines),
 		MaxResults:    viper.GetInt(keyMaxResults),

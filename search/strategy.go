@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"time"
 
 	"booker/types"
 )
@@ -29,13 +30,16 @@ type Request struct {
 	Passengers        int
 	CabinClass        types.CabinClass
 	FlexDays          int
-	MaxStops          int     // -1 = no limit
-	MaxPrice          float64 // 0 = no limit (USD)
-	PreferredAlliance string  // "Star Alliance", "OneWorld", "SkyTeam", or "" for no filter
-	DepartureAfter    string  // time-of-day "HH:MM" e.g. "06:00" — only keep flights departing at/after this
-	DepartureBefore   string  // time-of-day "HH:MM" e.g. "22:00" — only keep flights departing at/before this
-	SortBy            string  // "price" (default), "duration", or "departure"
-	AvoidAirlines     string  // comma-separated IATA codes to exclude (e.g. "BA,LH")
+	MaxStops          int           // -1 = no limit
+	MaxPrice          float64       // 0 = no limit (USD)
+	PreferredAlliance string        // "Star Alliance", "OneWorld", "SkyTeam", or "" for no filter
+	DepartureAfter    string        // time-of-day "HH:MM" e.g. "06:00" — only keep flights departing at/after this
+	DepartureBefore   string        // time-of-day "HH:MM" e.g. "22:00" — only keep flights departing at/before this
+	ArrivalAfter      string        // time-of-day "HH:MM" — only keep flights arriving at/after this
+	ArrivalBefore     string        // time-of-day "HH:MM" — only keep flights arriving at/before this
+	MaxDuration       time.Duration // max total flight duration; 0 = no limit
+	SortBy            string        // "price" (default), "duration", or "departure"
+	AvoidAirlines     string        // comma-separated IATA codes to exclude (e.g. "BA,LH")
 	MaxResults        int
 	Context           string // User's natural language context/preferences
 }

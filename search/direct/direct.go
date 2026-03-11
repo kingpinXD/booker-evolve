@@ -128,6 +128,8 @@ func (s *Searcher) searchFlights(ctx context.Context, origin, dest, dateStr stri
 	flights = search.FilterByMaxPrice(flights, req.MaxPrice)
 	flights = search.FilterByAlliance(flights, req.PreferredAlliance)
 	flights = search.FilterByDepartureTime(flights, req.DepartureAfter, req.DepartureBefore)
+	flights = search.FilterByArrivalTime(flights, req.ArrivalAfter, req.ArrivalBefore)
+	flights = search.FilterByMaxDuration(flights, req.MaxDuration)
 	flights = search.FilterByAvoidAirlines(flights, req.AvoidAirlines)
 	if req.FlexDays > 0 {
 		earliest := baseDate.AddDate(0, 0, -req.FlexDays)

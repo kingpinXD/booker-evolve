@@ -54,6 +54,9 @@ type tripParams struct {
 	PreferredAlliance string  `json:"preferred_alliance,omitempty"`
 	DepartureAfter    string  `json:"departure_after,omitempty"`
 	DepartureBefore   string  `json:"departure_before,omitempty"`
+	ArrivalAfter      string  `json:"arrival_after,omitempty"`
+	ArrivalBefore     string  `json:"arrival_before,omitempty"`
+	MaxDurationHours  int     `json:"max_duration_hours,omitempty"`
 	SortBy            string  `json:"sort_by,omitempty"`
 	AvoidAirlines     string  `json:"avoid_airlines,omitempty"`
 	Context           string  `json:"context,omitempty"`
@@ -82,6 +85,9 @@ Optional:
 - preferred_alliance: "Star Alliance", "OneWorld", or "SkyTeam" — filter to this alliance only
 - departure_after: earliest acceptable departure time (HH:MM, e.g. "06:00")
 - departure_before: latest acceptable departure time (HH:MM, e.g. "22:00")
+- arrival_after: earliest acceptable arrival time (HH:MM, e.g. "08:00")
+- arrival_before: latest acceptable arrival time (HH:MM, e.g. "18:00")
+- max_duration_hours: maximum flight duration in hours (e.g. 12)
 - sort_by: sort results by "price" (default), "duration", or "departure"
 - avoid_airlines: comma-separated IATA codes to exclude (e.g. "BA,LH")
 - context: any preferences like "cheapest option" or "prefer direct flights"
@@ -175,6 +181,9 @@ func buildRequestFromParams(p tripParams) search.Request {
 		PreferredAlliance: p.PreferredAlliance,
 		DepartureAfter:    p.DepartureAfter,
 		DepartureBefore:   p.DepartureBefore,
+		ArrivalAfter:      p.ArrivalAfter,
+		ArrivalBefore:     p.ArrivalBefore,
+		MaxDuration:       time.Duration(p.MaxDurationHours) * time.Hour,
 		SortBy:            p.SortBy,
 		AvoidAirlines:     p.AvoidAirlines,
 		MaxResults:        defaultMaxResults,
@@ -280,6 +289,15 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if merged.DepartureBefore == "" {
 		merged.DepartureBefore = prev.DepartureBefore
 	}
+	if merged.ArrivalAfter == "" {
+		merged.ArrivalAfter = prev.ArrivalAfter
+	}
+	if merged.ArrivalBefore == "" {
+		merged.ArrivalBefore = prev.ArrivalBefore
+	}
+	if merged.MaxDurationHours == 0 {
+		merged.MaxDurationHours = prev.MaxDurationHours
+	}
 	if merged.SortBy == "" {
 		merged.SortBy = prev.SortBy
 	}
@@ -323,6 +341,8 @@ func parsePartialParams(response string) (tripParams, bool) {
 			p.MaxPrice != 0 || p.DirectOnly || p.FlexDays != 0 ||
 			p.Profile != "" || p.PreferredAlliance != "" ||
 			p.DepartureAfter != "" || p.DepartureBefore != "" ||
+			p.ArrivalAfter != "" || p.ArrivalBefore != "" ||
+			p.MaxDurationHours != 0 ||
 			p.SortBy != "" || p.AvoidAirlines != "" || p.Context != "" {
 			return p, true
 		}
@@ -351,6 +371,8 @@ func refinementHint() string {
 		"change ranking profile (budget/comfort/balanced), " +
 		"filter by preferred_alliance (Star Alliance/OneWorld/SkyTeam), " +
 		"filter by departure time (departure_after/departure_before in HH:MM), " +
+		"filter by arrival time (arrival_after/arrival_before in HH:MM), " +
+		"limit flight duration with max_duration_hours, " +
 		"sort results by sort_by (price/duration/departure), " +
 		"exclude airlines with avoid_airlines (comma-separated IATA codes, e.g. \"BA,LH\"), " +
 		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +

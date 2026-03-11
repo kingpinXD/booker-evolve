@@ -244,6 +244,51 @@ func parseHHMM(s string) (int, bool) {
 	return h*60 + m, true
 }
 
+// FilterByArrivalTime keeps only flights whose last outbound segment arrives
+// within the given time-of-day range [after, before]. Both are "HH:MM" strings.
+// Empty strings mean no constraint on that end. Invalid formats return all flights.
+func FilterByArrivalTime(flights []types.Flight, after, before string) []types.Flight {
+	if after == "" && before == "" {
+		return flights
+	}
+	afterMin, afterOK := parseHHMM(after)
+	beforeMin, beforeOK := parseHHMM(before)
+	if (after != "" && !afterOK) || (before != "" && !beforeOK) {
+		return flights
+	}
+	filtered := make([]types.Flight, 0, len(flights))
+	for _, f := range flights {
+		if len(f.Outbound) == 0 {
+			continue
+		}
+		arr := f.Outbound[len(f.Outbound)-1].ArrivalTime
+		arrMin := arr.Hour()*60 + arr.Minute()
+		if afterOK && arrMin < afterMin {
+			continue
+		}
+		if beforeOK && arrMin > beforeMin {
+			continue
+		}
+		filtered = append(filtered, f)
+	}
+	return filtered
+}
+
+// FilterByMaxDuration keeps only flights whose TotalDuration is at most maxDur.
+// A zero maxDur means no limit.
+func FilterByMaxDuration(flights []types.Flight, maxDur time.Duration) []types.Flight {
+	if maxDur <= 0 {
+		return flights
+	}
+	filtered := make([]types.Flight, 0, len(flights))
+	for _, f := range flights {
+		if f.TotalDuration <= maxDur {
+			filtered = append(filtered, f)
+		}
+	}
+	return filtered
+}
+
 // FilterZeroPrices removes flights with a $0 price — these are data artifacts
 // from providers (e.g. Google Flights returning incomplete pricing).
 func FilterZeroPrices(flights []types.Flight) []types.Flight {

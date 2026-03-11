@@ -143,6 +143,17 @@ type SearchParams struct {
 	// Empty means no constraint.
 	DepartureBefore string
 
+	// ArrivalAfter filters flights arriving before this time-of-day ("HH:MM").
+	// Empty means no constraint.
+	ArrivalAfter string
+	// ArrivalBefore filters flights arriving after this time-of-day ("HH:MM").
+	// Empty means no constraint.
+	ArrivalBefore string
+
+	// MaxDuration filters flights whose TotalDuration exceeds this.
+	// 0 means no limit.
+	MaxDuration time.Duration
+
 	// AvoidAirlines is a comma-separated list of IATA codes to exclude.
 	// Empty means no filter.
 	AvoidAirlines string
@@ -360,11 +371,19 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 		depTime1 := before1t - len(pairs[i].leg1)
 		depTime2 := before2t - len(pairs[i].leg2)
 
-		// 3f: avoid airlines
+		// 3f: arrival time-of-day preference
+		pairs[i].leg1 = search.FilterByArrivalTime(pairs[i].leg1, params.ArrivalAfter, params.ArrivalBefore)
+		pairs[i].leg2 = search.FilterByArrivalTime(pairs[i].leg2, params.ArrivalAfter, params.ArrivalBefore)
+
+		// 3g: max duration
+		pairs[i].leg1 = search.FilterByMaxDuration(pairs[i].leg1, params.MaxDuration)
+		pairs[i].leg2 = search.FilterByMaxDuration(pairs[i].leg2, params.MaxDuration)
+
+		// 3h: avoid airlines
 		pairs[i].leg1 = search.FilterByAvoidAirlines(pairs[i].leg1, params.AvoidAirlines)
 		pairs[i].leg2 = search.FilterByAvoidAirlines(pairs[i].leg2, params.AvoidAirlines)
 
-		// 3g: date window (leg1 only)
+		// 3i: date window (leg1 only)
 		beforeDate := len(pairs[i].leg1)
 		pairs[i].leg1 = search.FilterByDateRange(pairs[i].leg1, dateEarliest, dateLatest)
 		dateDrop := beforeDate - len(pairs[i].leg1)
@@ -434,6 +453,22 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 				continue
 			}
 			if len(search.FilterByDepartureTime([]types.Flight{leg2}, params.DepartureAfter, params.DepartureBefore)) == 0 {
+				continue
+			}
+		}
+		if params.ArrivalAfter != "" || params.ArrivalBefore != "" {
+			if len(search.FilterByArrivalTime([]types.Flight{leg1}, params.ArrivalAfter, params.ArrivalBefore)) == 0 {
+				continue
+			}
+			if len(search.FilterByArrivalTime([]types.Flight{leg2}, params.ArrivalAfter, params.ArrivalBefore)) == 0 {
+				continue
+			}
+		}
+		if params.MaxDuration > 0 {
+			if len(search.FilterByMaxDuration([]types.Flight{leg1}, params.MaxDuration)) == 0 {
+				continue
+			}
+			if len(search.FilterByMaxDuration([]types.Flight{leg2}, params.MaxDuration)) == 0 {
 				continue
 			}
 		}

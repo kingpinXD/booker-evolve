@@ -1168,6 +1168,107 @@ func TestRefinementHint_Leg2Date(t *testing.T) {
 	}
 }
 
+func TestParsePartialParams_ArrivalTime(t *testing.T) {
+	p, ok := parsePartialParams(`{"arrival_before":"18:00"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with arrival_before to parse")
+	}
+	if p.ArrivalBefore != "18:00" {
+		t.Errorf("ArrivalBefore = %q, want %q", p.ArrivalBefore, "18:00")
+	}
+
+	p2, ok := parsePartialParams(`{"arrival_after":"08:00"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with arrival_after to parse")
+	}
+	if p2.ArrivalAfter != "08:00" {
+		t.Errorf("ArrivalAfter = %q, want %q", p2.ArrivalAfter, "08:00")
+	}
+}
+
+func TestMergeParams_ArrivalTime(t *testing.T) {
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", ArrivalAfter: "08:00", ArrivalBefore: "18:00"}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.ArrivalAfter != "08:00" || got.ArrivalBefore != "18:00" {
+		t.Errorf("ArrivalAfter/Before not preserved: got %q/%q", got.ArrivalAfter, got.ArrivalBefore)
+	}
+}
+
+func TestBuildRequestFromParams_ArrivalTime(t *testing.T) {
+	params := tripParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2025-06-15",
+		ArrivalAfter:  "08:00",
+		ArrivalBefore: "18:00",
+	}
+	req := buildRequestFromParams(params)
+	if req.ArrivalAfter != "08:00" || req.ArrivalBefore != "18:00" {
+		t.Errorf("ArrivalAfter/Before = %q/%q, want 08:00/18:00", req.ArrivalAfter, req.ArrivalBefore)
+	}
+}
+
+func TestParsePartialParams_MaxDurationHours(t *testing.T) {
+	p, ok := parsePartialParams(`{"max_duration_hours":12}`)
+	if !ok {
+		t.Fatal("expected partial JSON with max_duration_hours to parse")
+	}
+	if p.MaxDurationHours != 12 {
+		t.Errorf("MaxDurationHours = %d, want 12", p.MaxDurationHours)
+	}
+}
+
+func TestMergeParams_MaxDurationHours(t *testing.T) {
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", MaxDurationHours: 12}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.MaxDurationHours != 12 {
+		t.Errorf("MaxDurationHours = %d, want 12 (preserved from prev)", got.MaxDurationHours)
+	}
+}
+
+func TestBuildRequestFromParams_MaxDuration(t *testing.T) {
+	params := tripParams{
+		Origin:           "DEL",
+		Destination:      "YYZ",
+		DepartureDate:    "2025-06-15",
+		MaxDurationHours: 12,
+	}
+	req := buildRequestFromParams(params)
+	if req.MaxDuration != 12*time.Hour {
+		t.Errorf("MaxDuration = %v, want %v", req.MaxDuration, 12*time.Hour)
+	}
+}
+
+func TestChatSystemPrompt_ArrivalTime(t *testing.T) {
+	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
+	if !strings.Contains(prompt, "arrival_after") || !strings.Contains(prompt, "arrival_before") {
+		t.Error("system prompt should mention arrival_after and arrival_before")
+	}
+}
+
+func TestChatSystemPrompt_MaxDuration(t *testing.T) {
+	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
+	if !strings.Contains(prompt, "max_duration_hours") {
+		t.Error("system prompt should mention max_duration_hours")
+	}
+}
+
+func TestRefinementHint_ArrivalTime(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "arrival_after") || !strings.Contains(hint, "arrival_before") {
+		t.Error("refinement hint should mention arrival_after/arrival_before")
+	}
+}
+
+func TestRefinementHint_MaxDuration(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "max_duration_hours") {
+		t.Error("refinement hint should mention max_duration_hours")
+	}
+}
+
 func TestChatLoop_PriceInsightsInOutput(t *testing.T) {
 	responses := []string{
 		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}

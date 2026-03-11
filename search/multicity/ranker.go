@@ -233,6 +233,13 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 				)
 				if seg.LayoverDuration > 0 {
 					fmt.Fprintf(&b, "      ↳ layover: %s\n", formatDuration(seg.LayoverDuration))
+					layoverMins := int(seg.LayoverDuration.Minutes())
+					switch {
+					case layoverMins < 60:
+						fmt.Fprintf(&b, "      [Risky connection: %dm]\n", layoverMins)
+					case layoverMins < 90:
+						fmt.Fprintf(&b, "      [Tight connection: %dm]\n", layoverMins)
+					}
 				}
 			}
 			if leg.Stopover != nil {

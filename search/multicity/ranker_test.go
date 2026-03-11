@@ -804,6 +804,129 @@ func TestBuildRankingPrompt_WithCityNames(t *testing.T) {
 	}
 }
 
+func TestBuildRankingPrompt_RiskyConnection(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 12 * time.Hour,
+			TotalTrip:   12 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{
+							{
+								FlightNumber: "AA100", Origin: "JFK", Destination: "ORD",
+								OriginCity: "New York", DestinationCity: "Chicago",
+								DepartureTime: dep, ArrivalTime: dep.Add(3 * time.Hour),
+								Duration: 3 * time.Hour, AirlineName: "American Airlines",
+							},
+							{
+								FlightNumber:    "AA200", Origin: "ORD", Destination: "LAX",
+								OriginCity:      "Chicago", DestinationCity: "Los Angeles",
+								DepartureTime:   dep.Add(3*time.Hour + 45*time.Minute),
+								ArrivalTime:     dep.Add(7*time.Hour + 45*time.Minute),
+								Duration:        4 * time.Hour,
+								AirlineName:     "American Airlines",
+								LayoverDuration: 45 * time.Minute,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "[Risky connection: 45m]") {
+		t.Errorf("prompt should contain [Risky connection: 45m] for 45min layover, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_TightConnection(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 12 * time.Hour,
+			TotalTrip:   12 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{
+							{
+								FlightNumber: "UA100", Origin: "SFO", Destination: "DEN",
+								OriginCity: "San Francisco", DestinationCity: "Denver",
+								DepartureTime: dep, ArrivalTime: dep.Add(3 * time.Hour),
+								Duration: 3 * time.Hour, AirlineName: "United Airlines",
+							},
+							{
+								FlightNumber:    "UA200", Origin: "DEN", Destination: "JFK",
+								OriginCity:      "Denver", DestinationCity: "New York",
+								DepartureTime:   dep.Add(4*time.Hour + 15*time.Minute),
+								ArrivalTime:     dep.Add(8*time.Hour + 15*time.Minute),
+								Duration:        4 * time.Hour,
+								AirlineName:     "United Airlines",
+								LayoverDuration: 75 * time.Minute,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "[Tight connection: 75m]") {
+		t.Errorf("prompt should contain [Tight connection: 75m] for 75min layover, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_NoConnectionTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 12 * time.Hour,
+			TotalTrip:   12 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{
+							{
+								FlightNumber: "DL100", Origin: "ATL", Destination: "MSP",
+								OriginCity: "Atlanta", DestinationCity: "Minneapolis",
+								DepartureTime: dep, ArrivalTime: dep.Add(3 * time.Hour),
+								Duration: 3 * time.Hour, AirlineName: "Delta Air Lines",
+							},
+							{
+								FlightNumber:    "DL200", Origin: "MSP", Destination: "SEA",
+								OriginCity:      "Minneapolis", DestinationCity: "Seattle",
+								DepartureTime:   dep.Add(5 * time.Hour),
+								ArrivalTime:     dep.Add(9 * time.Hour),
+								Duration:        4 * time.Hour,
+								AirlineName:     "Delta Air Lines",
+								LayoverDuration: 120 * time.Minute,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if searchString(prompt, "[Risky connection:") {
+		t.Errorf("prompt should not contain [Risky connection:] for 120min layover, got:\n%s", prompt)
+	}
+	if searchString(prompt, "[Tight connection:") {
+		t.Errorf("prompt should not contain [Tight connection:] for 120min layover, got:\n%s", prompt)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

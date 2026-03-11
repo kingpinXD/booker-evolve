@@ -41,6 +41,8 @@ const (
 	keyMaxDuration       = "max-duration"
 	keyAvoidAirlines     = "avoid-airlines"
 	keyPreferredAirlines = "preferred-airlines"
+	keyMinStopover       = "min-stopover"
+	keyMaxStopover       = "max-stopover"
 	keyFormat            = "format"
 	keyVerbose           = "verbose"
 )
@@ -95,6 +97,8 @@ func init() {
 	f.Duration(keyMaxDuration, 0, "max flight duration (e.g. 12h, 8h30m); 0 = no limit")
 	f.String(keyAvoidAirlines, "", "comma-separated IATA codes to exclude (e.g. BA,LH)")
 	f.String(keyPreferredAirlines, "", "comma-separated IATA codes to keep (e.g. AC,UA)")
+	f.Duration(keyMinStopover, 0, "minimum stopover duration for multi-city (e.g. 24h, 48h); 0 = default")
+	f.Duration(keyMaxStopover, 0, "maximum stopover duration for multi-city (e.g. 96h, 168h); 0 = default")
 	f.String(keyFormat, "table", "output format: table or json")
 	f.BoolP(keyVerbose, "v", false, "show debug output from providers, cache, and LLM")
 
@@ -149,6 +153,8 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		SortBy:            viper.GetString(keySortBy),
 		AvoidAirlines:     viper.GetString(keyAvoidAirlines),
 		PreferredAirlines: viper.GetString(keyPreferredAirlines),
+		MinStopover:       viper.GetDuration(keyMinStopover),
+		MaxStopover:       viper.GetDuration(keyMaxStopover),
 		MaxResults:        viper.GetInt(keyMaxResults),
 		Context:           viper.GetString(keyContext),
 	}

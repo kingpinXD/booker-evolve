@@ -1460,3 +1460,48 @@ Searching for flights.`,
 		t.Errorf("expected typical price range in output, got:\n%s", output)
 	}
 }
+
+// --- stopover duration params ---
+
+func TestParsePartialParams_StopoverHours(t *testing.T) {
+	input := `{"min_stopover_hours":24,"max_stopover_hours":72}`
+	p, ok := parsePartialParams(input)
+	if !ok {
+		t.Fatal("expected partial params")
+	}
+	if p.MinStopoverHours != 24 {
+		t.Errorf("MinStopoverHours = %d, want 24", p.MinStopoverHours)
+	}
+	if p.MaxStopoverHours != 72 {
+		t.Errorf("MaxStopoverHours = %d, want 72", p.MaxStopoverHours)
+	}
+}
+
+func TestMergeParams_StopoverHours(t *testing.T) {
+	prev := tripParams{MinStopoverHours: 24, MaxStopoverHours: 96}
+	partial := tripParams{MaxStopoverHours: 72} // only change max
+	merged := mergeParams(prev, partial)
+	if merged.MinStopoverHours != 24 {
+		t.Errorf("MinStopoverHours = %d, want 24 (from prev)", merged.MinStopoverHours)
+	}
+	if merged.MaxStopoverHours != 72 {
+		t.Errorf("MaxStopoverHours = %d, want 72 (from partial)", merged.MaxStopoverHours)
+	}
+}
+
+func TestBuildRequestFromParams_StopoverDuration(t *testing.T) {
+	p := tripParams{
+		Origin:           "DEL",
+		Destination:      "YYZ",
+		DepartureDate:    "2026-06-15",
+		MinStopoverHours: 24,
+		MaxStopoverHours: 96,
+	}
+	req := buildRequestFromParams(p)
+	if req.MinStopover != 24*time.Hour {
+		t.Errorf("MinStopover = %v, want 24h", req.MinStopover)
+	}
+	if req.MaxStopover != 96*time.Hour {
+		t.Errorf("MaxStopover = %v, want 96h", req.MaxStopover)
+	}
+}

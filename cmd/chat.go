@@ -60,6 +60,8 @@ type tripParams struct {
 	SortBy            string  `json:"sort_by,omitempty"`
 	AvoidAirlines     string  `json:"avoid_airlines,omitempty"`
 	PreferredAirlines string  `json:"preferred_airlines,omitempty"`
+	MinStopoverHours  int     `json:"min_stopover_hours,omitempty"`
+	MaxStopoverHours  int     `json:"max_stopover_hours,omitempty"`
 	Context           string  `json:"context,omitempty"`
 }
 
@@ -92,6 +94,8 @@ Optional:
 - sort_by: sort results by "price" (default), "duration", or "departure"
 - avoid_airlines: comma-separated IATA codes to exclude (e.g. "BA,LH")
 - preferred_airlines: comma-separated IATA codes to keep only (e.g. "AC,UA")
+- min_stopover_hours: minimum city stopover duration in hours for multi-city (default: 48)
+- max_stopover_hours: maximum city stopover duration in hours for multi-city (default: 144)
 - context: any preferences like "cheapest option" or "prefer direct flights"
 
 Ask clarifying questions to gather missing information. Be conversational but concise.
@@ -189,6 +193,8 @@ func buildRequestFromParams(p tripParams) search.Request {
 		SortBy:            p.SortBy,
 		AvoidAirlines:     p.AvoidAirlines,
 		PreferredAirlines: p.PreferredAirlines,
+		MinStopover:       time.Duration(p.MinStopoverHours) * time.Hour,
+		MaxStopover:       time.Duration(p.MaxStopoverHours) * time.Hour,
 		MaxResults:        defaultMaxResults,
 		Context:           p.Context,
 	}
@@ -323,6 +329,12 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if merged.PreferredAirlines == "" {
 		merged.PreferredAirlines = prev.PreferredAirlines
 	}
+	if merged.MinStopoverHours == 0 {
+		merged.MinStopoverHours = prev.MinStopoverHours
+	}
+	if merged.MaxStopoverHours == 0 {
+		merged.MaxStopoverHours = prev.MaxStopoverHours
+	}
 	if merged.Context == "" {
 		merged.Context = prev.Context
 	}
@@ -362,7 +374,8 @@ func parsePartialParams(response string) (tripParams, bool) {
 			p.DepartureAfter != "" || p.DepartureBefore != "" ||
 			p.ArrivalAfter != "" || p.ArrivalBefore != "" ||
 			p.MaxDurationHours != 0 ||
-			p.SortBy != "" || p.AvoidAirlines != "" || p.PreferredAirlines != "" || p.Context != "" {
+			p.SortBy != "" || p.AvoidAirlines != "" || p.PreferredAirlines != "" ||
+			p.MinStopoverHours != 0 || p.MaxStopoverHours != 0 || p.Context != "" {
 			return p, true
 		}
 	}
@@ -395,6 +408,7 @@ func refinementHint() string {
 		"sort results by sort_by (price/duration/departure), " +
 		"exclude airlines with avoid_airlines (comma-separated IATA codes, e.g. \"BA,LH\"), " +
 		"keep only specific airlines with preferred_airlines (comma-separated IATA codes, e.g. \"AC,UA\"), " +
+		"adjust stopover duration with min_stopover_hours/max_stopover_hours (default 48-144h), " +
 		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }

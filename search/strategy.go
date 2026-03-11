@@ -41,6 +41,8 @@ type Request struct {
 	SortBy            string        // "price" (default), "duration", or "departure"
 	AvoidAirlines     string        // comma-separated IATA codes to exclude (e.g. "BA,LH")
 	PreferredAirlines string        // comma-separated IATA codes to keep (e.g. "AC,UA")
+	MinStopover       time.Duration // minimum stopover duration in multi-city; 0 = default
+	MaxStopover       time.Duration // maximum stopover duration in multi-city; 0 = default
 	MaxResults        int
 	Context           string // User's natural language context/preferences
 }

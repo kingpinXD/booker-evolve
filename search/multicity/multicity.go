@@ -161,6 +161,13 @@ type SearchParams struct {
 	// PreferredAirlines is a comma-separated list of IATA codes to keep.
 	// Empty means no filter.
 	PreferredAirlines string
+
+	// MinStopover overrides the default minimum stopover duration.
+	// 0 means use the stopover city's default (typically 48h).
+	MinStopover time.Duration
+	// MaxStopover overrides the default maximum stopover duration.
+	// 0 means use the stopover city's default (typically 144h).
+	MaxStopover time.Duration
 }
 
 // Searcher orchestrates the multi-city halt search pipeline.
@@ -412,6 +419,8 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 	for _, pair := range pairs {
 		combined := CombineLegs(pair.leg1, pair.leg2, CombineParams{
 			Stopover: pair.stopover,
+			MinStay:  params.MinStopover,
+			MaxStay:  params.MaxStopover,
 		})
 		allItineraries = append(allItineraries, combined...)
 		if len(combined) > 0 {

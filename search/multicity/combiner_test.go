@@ -426,6 +426,37 @@ func TestCombineLegs_RedEyeLeg2Rejected(t *testing.T) {
 	}
 }
 
+func TestCombineLegs_CustomStopoverDuration(t *testing.T) {
+	leg1Arr := basetime.Add(8 * time.Hour)
+	leg1 := []types.Flight{makeFlight("CX", "DEL", "HKG", basetime, leg1Arr, 300)}
+
+	// Leg2 departs 24 hours after leg1 arrival (within 24-72h custom range).
+	leg2Short := []types.Flight{makeFlight("AC", "HKG", "YYZ",
+		leg1Arr.Add(24*time.Hour), leg1Arr.Add(40*time.Hour), 400)}
+
+	// Leg2 departs 96 hours after leg1 arrival (outside 24-72h custom range).
+	leg2Long := []types.Flight{makeFlight("AC", "HKG", "YYZ",
+		leg1Arr.Add(96*time.Hour), leg1Arr.Add(112*time.Hour), 400)}
+
+	params := CombineParams{
+		Stopover: defaultParams().Stopover,
+		MinStay:  24 * time.Hour,
+		MaxStay:  72 * time.Hour,
+	}
+
+	// 24h gap should pass with custom min.
+	got := CombineLegs(leg1, leg2Short, params)
+	if len(got) != 1 {
+		t.Errorf("24h gap with min=24h: expected 1 result, got %d", len(got))
+	}
+
+	// 96h gap should be rejected with custom max=72h.
+	got = CombineLegs(leg1, leg2Long, params)
+	if len(got) != 0 {
+		t.Errorf("96h gap with max=72h: expected 0 results, got %d", len(got))
+	}
+}
+
 func TestSameAirline(t *testing.T) {
 	cx := makeFlight("CX", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 300)
 	ai := makeFlight("AI", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 280)

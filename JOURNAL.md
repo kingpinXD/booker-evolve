@@ -443,3 +443,16 @@ Added filterSuggestion(tripParams) that checks 8 optional filter categories and 
 
 ### Session 38, Task 4 -- Consolidate stage 3 filter logging
 Extracted applyBoth closure in stage 3 filter loop to eliminate repetitive before/after counting. Each filter application is now one line (plus a closure wrapper for parameterized filters). MaxStops kept separate since it uses different per-leg parameters. Same log output format preserved. Net reduction: ~15 lines while maintaining identical behavior.
+
+## Session 38 -- Kiwi dead code cleanup, route expansion, chat UX
+
+Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Used parallel worktrees for tasks 3 (stopovers) and 5 (chat filter hints) while working sequentially on tasks 1-2 on main, then task 4.
+
+Key outcomes:
+1. Removed KiwiID from StopoverCity struct and OriginKiwiID/DestinationKiwiID from SearchParams (dead Kiwi-era code).
+2. Replaced fetchWithDualSort (two identical SerpAPI calls) with single fetchFromAllProviders. Removed deduplicateFlights helper and 6 associated tests.
+3. Added India-US route stopovers: DELToJFK (8 cities) and BOMToJFK (7 cities) with curated hubs.
+4. Consolidated stage 3 filter logging with applyBoth closure.
+5. Chat now suggests relaxing filters when search returns zero results.
+
+Net lines: ~-100 Go code removed via cleanup, ~+200 added for new features. 12 new tests.

@@ -129,3 +129,9 @@ Session 37 worktree agent committed on its branch. When cherry-picking into main
 ## Lesson: Dedup itineraries after sort requires re-sort
 
 deduplicateItineraries uses a map to track best (cheapest) per key. After extracting results from the map, iteration order is random. Must re-sort by price after dedup. This is a common pattern when using maps for deduplication -- always re-sort if order matters.
+
+## Lesson: Kiwi constants must stay in config even after removing Kiwi-specific code from the pipeline
+The Kiwi provider (provider/kiwi/kiwi.go) directly references config.KiwiSortByQuality, config.KiwiParamSortBy, etc. Per CLAUDE.md, we don't modify Kiwi code. So even when removing Kiwi-era patterns from the active pipeline (like fetchWithDualSort), the config constants must remain. Always check cross-package references before removing constants.
+
+## Lesson: Worktree merges with struct changes need manual KiwiID stripping
+When a worktree branch adds stopover entries that include KiwiID fields, but main has already removed KiwiID from the struct, cherry-picking causes compile errors. The safest approach is to manually apply the worktree's Go changes to main, stripping the removed fields, rather than trying git rebase/cherry-pick.

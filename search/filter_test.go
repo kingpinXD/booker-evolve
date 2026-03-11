@@ -152,6 +152,31 @@ func TestFilterByMaxStops(t *testing.T) {
 	}
 }
 
+func TestFilterByMaxPrice(t *testing.T) {
+	cheap := types.Flight{Price: types.Money{Amount: 400, Currency: "USD"}}
+	mid := types.Flight{Price: types.Money{Amount: 800, Currency: "USD"}}
+	expensive := types.Flight{Price: types.Money{Amount: 1500, Currency: "USD"}}
+	flights := []types.Flight{cheap, mid, expensive}
+
+	// Zero means no limit.
+	result := FilterByMaxPrice(flights, 0)
+	if len(result) != 3 {
+		t.Errorf("FilterByMaxPrice(0): got %d, want 3 (no limit)", len(result))
+	}
+
+	// Cap at 800: keeps cheap and mid.
+	result = FilterByMaxPrice(flights, 800)
+	if len(result) != 2 {
+		t.Errorf("FilterByMaxPrice(800): got %d, want 2", len(result))
+	}
+
+	// Cap at 399: removes all.
+	result = FilterByMaxPrice(flights, 399)
+	if len(result) != 0 {
+		t.Errorf("FilterByMaxPrice(399): got %d, want 0", len(result))
+	}
+}
+
 func TestFilterZeroPrices(t *testing.T) {
 	zero := types.Flight{Price: types.Money{Amount: 0, Currency: "USD"}}
 	valid := types.Flight{Price: types.Money{Amount: 100, Currency: "USD"}}

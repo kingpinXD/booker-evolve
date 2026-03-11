@@ -166,6 +166,21 @@ func FilterByMaxStops(flights []types.Flight, maxStops int) []types.Flight {
 	return filtered
 }
 
+// FilterByMaxPrice keeps only flights at or below the given price ceiling.
+// A maxPrice of 0 means no limit.
+func FilterByMaxPrice(flights []types.Flight, maxPrice float64) []types.Flight {
+	if maxPrice <= 0 {
+		return flights
+	}
+	filtered := make([]types.Flight, 0, len(flights))
+	for _, f := range flights {
+		if f.Price.Amount <= maxPrice {
+			filtered = append(filtered, f)
+		}
+	}
+	return filtered
+}
+
 // FilterZeroPrices removes flights with a $0 price — these are data artifacts
 // from providers (e.g. Google Flights returning incomplete pricing).
 func FilterZeroPrices(flights []types.Flight) []types.Flight {

@@ -28,7 +28,8 @@ type Request struct {
 	Passengers    int
 	CabinClass    types.CabinClass
 	FlexDays      int
-	MaxStops      int // -1 = no limit
+	MaxStops      int     // -1 = no limit
+	MaxPrice      float64 // 0 = no limit (USD)
 	MaxResults    int
 	Context       string // User's natural language context/preferences
 }

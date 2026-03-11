@@ -28,6 +28,7 @@ const (
 	keyCabin      = "cabin"
 	keyFlexDays   = "flex-days"
 	keyMaxStops   = "max-stops"
+	keyMaxPrice   = "max-price"
 	keyMaxResults = "max-results"
 	keyProfile    = "profile"
 	keyCurrency   = "currency"
@@ -72,6 +73,7 @@ func init() {
 	f.String(keyCabin, defaultCabin, "cabin class (economy, premium_economy, business, first)")
 	f.Int(keyFlexDays, defaultFlexDays, "date flexibility ± days")
 	f.Int(keyMaxStops, defaultMaxStops, "max layovers per leg (-1 = no limit, 0 = direct)")
+	f.Float64(keyMaxPrice, 0, "max price per flight in USD (0 = no limit)")
 	f.Int(keyMaxResults, defaultMaxResults, "number of results to show")
 	f.String(keyProfile, defaultProfile, "ranking profile (budget, comfort, balanced)")
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
@@ -121,6 +123,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		CabinClass:    cabin,
 		FlexDays:      viper.GetInt(keyFlexDays),
 		MaxStops:      viper.GetInt(keyMaxStops),
+		MaxPrice:      viper.GetFloat64(keyMaxPrice),
 		MaxResults:    viper.GetInt(keyMaxResults),
 		Context:       viper.GetString(keyContext),
 	}

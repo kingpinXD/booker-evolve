@@ -38,13 +38,14 @@ func init() {
 
 // tripParams holds extracted flight search parameters from the LLM dialogue.
 type tripParams struct {
-	Origin        string `json:"origin"`
-	Destination   string `json:"destination"`
-	DepartureDate string `json:"departure_date"`
-	ReturnDate    string `json:"return_date,omitempty"`
-	Passengers    int    `json:"passengers,omitempty"`
-	Cabin         string `json:"cabin,omitempty"`
-	Context       string `json:"context,omitempty"`
+	Origin        string  `json:"origin"`
+	Destination   string  `json:"destination"`
+	DepartureDate string  `json:"departure_date"`
+	ReturnDate    string  `json:"return_date,omitempty"`
+	Passengers    int     `json:"passengers,omitempty"`
+	Cabin         string  `json:"cabin,omitempty"`
+	MaxPrice      float64 `json:"max_price,omitempty"`
+	Context       string  `json:"context,omitempty"`
 }
 
 // chatSystemPrompt returns the system prompt for the chat conversation.
@@ -60,6 +61,7 @@ Optional:
 - return_date: in YYYY-MM-DD format (for round trips)
 - passengers: number of travelers (default: 1)
 - cabin: economy, premium_economy, business, or first (default: economy)
+- max_price: maximum budget per flight in USD (e.g. 1200)
 - context: any preferences like "cheapest option" or "prefer direct flights"
 
 Ask clarifying questions to gather missing information. Be conversational but concise.
@@ -138,6 +140,7 @@ func buildRequestFromParams(p tripParams) search.Request {
 		CabinClass:    types.CabinClass(cabin),
 		FlexDays:      defaultFlexDays,
 		MaxStops:      defaultMaxStops,
+		MaxPrice:      p.MaxPrice,
 		MaxResults:    defaultMaxResults,
 		Context:       p.Context,
 	}

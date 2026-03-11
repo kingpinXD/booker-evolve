@@ -23,16 +23,15 @@ Carried from: Day 18 (all completed)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 23: Add --max-price budget filter
-**Status:** pending
-**Plan:**
-- [ ] Add MaxPrice float64 field to search.Request
-- [ ] Write FilterByMaxPrice test in search/filter_test.go (TDD: verify fail)
-- [ ] Implement FilterByMaxPrice in search/filter.go
-- [ ] Call FilterByMaxPrice in direct.searchFlights pipeline
-- [ ] Add --max-price flag to searchCmd, wire to req.MaxPrice
-- [ ] Add max_price to tripParams in chat.go, wire to buildRequestFromParams
-- [ ] Update chatSystemPrompt to mention max_price/budget option
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Add MaxPrice to Request, FilterByMaxPrice filter, wire into direct pipeline, CLI flag, and chat tripParams. TDD: test filter first, then implement.
+- [x] Add MaxPrice float64 to search.Request
+- [x] Write FilterByMaxPrice test (TDD: red then green)
+- [x] Implement FilterByMaxPrice
+- [x] Wire into direct.searchFlights
+- [x] Add --max-price CLI flag + chat integration (incl. system prompt)
+- [x] Fix gofmt alignment
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 24: Surface PriceInsights in output
 **Status:** pending

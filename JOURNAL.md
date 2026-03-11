@@ -93,6 +93,9 @@ Added refinementHint() function listing available levers (dates, nearby airports
 ### Session 18, Task 5 -- Lint and gofmt sweep
 Fixed 1 gofmt violation in search/direct/direct.go (tab alignment from worktree agent). Zero lint issues after fix. All build gates pass.
 
+### Session 19, Task 3 -- Add --max-price budget filter
+Added MaxPrice field to search.Request, FilterByMaxPrice filter function with TDD (3 test cases), wired into direct.searchFlights pipeline and CLI (--max-price flag). Also added max_price to chat tripParams and system prompt so the LLM can extract budget constraints from conversation. 1 gofmt fix for struct alignment.
+
 ### Session 19, Task 5 -- Test multicity.Strategy.Search
 Added 2 tests to strategy_test.go using existing test helpers. TestStrategy_Search verifies happy path (mock provider + LLM ranker), TestStrategy_Search_Error verifies error propagation from invalid date. Ran as parallel worktree agent. Coverage for Strategy.Search now > 0%.
 

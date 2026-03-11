@@ -28,30 +28,30 @@ Carried from: Day 47 (all completed)
 - [x] Verify build + test + vet pass
 
 ## Task 137: India to Southeast Asia stopover routes
-**Status:** pending
+**Status:** done
 **Plan:** Add DEL/BOM to BKK corridor stopovers.
-- [ ] Write tests for StopoversForRoute DEL-BKK and BKK-DEL
-- [ ] Write tests for StopoversForRoute BOM-BKK and BKK-BOM
-- [ ] Add DELToBKKStopovers slice (DOH, AUH, DXB, SIN, KUL, CCU)
-- [ ] Add BOMToBKKStopovers slice (DOH, AUH, DXB, SIN, KUL)
-- [ ] Register both in stopoversMap
-- [ ] Verify existing consistency test passes
-- [ ] Verify build + test + vet pass
+- [x] Write tests for StopoversForRoute DEL-BKK and BKK-DEL
+- [x] Write tests for StopoversForRoute BOM-BKK and BKK-BOM
+- [x] Add DELToBKKStopovers slice (DOH, AUH, DXB, SIN, KUL, CCU)
+- [x] Add BOMToBKKStopovers slice (DOH, AUH, DXB, SIN, KUL)
+- [x] Register both in stopoversMap
+- [x] Verify existing consistency test passes
+- [x] Verify build + test + vet pass
 
 ## Task 138: Layover details in chat result summary
-**Status:** pending
+**Status:** done
 **Plan:** Show layover city and duration for connecting flights in resultSummaryForChat.
-- [ ] Write test: multi-segment flight shows layover city and duration
-- [ ] Write test: direct flight shows "nonstop"
-- [ ] Write test: missing segment data falls back to stop count
-- [ ] Add layover extraction helper for chat summary
-- [ ] Update resultSummaryForChat to use layover details
-- [ ] Verify build + test + vet pass
+- [x] Write test: multi-segment flight shows layover city and duration
+- [x] Write test: direct flight shows "nonstop"
+- [x] Write test: missing segment data falls back to stop count
+- [x] Add layover extraction helper for chat summary
+- [x] Update resultSummaryForChat to use layover details
+- [x] Verify build + test + vet pass
 
 ## Task 139: SetRanker test + picker fallback coverage + stale TODO cleanup
-**Status:** pending
+**Status:** done
 **Plan:** Fix coverage gaps and remove stale TODO.
-- [ ] Change TestPicker_BothPassesRankerToComposite to use p.SetRanker(ranker)
-- [ ] Add test: fallback returns first strategy when no "direct" exists
-- [ ] Remove stale TODO at multicity.go:66 (dedup implemented Day 38)
-- [ ] Verify build + test + vet pass
+- [x] Change TestPicker_BothPassesRankerToComposite to use p.SetRanker(ranker)
+- [x] Add test: fallback returns first strategy when no "direct" exists (already covered)
+- [x] Remove stale TODO at multicity.go:66 (dedup implemented Day 38)
+- [x] Verify build + test + vet pass

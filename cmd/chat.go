@@ -239,13 +239,9 @@ func resultSummaryForChat(results []search.Itinerary, params tripParams) string 
 		if airline == "" {
 			airline = seg.Airline
 		}
-		stops := itineraryStops(r)
-		stopWord := "stops"
-		if stops == 1 {
-			stopWord = "stop"
-		}
-		fmt.Fprintf(&b, " %d) %s, %s, %d %s, $%.0f.",
-			i+1, airline, formatFlightDuration(r.Legs[0].Flight.TotalDuration), stops, stopWord, r.TotalPrice.Amount)
+		layoverInfo := formatLayoverSummary(r.Legs[0].Flight.Outbound)
+		fmt.Fprintf(&b, " %d) %s, %s, %s, $%.0f.",
+			i+1, airline, formatFlightDuration(r.Legs[0].Flight.TotalDuration), layoverInfo, r.TotalPrice.Amount)
 		if r.Reasoning != "" {
 			fmt.Fprintf(&b, " Reason: %s.", r.Reasoning)
 		}
@@ -271,6 +267,36 @@ func formatFlightDuration(d time.Duration) string {
 		return fmt.Sprintf("%dh", h)
 	}
 	return fmt.Sprintf("%dh%dm", h, m)
+}
+
+// formatLayoverSummary returns a human-readable stop description from segments.
+// "nonstop" for 1 segment, "1 stop (3h IST)" when layover data is available,
+// or "N stops" as fallback when LayoverDuration is zero.
+func formatLayoverSummary(segs []types.Segment) string {
+	stops := len(segs) - 1
+	if stops <= 0 {
+		return "nonstop"
+	}
+
+	// Check if all intermediate segments have layover data.
+	var layovers []string
+	for i := 0; i < stops; i++ {
+		if segs[i].LayoverDuration == 0 {
+			// Missing data — fall back to count only.
+			if stops == 1 {
+				return "1 stop"
+			}
+			return fmt.Sprintf("%d stops", stops)
+		}
+		layovers = append(layovers, fmt.Sprintf("%s %s",
+			formatFlightDuration(segs[i].LayoverDuration), segs[i].Destination))
+	}
+
+	word := "stop"
+	if stops > 1 {
+		word = "stops"
+	}
+	return fmt.Sprintf("%d %s (%s)", stops, word, strings.Join(layovers, ", "))
 }
 
 // mergeParams fills zero-value fields in partial from prev, producing

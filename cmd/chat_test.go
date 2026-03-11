@@ -322,8 +322,8 @@ func TestResultSummaryForChat_Top3(t *testing.T) {
 	if !strings.Contains(summary, "14h30m") {
 		t.Errorf("summary should contain 1st duration, got: %s", summary)
 	}
-	if !strings.Contains(summary, "0 stop") {
-		t.Errorf("summary should contain 0 stops for nonstop flight, got: %s", summary)
+	if !strings.Contains(summary, "nonstop") {
+		t.Errorf("summary should contain 'nonstop' for direct flight, got: %s", summary)
 	}
 
 	// Result 2: British Airways, 16h, 1 stop, $650
@@ -421,8 +421,8 @@ func TestResultSummaryForChat_OneResult(t *testing.T) {
 	if !strings.Contains(summary, "14h") {
 		t.Errorf("summary should contain duration, got: %s", summary)
 	}
-	if !strings.Contains(summary, "0 stop") {
-		t.Errorf("summary should contain stops, got: %s", summary)
+	if !strings.Contains(summary, "nonstop") {
+		t.Errorf("summary should contain 'nonstop', got: %s", summary)
 	}
 }
 
@@ -569,6 +569,51 @@ func TestInferProfile(t *testing.T) {
 				t.Errorf("inferProfile() = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestFormatLayoverSummary_Direct(t *testing.T) {
+	segs := []types.Segment{
+		{Origin: "DEL", Destination: "YYZ"},
+	}
+	got := formatLayoverSummary(segs)
+	if got != "nonstop" {
+		t.Errorf("formatLayoverSummary = %q, want %q", got, "nonstop")
+	}
+}
+
+func TestFormatLayoverSummary_OneStop(t *testing.T) {
+	segs := []types.Segment{
+		{Origin: "DEL", Destination: "IST", LayoverDuration: 3 * time.Hour},
+		{Origin: "IST", Destination: "YYZ"},
+	}
+	got := formatLayoverSummary(segs)
+	if got != "1 stop (3h IST)" {
+		t.Errorf("formatLayoverSummary = %q, want %q", got, "1 stop (3h IST)")
+	}
+}
+
+func TestFormatLayoverSummary_TwoStops(t *testing.T) {
+	segs := []types.Segment{
+		{Origin: "DEL", Destination: "DOH", LayoverDuration: 2 * time.Hour},
+		{Origin: "DOH", Destination: "SIN", LayoverDuration: 4*time.Hour + 30*time.Minute},
+		{Origin: "SIN", Destination: "YYZ"},
+	}
+	got := formatLayoverSummary(segs)
+	if got != "2 stops (2h DOH, 4h30m SIN)" {
+		t.Errorf("formatLayoverSummary = %q, want %q", got, "2 stops (2h DOH, 4h30m SIN)")
+	}
+}
+
+func TestFormatLayoverSummary_MissingLayoverData(t *testing.T) {
+	// Segments exist but no LayoverDuration — falls back to stop count.
+	segs := []types.Segment{
+		{Origin: "DEL", Destination: "IST"},
+		{Origin: "IST", Destination: "YYZ"},
+	}
+	got := formatLayoverSummary(segs)
+	if got != "1 stop" {
+		t.Errorf("formatLayoverSummary = %q, want %q", got, "1 stop")
 	}
 }
 

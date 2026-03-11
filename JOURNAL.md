@@ -295,3 +295,7 @@ Post-merge verification. Fixed gofmt alignment in strategy.go (common with struc
 ## Session 29 -- Multicity consistency, departure time filter, seats display
 
 Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Tasks ran in 3 parallel worktree agents (65+66 sequential in one worktree, 67 and 68 in separate worktrees). Key outcomes: (1) PreferredAlliance and MaxPrice now work in multicity strategy, closing the consistency gap with the direct pipeline. (2) Users can filter by departure time-of-day to avoid red-eyes or prefer morning flights. (3) Seat scarcity data (SeatsLeft) is now visible in JSON output and in the LLM ranker prompt. gofmt fix needed after rebase (expected pattern for struct alignment). Coverage steady at ~84%.
+
+## Session 29 -- 08:33 -- Session close and Day 30 handoff
+
+Day 29 delivered 4 features across 5 commits with zero reverts and zero API calls. The multicity strategy now respects PreferredAlliance and MaxPrice, closing the last consistency gap with the direct pipeline. DepartureAfter/DepartureBefore time-of-day filtering enables "no red-eyes" and "morning flights only" use cases end-to-end (direct search + chat). SeatsLeft surfaces in JSON output and the ranker prompt for scarcity-aware recommendations. All 15 packages pass, coverage steady at ~84%, no open GitHub issues. Next priorities: departure time filter in multicity pipeline, passenger count support, or cached flight data analysis for route recommendations.

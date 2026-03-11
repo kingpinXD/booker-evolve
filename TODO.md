@@ -26,11 +26,11 @@ Carried from: Day 43 (all completed)
 - [x] Verify all existing tests pass
 
 ## Task 122: Fix NearbySearcher ignoring SortBy
-**Status:** pending
-**Plan:**
-- [ ] Write test: NearbySearcher with SortBy="duration" returns duration-sorted results
-- [ ] Replace hardcoded price sort with search.SortResults(merged, req.SortBy)
-- [ ] Verify existing nearby tests pass
+**Status:** done
+**Plan:** Replace hardcoded sort.Slice by price with search.SortResults(merged, req.SortBy). Add test with SortBy="duration".
+- [x] Write test: NearbySearcher with SortBy="duration" returns duration-sorted results
+- [x] Replace hardcoded price sort with search.SortResults(merged, req.SortBy)
+- [x] Verify existing nearby tests pass
 
 ## Task 123: Thread user Context to multicity ranker
 **Status:** pending

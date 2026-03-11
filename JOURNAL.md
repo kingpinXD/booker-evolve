@@ -537,3 +537,6 @@ Added SetWeights method to multicity.Ranker and changed NewSearcher to accept a 
 
 ### Session 44, Task 2 -- Extract StripCodeFences helper to deduplicate 4 call sites
 Added llm.StripCodeFences function with 6-case table test. Replaced identical 4-line TrimPrefix/TrimSuffix sequences in parseTripParams, parsePartialParams, pickWithLLM, and parseRankingResponse. Net -12 lines of duplicated logic.
+
+### Session 44, Task 3 -- Fix NearbySearcher ignoring SortBy
+NearbySearcher hardcoded sort.Slice by price after dedup, ignoring req.SortBy. Replaced with search.SortResults. Added TestSearcher_SortByDuration to verify duration sorting works.

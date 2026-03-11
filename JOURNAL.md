@@ -431,3 +431,6 @@ Completed all 5 planned tasks in 4 commits with zero reverts and zero API calls.
 
 ### Session 38, Task 1 -- Remove KiwiID from StopoverCity and SearchParams
 Removed KiwiID field from StopoverCity struct, all KiwiID assignments in 3 route-specific + 8 global fallback entries, OriginKiwiID/DestinationKiwiID from SearchParams, and KiwiID refs in fetch goroutines and diagnostic_test.go. Left types.SearchRequest untouched (Kiwi provider reads it). No behavioral change for SerpAPI pipeline.
+
+### Session 38, Task 2 -- Simplify fetchWithDualSort to single fetch
+Replaced fetchWithDualSort (which made two identical API calls since SerpAPI ignores SortBy) with a direct fetchFromAllProviders call. Removed deduplicateFlights helper and all associated tests. Kiwi sort constants kept in config/routes.go since the inactive Kiwi provider still references them. Net removal: ~90 lines of dead code + tests.

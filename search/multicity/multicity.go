@@ -81,7 +81,6 @@ import (
 	"sync"
 	"time"
 
-	"booker/config"
 	"booker/llm"
 	"booker/provider"
 	"booker/search"
@@ -268,7 +267,7 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 				Passengers:    params.Passengers,
 				CabinClass:    params.CabinClass,
 			}
-			leg1Results := s.fetchWithDualSort(ctx, leg1Req)
+			leg1Results := s.fetchFromAllProviders(ctx, leg1Req)
 
 			leg2Req := types.SearchRequest{
 				Origin:        stop.Airport,
@@ -277,7 +276,7 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 				Passengers:    params.Passengers,
 				CabinClass:    params.CabinClass,
 			}
-			leg2Results := s.fetchWithDualSort(ctx, leg2Req)
+			leg2Results := s.fetchFromAllProviders(ctx, leg2Req)
 
 			mu.Lock()
 			pairs = append(pairs, legPair{
@@ -557,21 +556,6 @@ func buildMultiCityItinerary(r provider.MultiCityResult, stop StopoverCity) sear
 	}
 }
 
-// fetchWithDualSort makes two API calls per provider (QUALITY + PRICE sort)
-// and merges the results. This maximizes date coverage since QUALITY returns
-// nearer-dated flights while PRICE returns cheapest across all dates.
-func (s *Searcher) fetchWithDualSort(ctx context.Context, req types.SearchRequest) []types.Flight {
-	reqQ := req
-	reqQ.SortBy = config.KiwiSortByQuality
-	reqP := req
-	reqP.SortBy = config.KiwiSortByPrice
-
-	qualityResults := s.fetchFromAllProviders(ctx, reqQ)
-	priceResults := s.fetchFromAllProviders(ctx, reqP)
-
-	return deduplicateFlights(qualityResults, priceResults)
-}
-
 func (s *Searcher) fetchFromAllProviders(ctx context.Context, req types.SearchRequest) []types.Flight {
 	var allFlights []types.Flight
 	for _, p := range s.registry.All() {
@@ -620,28 +604,4 @@ func itineraryKey(itin search.Itinerary) string {
 		}
 	}
 	return key
-}
-
-// deduplicateFlights merges two flight slices, removing duplicates by booking URL.
-func deduplicateFlights(sets ...[]types.Flight) []types.Flight {
-	seen := make(map[string]bool)
-	var merged []types.Flight
-	for _, flights := range sets {
-		for _, f := range flights {
-			key := f.BookingURL
-			if key == "" {
-				// No booking URL — use flight number + departure as key.
-				if len(f.Outbound) > 0 {
-					seg := f.Outbound[0]
-					key = seg.FlightNumber + seg.DepartureTime.Format("2006-01-02T15:04")
-				}
-			}
-			if seen[key] {
-				continue
-			}
-			seen[key] = true
-			merged = append(merged, f)
-		}
-	}
-	return merged
 }

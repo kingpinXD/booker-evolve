@@ -20,15 +20,15 @@ Carried from: Day 37 (all completed)
 - [x] Verify build + test + vet pass
 
 ## Task 101: Simplify fetchWithDualSort to single fetch
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Replace fetchWithDualSort with direct fetchFromAllProviders call
-- [ ] Remove deduplicateFlights helper (no longer needed)
-- [ ] Remove KiwiSortByQuality, KiwiSortByPrice, KiwiSortAscending constants from config/routes.go
-- [ ] Remove KiwiParamSortBy, KiwiParamSortOrder from config/routes.go
-- [ ] Update sortCapturingProvider test helper in helpers_test.go
-- [ ] Remove deduplicateFlights tests from helpers_test.go
-- [ ] Verify build + test + vet pass
+**Status:** done
+**Plan:** Replace fetchWithDualSort with direct fetchFromAllProviders call in Search(). Remove deduplicateFlights helper + fetchWithDualSort + their tests. Kiwi sort constants kept in config (Kiwi provider still reads them).
+- [x] Replace fetchWithDualSort with direct fetchFromAllProviders call
+- [x] Remove deduplicateFlights helper (no longer needed)
+- [x] Remove fetchWithDualSort function
+- [ ] ~~Remove Kiwi sort constants~~ (kept -- Kiwi provider reads them)
+- [x] Remove sortCapturingProvider and fetchWithDualSort tests
+- [x] Remove deduplicateFlights tests from helpers_test.go
+- [x] Verify build + test + vet + lint pass
 
 ## Task 102: Add India-US route stopovers (DEL/BOM to JFK)
 **Status:** pending

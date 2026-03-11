@@ -78,12 +78,19 @@ type Ranker struct {
 	llm     rankerLLM
 	weights RankingWeights
 	cache   map[string][]RankResult
+	hits    int
+	misses  int
 }
 
 // NewRanker creates a ranker with the given weights profile.
 // Pass WeightsBudget, WeightsComfort, or WeightsBalanced — or a custom RankingWeights.
 func NewRanker(llmClient rankerLLM, weights RankingWeights) *Ranker {
 	return &Ranker{llm: llmClient, weights: weights, cache: make(map[string][]RankResult)}
+}
+
+// CacheStats returns the number of cache hits and misses since the Ranker was created.
+func (r *Ranker) CacheStats() (hits, misses int) {
+	return r.hits, r.misses
 }
 
 // RankResult is a single scored itinerary from the LLM.
@@ -111,6 +118,7 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 
 	// Check cache before calling LLM.
 	if cached, ok := r.cache[key]; ok {
+		r.hits++
 		for _, res := range cached {
 			if res.Index >= 0 && res.Index < len(candidates) {
 				candidates[res.Index].Score = res.Score
@@ -119,6 +127,7 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 		}
 		return applySortByScore(candidates), nil
 	}
+	r.misses++
 
 	prompt := buildRankingPrompt(candidates)
 	sysPrompt := buildSystemPrompt(r.weights)

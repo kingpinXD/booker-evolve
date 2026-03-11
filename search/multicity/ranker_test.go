@@ -1014,6 +1014,53 @@ func TestRankCache_DifferentWeightsMiss(t *testing.T) {
 	}
 }
 
+func TestRankerCacheStats_HitAndMiss(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+	ctx := context.Background()
+
+	itins := makeTestItineraries(500, "JFK", "LHR")
+	if _, err := ranker.Rank(ctx, itins); err != nil {
+		t.Fatalf("first Rank: %v", err)
+	}
+	if _, err := ranker.Rank(ctx, itins); err != nil {
+		t.Fatalf("second Rank: %v", err)
+	}
+
+	hits, misses := ranker.CacheStats()
+	if hits != 1 || misses != 1 {
+		t.Errorf("CacheStats() = (%d, %d), want (1, 1)", hits, misses)
+	}
+}
+
+func TestRankerCacheStats_AllMisses(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+	ctx := context.Background()
+
+	if _, err := ranker.Rank(ctx, makeTestItineraries(500, "JFK", "LHR")); err != nil {
+		t.Fatalf("first Rank: %v", err)
+	}
+	if _, err := ranker.Rank(ctx, makeTestItineraries(700, "SFO", "NRT")); err != nil {
+		t.Fatalf("second Rank: %v", err)
+	}
+
+	hits, misses := ranker.CacheStats()
+	if hits != 0 || misses != 2 {
+		t.Errorf("CacheStats() = (%d, %d), want (0, 2)", hits, misses)
+	}
+}
+
+func TestRankerCacheStats_Empty(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+
+	hits, misses := ranker.CacheStats()
+	if hits != 0 || misses != 0 {
+		t.Errorf("CacheStats() = (%d, %d), want (0, 0)", hits, misses)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

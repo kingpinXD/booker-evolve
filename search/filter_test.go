@@ -622,3 +622,107 @@ func TestFilterByPreferredAirlines_OperatingCarrierMatch(t *testing.T) {
 		t.Fatalf("op carrier match: got %d, want 1", len(result))
 	}
 }
+
+// --- Single-flight predicates ---
+
+func TestFlightPassesBlocked(t *testing.T) {
+	clean := types.Flight{Outbound: []types.Segment{{Airline: "AC", Origin: "YYZ", Destination: "LHR"}}}
+	blocked := types.Flight{Outbound: []types.Segment{{Airline: "EK", Origin: "DXB", Destination: "LHR"}}}
+	if !FlightPassesBlocked(clean) {
+		t.Error("clean flight should pass")
+	}
+	if FlightPassesBlocked(blocked) {
+		t.Error("blocked flight should not pass")
+	}
+}
+
+func TestFlightPassesAlliance(t *testing.T) {
+	star := types.Flight{Outbound: []types.Segment{{Airline: "AC"}}}
+	ow := types.Flight{Outbound: []types.Segment{{Airline: "AA"}}}
+
+	if !FlightPassesAlliance(star, "") {
+		t.Error("empty alliance should pass all")
+	}
+	if !FlightPassesAlliance(star, "Star Alliance") {
+		t.Error("AC should match Star Alliance")
+	}
+	if FlightPassesAlliance(ow, "Star Alliance") {
+		t.Error("AA should not match Star Alliance")
+	}
+}
+
+func TestFlightPassesDepartureTime(t *testing.T) {
+	morning := types.Flight{Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 8, 30, 0, 0, time.UTC)}}}
+	evening := types.Flight{Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 20, 0, 0, 0, time.UTC)}}}
+	noSegs := types.Flight{}
+
+	if !FlightPassesDepartureTime(morning, "06:00", "12:00") {
+		t.Error("8:30 should pass 06:00-12:00")
+	}
+	if FlightPassesDepartureTime(evening, "06:00", "12:00") {
+		t.Error("20:00 should not pass 06:00-12:00")
+	}
+	if !FlightPassesDepartureTime(morning, "", "") {
+		t.Error("empty bounds should pass all")
+	}
+	if FlightPassesDepartureTime(noSegs, "06:00", "12:00") {
+		t.Error("no segments should not pass")
+	}
+}
+
+func TestFlightPassesArrivalTime(t *testing.T) {
+	early := types.Flight{Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 14, 0, 0, 0, time.UTC)}}}
+	late := types.Flight{Outbound: []types.Segment{{ArrivalTime: time.Date(2026, 3, 15, 22, 0, 0, 0, time.UTC)}}}
+
+	if !FlightPassesArrivalTime(early, "", "18:00") {
+		t.Error("14:00 should pass before 18:00")
+	}
+	if FlightPassesArrivalTime(late, "", "18:00") {
+		t.Error("22:00 should not pass before 18:00")
+	}
+}
+
+func TestFlightPassesMaxDuration(t *testing.T) {
+	short := types.Flight{TotalDuration: 8 * time.Hour}
+	long := types.Flight{TotalDuration: 20 * time.Hour}
+
+	if !FlightPassesMaxDuration(short, 12*time.Hour) {
+		t.Error("8h should pass 12h max")
+	}
+	if FlightPassesMaxDuration(long, 12*time.Hour) {
+		t.Error("20h should not pass 12h max")
+	}
+	if !FlightPassesMaxDuration(long, 0) {
+		t.Error("zero max should pass all")
+	}
+}
+
+func TestFlightPassesAvoidAirlines(t *testing.T) {
+	ac := types.Flight{Outbound: []types.Segment{{Airline: "AC"}}}
+	ba := types.Flight{Outbound: []types.Segment{{Airline: "BA"}}}
+
+	if !FlightPassesAvoidAirlines(ac, "BA") {
+		t.Error("AC should pass when avoiding BA")
+	}
+	if FlightPassesAvoidAirlines(ba, "BA") {
+		t.Error("BA should not pass when avoiding BA")
+	}
+	if !FlightPassesAvoidAirlines(ba, "") {
+		t.Error("empty avoid should pass all")
+	}
+}
+
+func TestFlightPassesPreferredAirlines(t *testing.T) {
+	ac := types.Flight{Outbound: []types.Segment{{Airline: "AC"}}}
+	ba := types.Flight{Outbound: []types.Segment{{Airline: "BA"}}}
+
+	if !FlightPassesPreferredAirlines(ac, "AC,LH") {
+		t.Error("AC should pass when preferred AC,LH")
+	}
+	if FlightPassesPreferredAirlines(ba, "AC,LH") {
+		t.Error("BA should not pass when preferred AC,LH")
+	}
+	if !FlightPassesPreferredAirlines(ba, "") {
+		t.Error("empty preferred should pass all")
+	}
+}

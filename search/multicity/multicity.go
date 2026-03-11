@@ -494,15 +494,14 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 // time, max duration, avoid/preferred airlines). Leg-specific checks like
 // max layovers and itinerary-level checks like max price are NOT included.
 func passesAllFilters(f types.Flight, params SearchParams) bool {
-	wrap := []types.Flight{f}
-	return len(search.FilterFlights(wrap)) > 0 &&
+	return search.FlightPassesBlocked(f) &&
 		f.Price.Amount > 0 &&
-		len(search.FilterByAlliance(wrap, params.PreferredAlliance)) > 0 &&
-		len(search.FilterByDepartureTime(wrap, params.DepartureAfter, params.DepartureBefore)) > 0 &&
-		len(search.FilterByArrivalTime(wrap, params.ArrivalAfter, params.ArrivalBefore)) > 0 &&
-		len(search.FilterByMaxDuration(wrap, params.MaxDuration)) > 0 &&
-		len(search.FilterByAvoidAirlines(wrap, params.AvoidAirlines)) > 0 &&
-		len(search.FilterByPreferredAirlines(wrap, params.PreferredAirlines)) > 0
+		search.FlightPassesAlliance(f, params.PreferredAlliance) &&
+		search.FlightPassesDepartureTime(f, params.DepartureAfter, params.DepartureBefore) &&
+		search.FlightPassesArrivalTime(f, params.ArrivalAfter, params.ArrivalBefore) &&
+		search.FlightPassesMaxDuration(f, params.MaxDuration) &&
+		search.FlightPassesAvoidAirlines(f, params.AvoidAirlines) &&
+		search.FlightPassesPreferredAirlines(f, params.PreferredAirlines)
 }
 
 // buildMultiCityItinerary converts a provider.MultiCityResult into a

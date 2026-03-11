@@ -203,6 +203,24 @@ func FilterByAlliance(flights []types.Flight, alliance string) []types.Flight {
 // within the given time-of-day range [after, before]. Both are "HH:MM" strings.
 // Empty strings mean no constraint on that end. Invalid formats return all flights.
 func FilterByDepartureTime(flights []types.Flight, after, before string) []types.Flight {
+	return filterByTimeOfDay(flights, after, before, func(f types.Flight) time.Time {
+		return f.Outbound[0].DepartureTime
+	})
+}
+
+// FilterByArrivalTime keeps only flights whose last outbound segment arrives
+// within the given time-of-day range [after, before]. Both are "HH:MM" strings.
+// Empty strings mean no constraint on that end. Invalid formats return all flights.
+func FilterByArrivalTime(flights []types.Flight, after, before string) []types.Flight {
+	return filterByTimeOfDay(flights, after, before, func(f types.Flight) time.Time {
+		return f.Outbound[len(f.Outbound)-1].ArrivalTime
+	})
+}
+
+// filterByTimeOfDay is the shared implementation for departure/arrival time
+// filters. The extractTime function selects which time to check from a flight
+// (caller guarantees len(f.Outbound) > 0).
+func filterByTimeOfDay(flights []types.Flight, after, before string, extractTime func(types.Flight) time.Time) []types.Flight {
 	if after == "" && before == "" {
 		return flights
 	}
@@ -216,12 +234,12 @@ func FilterByDepartureTime(flights []types.Flight, after, before string) []types
 		if len(f.Outbound) == 0 {
 			continue
 		}
-		dep := f.Outbound[0].DepartureTime
-		depMin := dep.Hour()*60 + dep.Minute()
-		if afterOK && depMin < afterMin {
+		t := extractTime(f)
+		mins := t.Hour()*60 + t.Minute()
+		if afterOK && mins < afterMin {
 			continue
 		}
-		if beforeOK && depMin > beforeMin {
+		if beforeOK && mins > beforeMin {
 			continue
 		}
 		filtered = append(filtered, f)
@@ -242,36 +260,6 @@ func parseHHMM(s string) (int, bool) {
 		return 0, false
 	}
 	return h*60 + m, true
-}
-
-// FilterByArrivalTime keeps only flights whose last outbound segment arrives
-// within the given time-of-day range [after, before]. Both are "HH:MM" strings.
-// Empty strings mean no constraint on that end. Invalid formats return all flights.
-func FilterByArrivalTime(flights []types.Flight, after, before string) []types.Flight {
-	if after == "" && before == "" {
-		return flights
-	}
-	afterMin, afterOK := parseHHMM(after)
-	beforeMin, beforeOK := parseHHMM(before)
-	if (after != "" && !afterOK) || (before != "" && !beforeOK) {
-		return flights
-	}
-	filtered := make([]types.Flight, 0, len(flights))
-	for _, f := range flights {
-		if len(f.Outbound) == 0 {
-			continue
-		}
-		arr := f.Outbound[len(f.Outbound)-1].ArrivalTime
-		arrMin := arr.Hour()*60 + arr.Minute()
-		if afterOK && arrMin < afterMin {
-			continue
-		}
-		if beforeOK && arrMin > beforeMin {
-			continue
-		}
-		filtered = append(filtered, f)
-	}
-	return filtered
 }
 
 // FilterByMaxDuration keeps only flights whose TotalDuration is at most maxDur.
@@ -307,12 +295,7 @@ func FilterByAvoidAirlines(flights []types.Flight, avoid string) []types.Flight 
 	if avoid == "" {
 		return flights
 	}
-	codes := make(map[string]bool)
-	for _, c := range strings.Split(avoid, ",") {
-		if c = strings.TrimSpace(c); c != "" {
-			codes[c] = true
-		}
-	}
+	codes := parseAirlineCodes(avoid)
 	if len(codes) == 0 {
 		return flights
 	}
@@ -332,12 +315,7 @@ func FilterByPreferredAirlines(flights []types.Flight, preferred string) []types
 	if preferred == "" {
 		return flights
 	}
-	codes := make(map[string]bool)
-	for _, c := range strings.Split(preferred, ",") {
-		if c = strings.TrimSpace(c); c != "" {
-			codes[c] = true
-		}
-	}
+	codes := parseAirlineCodes(preferred)
 	if len(codes) == 0 {
 		return flights
 	}
@@ -422,4 +400,98 @@ func isFlightBlocked(f types.Flight) bool {
 		}
 	}
 	return false
+}
+
+// ==========================================================================
+// SINGLE-FLIGHT PREDICATES
+// ==========================================================================
+//
+// These return true if a single flight passes the given filter criterion.
+// Used by multicity.passesAllFilters to avoid wrapping flights in slices.
+
+// FlightPassesBlocked returns true if the flight does not use blocked airlines or hubs.
+func FlightPassesBlocked(f types.Flight) bool {
+	return !isFlightBlocked(f)
+}
+
+// FlightPassesAlliance returns true if the flight matches the preferred alliance
+// (or if alliance is empty, meaning no preference).
+func FlightPassesAlliance(f types.Flight, alliance string) bool {
+	return alliance == "" || flightMatchesAlliance(f, alliance)
+}
+
+// FlightPassesDepartureTime returns true if the flight's first departure is
+// within the [after, before] time-of-day range. Empty strings mean no constraint.
+func FlightPassesDepartureTime(f types.Flight, after, before string) bool {
+	return flightPassesTimeOfDay(f, after, before, func(fl types.Flight) time.Time {
+		return fl.Outbound[0].DepartureTime
+	})
+}
+
+// FlightPassesArrivalTime returns true if the flight's last arrival is within
+// the [after, before] time-of-day range. Empty strings mean no constraint.
+func FlightPassesArrivalTime(f types.Flight, after, before string) bool {
+	return flightPassesTimeOfDay(f, after, before, func(fl types.Flight) time.Time {
+		return fl.Outbound[len(fl.Outbound)-1].ArrivalTime
+	})
+}
+
+// FlightPassesMaxDuration returns true if the flight's TotalDuration is at most
+// maxDur. Zero maxDur means no limit.
+func FlightPassesMaxDuration(f types.Flight, maxDur time.Duration) bool {
+	return maxDur <= 0 || f.TotalDuration <= maxDur
+}
+
+// FlightPassesAvoidAirlines returns true if no segment matches the avoid list.
+func FlightPassesAvoidAirlines(f types.Flight, avoid string) bool {
+	if avoid == "" {
+		return true
+	}
+	codes := parseAirlineCodes(avoid)
+	return len(codes) == 0 || !flightMatchesAvoid(f, codes)
+}
+
+// FlightPassesPreferredAirlines returns true if at least one segment matches
+// the preferred list (or if preferred is empty).
+func FlightPassesPreferredAirlines(f types.Flight, preferred string) bool {
+	if preferred == "" {
+		return true
+	}
+	codes := parseAirlineCodes(preferred)
+	return len(codes) == 0 || flightMatchesPreferred(f, codes)
+}
+
+// flightPassesTimeOfDay checks a single flight's time against the range.
+func flightPassesTimeOfDay(f types.Flight, after, before string, extractTime func(types.Flight) time.Time) bool {
+	if after == "" && before == "" {
+		return true
+	}
+	if len(f.Outbound) == 0 {
+		return false
+	}
+	afterMin, afterOK := parseHHMM(after)
+	beforeMin, beforeOK := parseHHMM(before)
+	if (after != "" && !afterOK) || (before != "" && !beforeOK) {
+		return true // invalid format = no constraint
+	}
+	t := extractTime(f)
+	mins := t.Hour()*60 + t.Minute()
+	if afterOK && mins < afterMin {
+		return false
+	}
+	if beforeOK && mins > beforeMin {
+		return false
+	}
+	return true
+}
+
+// parseAirlineCodes splits a comma-separated string into a set of airline codes.
+func parseAirlineCodes(csv string) map[string]bool {
+	codes := make(map[string]bool)
+	for _, c := range strings.Split(csv, ",") {
+		if c = strings.TrimSpace(c); c != "" {
+			codes[c] = true
+		}
+	}
+	return codes
 }

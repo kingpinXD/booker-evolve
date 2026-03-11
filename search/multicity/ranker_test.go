@@ -325,3 +325,89 @@ func searchString(s, sub string) bool {
 	}
 	return false
 }
+
+func TestIsRedEye_EarlyMorning(t *testing.T) {
+	tm := time.Date(2026, 3, 15, 2, 30, 0, 0, time.UTC)
+	if !isRedEye(tm) {
+		t.Error("02:30 should be red-eye")
+	}
+}
+
+func TestIsRedEye_Morning(t *testing.T) {
+	tm := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	if isRedEye(tm) {
+		t.Error("10:00 should not be red-eye")
+	}
+}
+
+func TestIsRedEye_Midnight(t *testing.T) {
+	tm := time.Date(2026, 3, 15, 0, 0, 0, 0, time.UTC)
+	if !isRedEye(tm) {
+		t.Error("00:00 should be red-eye")
+	}
+}
+
+func TestIsRedEye_FiveAM(t *testing.T) {
+	tm := time.Date(2026, 3, 15, 5, 0, 0, 0, time.UTC)
+	if isRedEye(tm) {
+		t.Error("05:00 should not be red-eye")
+	}
+}
+
+func TestBuildRankingPrompt_RedEyeTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 3, 30, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6*time.Hour + 30*time.Minute,
+			TotalTrip:   6*time.Hour + 30*time.Minute,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG332", Origin: "DEL", Destination: "HKG",
+							OriginCity: "Delhi", DestinationCity: "Hong Kong",
+							DepartureTime: dep, ArrivalTime: dep.Add(6*time.Hour + 30*time.Minute),
+							Duration: 6*time.Hour + 30*time.Minute, AirlineName: "Thai Airways",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "[Red-eye]") {
+		t.Errorf("prompt should contain [Red-eye] for 03:30 departure, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6*time.Hour + 30*time.Minute,
+			TotalTrip:   6*time.Hour + 30*time.Minute,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG332", Origin: "DEL", Destination: "HKG",
+							OriginCity: "Delhi", DestinationCity: "Hong Kong",
+							DepartureTime: dep, ArrivalTime: dep.Add(6*time.Hour + 30*time.Minute),
+							Duration: 6*time.Hour + 30*time.Minute, AirlineName: "Thai Airways",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if searchString(prompt, "[Red-eye]") {
+		t.Errorf("prompt should not contain [Red-eye] for 10:00 departure, got:\n%s", prompt)
+	}
+}

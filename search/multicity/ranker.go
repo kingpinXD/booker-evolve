@@ -193,6 +193,9 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 				if tag := search.Alliance(seg.Airline); tag != "" {
 					airlineInfo += " [" + tag + "]"
 				}
+				if isRedEye(seg.DepartureTime) {
+					airlineInfo += " [Red-eye]"
+				}
 				fmt.Fprintf(&b, "    %s %s→%s (%s→%s) depart %s arrive %s [%s] %s\n",
 					seg.FlightNumber,
 					seg.Origin, seg.Destination,
@@ -218,6 +221,11 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 		b.WriteString("\n")
 	}
 	return b.String()
+}
+
+// isRedEye returns true for departures between 00:00 and 04:59.
+func isRedEye(t time.Time) bool {
+	return t.Hour() < 5
 }
 
 func formatDuration(d time.Duration) string {

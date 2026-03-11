@@ -977,6 +977,59 @@ func TestChatSystemPrompt_DepartureTime(t *testing.T) {
 	}
 }
 
+func TestParsePartialParams_SortBy(t *testing.T) {
+	p, ok := parsePartialParams(`{"sort_by":"duration"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with sort_by to parse")
+	}
+	if p.SortBy != "duration" {
+		t.Errorf("SortBy = %q, want %q", p.SortBy, "duration")
+	}
+}
+
+func TestMergeParams_SortBy(t *testing.T) {
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", SortBy: "duration"}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.SortBy != "duration" {
+		t.Errorf("SortBy = %q, want %q (preserved from prev)", got.SortBy, "duration")
+	}
+
+	// Partial overrides prev.
+	partial2 := tripParams{SortBy: "departure"}
+	got2 := mergeParams(prev, partial2)
+	if got2.SortBy != "departure" {
+		t.Errorf("SortBy = %q, want %q (overridden by partial)", got2.SortBy, "departure")
+	}
+}
+
+func TestBuildRequestFromParams_SortBy(t *testing.T) {
+	params := tripParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2025-06-15",
+		SortBy:        "duration",
+	}
+	req := buildRequestFromParams(params)
+	if req.SortBy != "duration" {
+		t.Errorf("SortBy = %q, want %q", req.SortBy, "duration")
+	}
+}
+
+func TestChatSystemPrompt_SortBy(t *testing.T) {
+	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
+	if !strings.Contains(prompt, "sort_by") {
+		t.Error("system prompt should mention sort_by")
+	}
+}
+
+func TestRefinementHint_SortBy(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "sort_by") {
+		t.Error("refinement hint should mention sort_by")
+	}
+}
+
 func TestRefinementHint_DepartureTime(t *testing.T) {
 	hint := refinementHint()
 	if !strings.Contains(hint, "departure_after") {

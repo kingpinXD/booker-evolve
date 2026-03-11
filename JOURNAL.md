@@ -515,3 +515,6 @@ Key outcomes:
 
 ## Day 43, Task 1 -- Update stale Kiwi references in multicity pipeline docs
 Replaced 5 "Kiwi" references in multicity.go package-level doc comments with accurate SerpAPI descriptions. Removed the stale TODO about Kiwi's 20-result limit (no longer applicable). Pure documentation change, build+vet clean.
+
+## Day 43, Task 3 -- Add eco ranking profile (carbon-weighted)
+Added WeightsEco profile (Carbon 30%, Cost 20%, FlightDuration 20%, rest 30%) to ranker.go with new Carbon field on RankingWeights. buildSystemPrompt conditionally includes "CARBON EMISSIONS" criterion when Carbon > 0, so existing profiles are unaffected. Registered "eco" in profiles map, updated chat system prompt, flag description, and refinement hint. cacheKey includes Carbon weight. Tests: WeightsEco sums to 100, eco prompt includes CARBON, budget prompt does not, eco differs from budget in profileWeights.

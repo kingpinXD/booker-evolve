@@ -1112,6 +1112,31 @@ func TestApplyScores(t *testing.T) {
 	}
 }
 
+func TestWeightsEco_SumsTo100(t *testing.T) {
+	w := WeightsEco
+	sum := w.Cost + w.AirlineConsistency + w.LayoverQuality + w.FlightDuration + w.StopoverCity + w.Schedule + w.Carbon
+	if sum != 100 {
+		t.Errorf("WeightsEco sums to %d, want 100", sum)
+	}
+	if w.Carbon < 25 {
+		t.Errorf("WeightsEco.Carbon = %d, want >= 25 (eco should prioritize carbon)", w.Carbon)
+	}
+}
+
+func TestBuildSystemPrompt_EcoIncludesCarbon(t *testing.T) {
+	prompt := buildSystemPrompt(WeightsEco)
+	if !searchString(prompt, "CARBON") {
+		t.Errorf("eco system prompt should mention CARBON, got:\n%s", prompt)
+	}
+}
+
+func TestBuildSystemPrompt_BudgetNoCarbon(t *testing.T) {
+	prompt := buildSystemPrompt(WeightsBudget)
+	if searchString(prompt, "CARBON") {
+		t.Errorf("budget system prompt should not mention CARBON, got:\n%s", prompt)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

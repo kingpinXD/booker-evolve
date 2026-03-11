@@ -33,6 +33,7 @@ type RankingWeights struct {
 	FlightDuration     int // shorter in-air time preferred
 	StopoverCity       int // how interesting the stopover city is
 	Schedule           int // reasonable departure times
+	Carbon             int // lower carbon emissions preferred (eco)
 }
 
 // Traveler profile presets.
@@ -65,6 +66,17 @@ var (
 		FlightDuration:     15,
 		StopoverCity:       10,
 		Schedule:           5,
+	}
+
+	// WeightsEco prioritizes lower carbon emissions alongside cost.
+	WeightsEco = RankingWeights{
+		Cost:               20,
+		AirlineConsistency: 10,
+		LayoverQuality:     10,
+		FlightDuration:     20,
+		StopoverCity:       5,
+		Schedule:           5,
+		Carbon:             30,
 	}
 )
 
@@ -174,7 +186,7 @@ func applySortByScore(itineraries []search.Itinerary) []search.Itinerary {
 // It uses route, price, and duration per leg to form a unique key.
 func cacheKey(itineraries []search.Itinerary, w RankingWeights) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "w:%d/%d/%d/%d/%d/%d;", w.Cost, w.AirlineConsistency, w.LayoverQuality, w.FlightDuration, w.StopoverCity, w.Schedule)
+	fmt.Fprintf(&b, "w:%d/%d/%d/%d/%d/%d/%d;", w.Cost, w.AirlineConsistency, w.LayoverQuality, w.FlightDuration, w.StopoverCity, w.Schedule, w.Carbon)
 	for i, itin := range itineraries {
 		fmt.Fprintf(&b, "i%d:%.2f/%s;", i, itin.TotalPrice.Amount, itin.TotalPrice.Currency)
 		for j, leg := range itin.Legs {
@@ -192,37 +204,34 @@ func cacheKey(itineraries []search.Itinerary, w RankingWeights) string {
 
 // buildSystemPrompt generates the LLM system prompt with the given weights.
 func buildSystemPrompt(w RankingWeights) string {
-	return fmt.Sprintf(`You are a flight search assistant that ranks multi-city itineraries.
+	var b strings.Builder
+	b.WriteString(`You are a flight search assistant that ranks multi-city itineraries.
 
 You will receive a list of candidate itineraries, each consisting of two flight legs
 with a stopover city in between. Your job is to score each itinerary from 0 to 100
 based on these criteria (in rough priority order):
 
-1. TOTAL COST (%d%%) — Cheaper is better. But don't sacrifice everything for $20 savings.
+`)
+	fmt.Fprintf(&b, "1. TOTAL COST (%d%%) — Cheaper is better. But don't sacrifice everything for $20 savings.\n\n", w.Cost)
+	fmt.Fprintf(&b, "2. AIRLINE CONSISTENCY (%d%%) — Same airline on both legs is strongly preferred.\n", w.AirlineConsistency)
+	b.WriteString("   Same alliance is good. Completely different airlines means separate bookings,\n   no baggage transfer, and more hassle.\n\n")
+	fmt.Fprintf(&b, "3. LAYOVER QUALITY (%d%%) — Within each leg, short connections (1.5-3 hours) are ideal.\n", w.LayoverQuality)
+	b.WriteString("   Very tight connections (<1hr) are risky. Long airport waits (5+ hours) are bad.\n   The multi-day stopover between legs is GOOD (that's the point of the trip).\n\n")
+	fmt.Fprintf(&b, "4. FLIGHT DURATION (%d%%) — Shorter total in-air time is better. But a 1-hour\n   difference doesn't matter much.\n\n", w.FlightDuration)
+	fmt.Fprintf(&b, "5. STOPOVER CITY (%d%%) — Consider how interesting/convenient the stopover city is\n   for a 2-6 day visit.\n\n", w.StopoverCity)
+	fmt.Fprintf(&b, "6. SCHEDULE (%d%%) — Prefer reasonable departure times. Avoid 3 AM departures.\n", w.Schedule)
 
-2. AIRLINE CONSISTENCY (%d%%) — Same airline on both legs is strongly preferred.
-   Same alliance is good. Completely different airlines means separate bookings,
-   no baggage transfer, and more hassle.
+	if w.Carbon > 0 {
+		fmt.Fprintf(&b, "\n7. CARBON EMISSIONS (%d%%) — Lower CO2 is better. Prefer flights below the\n   typical route benchmark. Fewer stops and newer aircraft tend to emit less.\n", w.Carbon)
+	}
 
-3. LAYOVER QUALITY (%d%%) — Within each leg, short connections (1.5-3 hours) are ideal.
-   Very tight connections (<1hr) are risky. Long airport waits (5+ hours) are bad.
-   The multi-day stopover between legs is GOOD (that's the point of the trip).
-
-4. FLIGHT DURATION (%d%%) — Shorter total in-air time is better. But a 1-hour
-   difference doesn't matter much.
-
-5. STOPOVER CITY (%d%%) — Consider how interesting/convenient the stopover city is
-   for a 2-6 day visit.
-
-6. SCHEDULE (%d%%) — Prefer reasonable departure times. Avoid 3 AM departures.
-
+	b.WriteString(`
 IMPORTANT: Respond ONLY with a JSON array. No markdown, no code fences, no explanation
 outside the JSON. Each element must have:
   - "index": the 0-based itinerary index
   - "score": integer 0-100
-  - "reasoning": one sentence explaining the score`,
-		w.Cost, w.AirlineConsistency, w.LayoverQuality,
-		w.FlightDuration, w.StopoverCity, w.Schedule)
+  - "reasoning": one sentence explaining the score`)
+	return b.String()
 }
 
 // buildRankingPrompt creates a human-readable summary of itineraries

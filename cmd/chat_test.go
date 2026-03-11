@@ -780,6 +780,14 @@ func TestProfileWeights(t *testing.T) {
 	}
 }
 
+func TestProfileWeights_EcoDistinctFromBudget(t *testing.T) {
+	eco := profileWeights("eco")
+	budget := profileWeights("budget")
+	if eco == budget {
+		t.Error("eco profile should differ from budget (carbon-weighted)")
+	}
+}
+
 func TestTruncateHistory_PreservesSystemPrompt(t *testing.T) {
 	// Build history: system prompt + 30 user/assistant messages.
 	history := []llm.Message{

@@ -111,6 +111,7 @@ var profiles = map[string]multicity.RankingWeights{
 	"budget":   multicity.WeightsBudget,
 	"comfort":  multicity.WeightsComfort,
 	"balanced": multicity.WeightsBalanced,
+	"eco":      multicity.WeightsEco,
 }
 
 func runSearch(cmd *cobra.Command, args []string) error {
@@ -119,7 +120,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 
 	weights, ok := profiles[viper.GetString(keyProfile)]
 	if !ok {
-		return fmt.Errorf("unknown profile %q, choose: budget, comfort, balanced", viper.GetString(keyProfile))
+		return fmt.Errorf("unknown profile %q, choose: budget, comfort, balanced, eco", viper.GetString(keyProfile))
 	}
 
 	cabin := types.CabinClass(viper.GetString(keyCabin))

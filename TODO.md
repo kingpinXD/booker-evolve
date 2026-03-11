@@ -24,14 +24,14 @@ Carried from: Day 41 (all completed)
 - [ ] Verify tests pass + consistency test passes
 
 ## Task 117: Add eco ranking profile (carbon-weighted)
-**Status:** pending
+**Status:** done
 **Plan:** Add WeightsEco profile, register in profiles map, wire into chat.
-- [ ] Write test for WeightsEco profile (weights sum to 100, carbon-aware)
-- [ ] Add WeightsEco to ranker.go
-- [ ] Register "eco" in profiles map in cmd/search.go
-- [ ] Update chat system prompt and refinement hint to mention eco profile
-- [ ] Add chat test recognizing eco profile
-- [ ] Verify build + test + vet pass
+- [x] Write test for WeightsEco profile (weights sum to 100, carbon-aware)
+- [x] Add WeightsEco to ranker.go
+- [x] Register "eco" in profiles map in cmd/search.go
+- [x] Update chat system prompt and refinement hint to mention eco profile
+- [x] Add chat test recognizing eco profile
+- [x] Verify build + test + vet pass
 
 ## Task 118: Add Indian airport clusters (DEL, BOM metro areas)
 **Status:** pending

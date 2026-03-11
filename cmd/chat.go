@@ -33,7 +33,7 @@ func init() {
 	f := chatCmd.Flags()
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
 	f.String(keyFormat, "table", "output format: table or json")
-	f.String(keyProfile, "budget", "ranking profile: budget, comfort, or balanced")
+	f.String(keyProfile, "budget", "ranking profile: budget, comfort, balanced, or eco")
 	f.BoolP(keyVerbose, "v", false, "show debug output")
 	_ = viper.BindPFlags(f)
 }
@@ -86,7 +86,7 @@ Optional:
 - max_price: maximum budget per flight in USD (e.g. 1200)
 - direct_only: true to show only non-stop flights
 - flex_days: search ± N days around departure date (default: 3)
-- profile: ranking profile — "budget" (cheapest), "comfort" (best schedule/airline), or "balanced" (default: budget)
+- profile: ranking profile — "budget" (cheapest), "comfort" (best schedule/airline), "balanced", or "eco" (lowest carbon emissions) (default: budget)
 - preferred_alliance: "Star Alliance", "OneWorld", or "SkyTeam" — filter to this alliance only
 - departure_after: earliest acceptable departure time (HH:MM, e.g. "06:00")
 - departure_before: latest acceptable departure time (HH:MM, e.g. "22:00")
@@ -404,7 +404,7 @@ func refinementHint() string {
 		"adjust number of passengers, add a return date for round-trip pricing, " +
 		"set leg2_date for multi-city trips (YYYY-MM-DD, date to leave the stopover city), " +
 		"adjust date flexibility (flex_days), " +
-		"change ranking profile (budget/comfort/balanced), " +
+		"change ranking profile (budget/comfort/balanced/eco), " +
 		"filter by preferred_alliance (Star Alliance/OneWorld/SkyTeam), " +
 		"filter by departure time (departure_after/departure_before in HH:MM), " +
 		"filter by arrival time (arrival_after/arrival_before in HH:MM), " +

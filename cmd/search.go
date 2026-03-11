@@ -160,7 +160,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(cmd.Context(), defaultTimeout)
 	defer cancel()
 
-	strategy, err := picker.Pick(ctx, req)
+	strategy, reason, err := picker.Pick(ctx, req)
 	if err != nil {
 		return fmt.Errorf("picking strategy: %w", err)
 	}
@@ -170,7 +170,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("multicity strategy requires --leg2-date flag")
 	}
 
-	fmt.Printf("Strategy: %s\n", strategy.Name())
+	fmt.Printf("Strategy: %s (%s)\n", strategy.Name(), reason)
 
 	results, err := strategy.Search(ctx, req)
 	if err != nil {

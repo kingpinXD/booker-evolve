@@ -26,12 +26,15 @@ func TestPicker_SingleStrategy(t *testing.T) {
 	direct := &fakeStrategy{name: "direct", desc: "Direct flights"}
 	p := NewPicker(nil, direct)
 
-	got, err := p.Pick(context.Background(), Request{})
+	got, reason, err := p.Pick(context.Background(), Request{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "direct")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason for single strategy")
 	}
 }
 
@@ -41,12 +44,15 @@ func TestPicker_FallbackNoContext(t *testing.T) {
 	p := NewPicker(nil, direct, mc)
 
 	// No context provided — should fall back to "direct".
-	got, err := p.Pick(context.Background(), Request{})
+	got, reason, err := p.Pick(context.Background(), Request{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "direct")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason for fallback")
 	}
 }
 
@@ -54,12 +60,15 @@ func TestPicker_FallbackWhenNoDirectExists(t *testing.T) {
 	mc := &fakeStrategy{name: "multicity", desc: "Multi-city with stopover"}
 	p := NewPicker(nil, mc)
 
-	got, err := p.Pick(context.Background(), Request{})
+	got, reason, err := p.Pick(context.Background(), Request{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "multicity" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "multicity")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason")
 	}
 }
 
@@ -79,12 +88,15 @@ func TestPicker_LLMReturnsValidJSON(t *testing.T) {
 	mock := &mockLLM{response: `{"strategy": "multicity", "reason": "user wants stopover"}`}
 	p := NewPicker(mock, direct, mc)
 
-	got, err := p.Pick(context.Background(), Request{Context: "I want a stopover in Istanbul"})
+	got, reason, err := p.Pick(context.Background(), Request{Context: "I want a stopover in Istanbul"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "multicity" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "multicity")
+	}
+	if reason != "user wants stopover" {
+		t.Errorf("reason = %q, want %q", reason, "user wants stopover")
 	}
 }
 
@@ -94,12 +106,15 @@ func TestPicker_LLMReturnsJSONInMarkdownFences(t *testing.T) {
 	mock := &mockLLM{response: "```json\n{\"strategy\": \"direct\", \"reason\": \"simple route\"}\n```"}
 	p := NewPicker(mock, direct, mc)
 
-	got, err := p.Pick(context.Background(), Request{Context: "JFK to LAX"})
+	got, reason, err := p.Pick(context.Background(), Request{Context: "JFK to LAX"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "direct")
+	}
+	if reason != "simple route" {
+		t.Errorf("reason = %q, want %q", reason, "simple route")
 	}
 }
 
@@ -109,13 +124,16 @@ func TestPicker_LLMReturnsUnknownStrategy(t *testing.T) {
 	mock := &mockLLM{response: `{"strategy": "nonexistent", "reason": "oops"}`}
 	p := NewPicker(mock, direct, mc)
 
-	got, err := p.Pick(context.Background(), Request{Context: "some context"})
+	got, reason, err := p.Pick(context.Background(), Request{Context: "some context"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// Should fall back to "direct" since LLM returned unknown strategy.
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q (fallback)", got.Name(), "direct")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason on LLM fallback")
 	}
 }
 
@@ -125,12 +143,15 @@ func TestPicker_LLMReturnsInvalidJSON(t *testing.T) {
 	mock := &mockLLM{response: "not json at all"}
 	p := NewPicker(mock, direct, mc)
 
-	got, err := p.Pick(context.Background(), Request{Context: "some context"})
+	got, reason, err := p.Pick(context.Background(), Request{Context: "some context"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q (fallback)", got.Name(), "direct")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason on LLM fallback")
 	}
 }
 
@@ -140,12 +161,15 @@ func TestPicker_LLMReturnsError(t *testing.T) {
 	mock := &mockLLM{err: errors.New("LLM unavailable")}
 	p := NewPicker(mock, direct, mc)
 
-	got, err := p.Pick(context.Background(), Request{Context: "some context"})
+	got, reason, err := p.Pick(context.Background(), Request{Context: "some context"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q (fallback)", got.Name(), "direct")
+	}
+	if reason != "LLM unavailable, using default" {
+		t.Errorf("reason = %q, want %q", reason, "LLM unavailable, using default")
 	}
 }
 
@@ -181,12 +205,15 @@ func TestPicker_LLMReturnsBoth(t *testing.T) {
 	mock := &mockLLM{response: `{"strategy": "both", "reason": "compare options"}`}
 	p := NewPicker(mock, direct, mc)
 
-	got, err := p.Pick(context.Background(), Request{Context: "not sure which is better"})
+	got, reason, err := p.Pick(context.Background(), Request{Context: "not sure which is better"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "composite" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "composite")
+	}
+	if reason != "compare options" {
+		t.Errorf("reason = %q, want %q", reason, "compare options")
 	}
 }
 
@@ -196,12 +223,15 @@ func TestPicker_LLMReturnsBoth_SingleStrategy(t *testing.T) {
 	// With only one strategy registered, "both" should return it directly.
 	p := NewPicker(mock, direct)
 
-	got, err := p.Pick(context.Background(), Request{Context: "compare"})
+	got, reason, err := p.Pick(context.Background(), Request{Context: "compare"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "direct")
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason")
 	}
 }
 
@@ -246,7 +276,7 @@ func TestPicker_BothPassesRankerToComposite(t *testing.T) {
 	p := NewPicker(mock, s1, s2)
 	p.ranker = ranker
 
-	strategy, err := p.Pick(context.Background(), Request{Context: "compare options"})
+	strategy, _, err := p.Pick(context.Background(), Request{Context: "compare options"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

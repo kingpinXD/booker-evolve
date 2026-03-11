@@ -572,3 +572,6 @@ Completed all 5 planned tasks with zero reverts and zero API calls. (1) Wired sh
 ## Session 46 -- 18:34 -- Composite ranker, dedup consolidation, score sort, round-trip price fix
 
 Completed all 5 planned tasks: wired shared ranker to CompositeStrategy so "both" mode re-ranks merged results (was silently nil), consolidated duplicated itinRoute/DeduplicateItineraries into search package eliminating 29 lines from nearby.go, added "score" sort mode to SortResults, fixed round-trip max_price to filter by total itinerary price, and cleaned stale Kiwi references. Tasks 2 and 4 ran successfully in parallel worktrees. Zero reverts, zero API calls, all build gates pass.
+
+### Session 47, Task 1 -- Return strategy reasoning from Picker.Pick
+Changed Pick signature from (Strategy, error) to (Strategy, string, error). LLM path returns the parsed reason from pickerResult JSON. Fallback paths return descriptive strings ("only one strategy registered", "default for single-leg route", "LLM unavailable, using default"). cmd/search.go shows "Strategy: direct (reason)" and cmd/chat.go shows "Using direct strategy (reason)". All existing picker tests updated for new signature with reason assertions. Chat test verifies reason appears in output.

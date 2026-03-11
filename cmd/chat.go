@@ -574,11 +574,12 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 			_, _ = fmt.Fprintf(out, "Tip: %s\n", hint)
 		}
 
-		strategy, err := picker.Pick(ctx, req)
+		strategy, reason, err := picker.Pick(ctx, req)
 		if err != nil {
 			_, _ = fmt.Fprintf(out, "Error picking strategy: %v\n", err)
 			continue
 		}
+		_, _ = fmt.Fprintf(out, "Using %s strategy (%s)\n", strategy.Name(), reason)
 
 		results, err := strategy.Search(ctx, req)
 		if err != nil {

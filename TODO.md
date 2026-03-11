@@ -1,54 +1,58 @@
 # TODO
 
-Carried from: Day 44 (all completed)
+Carried from: Day 46 (all completed)
 
-## Tasks 120-124: Day 44 tasks
-**Status:** completed -- Dynamic profile switching, StripCodeFences dedup, NearbySearcher SortBy fix, user context to ranker, red-eye departure time override
+## Tasks 125-129: Day 46 tasks
+**Status:** completed -- Composite ranker wiring, dedup consolidation, score sort, round-trip price fix, Kiwi doc cleanup
 
 ---
 
-## Task 125: Wire ranker to composite strategy
+## Task 130: Return strategy reasoning from Picker.Pick
 **Status:** done
-**Plan:**
-- [x] Write test: picker with "both" response creates composite that ranks results
-- [x] Add Ranker field to Picker + SetRanker method
-- [x] Pass ranker to NewCompositeStrategy in pickWithLLM "both" branch
-- [x] Update buildPicker in cmd/infra.go to call SetRanker
-- [x] Verify existing picker tests still pass
-- [x] Verify build + test + vet + lint pass
-
-## Task 126: Consolidate itinRoute and deduplicate to search package
-**Status:** done
-**Plan:**
-- [x] Export ItinRoute and DeduplicateItineraries in search package (composite.go)
-- [x] Update composite.go to use exported functions
-- [x] Update nearby/nearby.go to use search.DeduplicateItineraries
-- [x] Remove duplicate unexported functions from nearby.go
-- [x] Verify all existing tests pass unchanged
-- [x] Verify build + test + vet + lint pass
-
-## Task 127: Add "score" sort mode to SortResults
-**Status:** done
-**Plan:**
-- [x] Write test: SortResults with "score" sorts by Score descending
-- [x] Write test: SortResults with "score" and all-zero scores is stable
-- [x] Add "score" case to SortResults switch in filter.go
-- [x] Update chat system prompt sort_by description to include "score"
-- [x] Update refinementHint to mention sort_by "score"
-- [x] Update --sort-by flag description in cmd/search.go
-- [x] Verify build + test + vet + lint pass
-
-## Task 128: Fix round-trip max_price to check total itinerary price
-**Status:** done
-**Plan:**
-- [x] Write test: round-trip with max_price, verify total price filtering
-- [x] Add total-price filter after combineRoundTrip in direct.go Search method
-- [x] Verify existing round-trip tests still pass
+**Plan:** Changed Pick to return (Strategy, string, error). LLM path returns parsed reason, fallback returns descriptive string. Both callers (search.go, chat.go) display the reason.
+- [x] Write test: Pick returns non-empty reason from LLM path
+- [x] Write test: Pick returns non-empty reason from fallback path
+- [x] Change Pick signature to return (Strategy, string, error)
+- [x] Update pickWithLLM to return reason from pickerResult
+- [x] Update fallback to return descriptive reason string
+- [x] Update cmd/search.go caller for new signature
+- [x] Update cmd/chat.go caller to display reason in search output
+- [x] Write chat test verifying reason appears in output
 - [x] Verify build + test + vet pass
 
-## Task 129: Clean stale Kiwi references in search and filter docs
-**Status:** done
+## Task 131: Test printJSONWithInsights
+**Status:** pending
 **Plan:**
-- [x] Update search/search.go line 34 "currently Kiwi only" to SerpAPI
-- [x] Update filter.go line 138-139 Kiwi reference to generic provider description
-- [x] Verify build + test + vet + lint clean
+- [ ] Write test: printJSONWithInsights with valid PriceInsights produces price_insights key
+- [ ] Write test: printJSONWithInsights with empty PriceInsights omits price_insights
+- [ ] Write test: printJSONWithInsights results array matches input count
+- [ ] Verify build + test + vet pass
+
+## Task 132: Thread PriceInsights into zero-results chat suggestion
+**Status:** pending
+**Plan:**
+- [ ] Write test: zero-results output includes price range when insights have data
+- [ ] Write test: zero-results output omits price info when no insights
+- [ ] Add priceInsightHint helper in chat.go
+- [ ] Thread PriceInsights into chatLoop zero-results block
+- [ ] Verify build + test + vet pass
+
+## Task 133: Add DEL/BOM to FRA stopover routes
+**Status:** pending
+**Plan:**
+- [ ] Write tests for StopoversForRoute DEL-FRA and FRA-DEL
+- [ ] Write tests for StopoversForRoute BOM-FRA and FRA-BOM
+- [ ] Add DELToFRAStopovers slice (DOH, AUH, DXB, IST, BAH, KWI)
+- [ ] Add BOMToFRAStopovers slice (DOH, AUH, DXB, IST, BAH)
+- [ ] Register both in stopoversMap
+- [ ] Verify existing consistency test passes
+- [ ] Verify build + test + vet pass
+
+## Task 134: Test filter edge cases (firstDeparture, flightPassesTimeOfDay)
+**Status:** pending
+**Plan:**
+- [ ] Write test: firstDeparture with 0 legs returns zero time
+- [ ] Write test: firstDeparture with empty outbound segments
+- [ ] Write test: flightPassesTimeOfDay with empty Outbound returns false
+- [ ] Write test: flightPassesTimeOfDay with invalid HH:MM returns true
+- [ ] Verify build + test + vet pass

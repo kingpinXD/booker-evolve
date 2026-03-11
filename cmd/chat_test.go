@@ -185,6 +185,9 @@ Searching for flights now.`,
 	if !strings.Contains(output, "Searching DEL -> YYZ") {
 		t.Errorf("expected search execution message, got:\n%s", output)
 	}
+	if !strings.Contains(output, "Using direct strategy") {
+		t.Errorf("expected strategy reason in output, got:\n%s", output)
+	}
 }
 
 // chatMockLLM returns pre-set responses in order.

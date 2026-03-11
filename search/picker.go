@@ -34,25 +34,28 @@ func (p *Picker) SetRanker(r Ranker) {
 	p.ranker = r
 }
 
-// Pick analyzes the request context and returns the most appropriate strategy.
-func (p *Picker) Pick(ctx context.Context, req Request) (Strategy, error) {
+// Pick analyzes the request context and returns the most appropriate strategy
+// along with a human-readable reason for the choice.
+func (p *Picker) Pick(ctx context.Context, req Request) (Strategy, string, error) {
 	if len(p.strategies) == 0 {
-		return nil, fmt.Errorf("no strategies registered")
+		return nil, "", fmt.Errorf("no strategies registered")
 	}
 	if len(p.strategies) == 1 {
-		return p.strategies[0], nil
+		return p.strategies[0], "only one strategy registered", nil
 	}
 
 	// No context or no LLM — use heuristic fallback.
 	if req.Context == "" || p.llm == nil {
-		return p.fallback(), nil
+		s := p.fallback()
+		return s, "default for single-leg route", nil
 	}
 
-	picked, err := p.pickWithLLM(ctx, req)
+	picked, reason, err := p.pickWithLLM(ctx, req)
 	if err != nil {
-		return p.fallback(), nil
+		s := p.fallback()
+		return s, "LLM unavailable, using default", nil
 	}
-	return picked, nil
+	return picked, reason, nil
 }
 
 // fallback returns "direct" if available, otherwise the first strategy.
@@ -70,7 +73,7 @@ type pickerResult struct {
 	Reason   string `json:"reason"`
 }
 
-func (p *Picker) pickWithLLM(ctx context.Context, req Request) (Strategy, error) {
+func (p *Picker) pickWithLLM(ctx context.Context, req Request) (Strategy, string, error) {
 	sysPrompt := p.buildSystemPrompt()
 	userPrompt := fmt.Sprintf(
 		"Route: %s -> %s\nDate: %s\nPassengers: %d\nCabin: %s\nContext: %s",
@@ -85,7 +88,7 @@ func (p *Picker) pickWithLLM(ctx context.Context, req Request) (Strategy, error)
 
 	response, err := p.llm.ChatCompletion(ctx, messages)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	// Strip markdown code fences if present.
@@ -93,19 +96,19 @@ func (p *Picker) pickWithLLM(ctx context.Context, req Request) (Strategy, error)
 
 	var result pickerResult
 	if err := json.Unmarshal([]byte(cleaned), &result); err != nil {
-		return nil, fmt.Errorf("parsing picker response: %w", err)
+		return nil, "", fmt.Errorf("parsing picker response: %w", err)
 	}
 
 	if result.Strategy == "both" {
-		return NewCompositeStrategy(p.ranker, p.strategies...), nil
+		return NewCompositeStrategy(p.ranker, p.strategies...), result.Reason, nil
 	}
 
 	for _, s := range p.strategies {
 		if s.Name() == result.Strategy {
-			return s, nil
+			return s, result.Reason, nil
 		}
 	}
-	return nil, fmt.Errorf("unknown strategy %q from LLM", result.Strategy)
+	return nil, "", fmt.Errorf("unknown strategy %q from LLM", result.Strategy)
 }
 
 func (p *Picker) buildSystemPrompt() string {

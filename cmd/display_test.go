@@ -26,7 +26,7 @@ func TestPrintJSONWithInsights_WithPriceInsights(t *testing.T) {
 	}
 
 	var out struct {
-		Results       []jsonItinerary `json:"results"`
+		Results       []jsonItinerary    `json:"results"`
 		PriceInsights *jsonPriceInsights `json:"price_insights"`
 	}
 	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {

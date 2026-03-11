@@ -130,3 +130,22 @@ Enhanced resultSummaryForChat to accept tripParams and include top result's rout
 
 ### Day 20, Task 5 -- Lint, gofmt sweep, and build gate
 All gates clean: gofmt -l returns empty, go vet 0 issues, golangci-lint 0 issues, go test ./... all 15 packages pass.
+
+## Day 21 -- Session 21 -- Alliance tags, stopover notes, direct-only chat, reasoning output
+
+Completed all 5 tasks in 5 commits with zero reverts and zero API calls. Tasks 33 and 34 ran as parallel worktree agents while tasks 31 and 32 ran sequentially on main.
+
+### Session 21, Task 1 -- Alliance-aware ranking in multicity
+Wired search.Alliance() into buildRankingPrompt so the LLM sees airline alliance membership (Star Alliance, OneWorld, SkyTeam) next to each segment's airline name. Previously the system prompt mentioned "same alliance is good" but the LLM had no alliance data. Removed resolved TODO in combiner.go. 2 new tests.
+
+### Session 21, Task 2 -- Stopover city notes in ranker prompt
+Added Notes field to search.Stopover, passed StopoverCity.Notes through buildItinerary in combiner.go, and displayed notes in buildRankingPrompt after the stopover line. The LLM now has context about connectivity, food, visa, and airline hubs when scoring stopover cities. Removed resolved TODO in combiner.go. 2 new tests.
+
+### Session 21, Task 3 -- Direct-only preference in chat
+Added DirectOnly bool to tripParams. When set, buildRequestFromParams sets MaxStops=0. Added to system prompt, parsePartialParams recognition, and mergeParams. Ran as parallel worktree agent. 5 new test assertions.
+
+### Session 21, Task 4 -- Surface ranking reasoning in output
+Added "Reason" column to table output and "reasoning" field to jsonItinerary. The ranker's Reasoning string was already populated but never displayed. Ran as parallel worktree agent. 4 new tests.
+
+### Session 21, Task 5 -- Lint, gofmt sweep, and build gate
+All gates clean after merging worktree branches: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all pass.

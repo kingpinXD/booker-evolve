@@ -426,6 +426,42 @@ func TestResultSummaryForChat_OneResult(t *testing.T) {
 	}
 }
 
+func TestResultSummaryForChat_WithReasoning(t *testing.T) {
+	itin := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Origin: "DEL", Destination: "YYZ", Airline: "AC", AirlineName: "Air Canada"}},
+		}}},
+		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+		Reasoning:  "good schedule and price balance",
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+
+	if !strings.Contains(summary, "good schedule and price balance") {
+		t.Errorf("summary should contain reasoning, got: %s", summary)
+	}
+}
+
+func TestResultSummaryForChat_OmitsEmptyReasoning(t *testing.T) {
+	itin := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Origin: "DEL", Destination: "YYZ", Airline: "AC", AirlineName: "Air Canada"}},
+		}}},
+		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+
+	// Should NOT contain "Reason:" or similar marker when reasoning is empty.
+	if strings.Contains(summary, "Reason:") {
+		t.Errorf("summary should not contain reasoning marker when empty, got: %s", summary)
+	}
+}
+
 func TestResultSummaryForChat_Empty(t *testing.T) {
 	summary := resultSummaryForChat(nil, tripParams{})
 	if !strings.Contains(summary, "No results") {

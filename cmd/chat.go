@@ -246,6 +246,9 @@ func resultSummaryForChat(results []search.Itinerary, params tripParams) string 
 		}
 		fmt.Fprintf(&b, " %d) %s, %s, %d %s, $%.0f.",
 			i+1, airline, formatFlightDuration(r.Legs[0].Flight.TotalDuration), stops, stopWord, r.TotalPrice.Amount)
+		if r.Reasoning != "" {
+			fmt.Fprintf(&b, " Reason: %s.", r.Reasoning)
+		}
 	}
 
 	// Search params context.

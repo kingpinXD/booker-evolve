@@ -432,70 +432,18 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 		leg1 := itin.Legs[0].Flight
 		leg2 := itin.Legs[1].Flight
 
-		// Apply the same filters as one-way results.
-		if len(search.FilterFlights([]types.Flight{leg1})) == 0 {
+		// Apply the same per-flight filters as one-way results.
+		if !passesAllFilters(leg1, params) || !passesAllFilters(leg2, params) {
 			continue
 		}
-		if len(search.FilterFlights([]types.Flight{leg2})) == 0 {
-			continue
-		}
-		if itin.TotalPrice.Amount <= 0 {
-			continue
-		}
+		// Leg-specific layover checks.
 		if params.MaxLayoversLeg1 >= 0 && leg1.Stops() > params.MaxLayoversLeg1 {
 			continue
 		}
 		if params.MaxLayoversLeg2 >= 0 && leg2.Stops() > params.MaxLayoversLeg2 {
 			continue
 		}
-		if params.PreferredAlliance != "" {
-			if len(search.FilterByAlliance([]types.Flight{leg1}, params.PreferredAlliance)) == 0 {
-				continue
-			}
-			if len(search.FilterByAlliance([]types.Flight{leg2}, params.PreferredAlliance)) == 0 {
-				continue
-			}
-		}
-		if params.DepartureAfter != "" || params.DepartureBefore != "" {
-			if len(search.FilterByDepartureTime([]types.Flight{leg1}, params.DepartureAfter, params.DepartureBefore)) == 0 {
-				continue
-			}
-			if len(search.FilterByDepartureTime([]types.Flight{leg2}, params.DepartureAfter, params.DepartureBefore)) == 0 {
-				continue
-			}
-		}
-		if params.ArrivalAfter != "" || params.ArrivalBefore != "" {
-			if len(search.FilterByArrivalTime([]types.Flight{leg1}, params.ArrivalAfter, params.ArrivalBefore)) == 0 {
-				continue
-			}
-			if len(search.FilterByArrivalTime([]types.Flight{leg2}, params.ArrivalAfter, params.ArrivalBefore)) == 0 {
-				continue
-			}
-		}
-		if params.MaxDuration > 0 {
-			if len(search.FilterByMaxDuration([]types.Flight{leg1}, params.MaxDuration)) == 0 {
-				continue
-			}
-			if len(search.FilterByMaxDuration([]types.Flight{leg2}, params.MaxDuration)) == 0 {
-				continue
-			}
-		}
-		if params.AvoidAirlines != "" {
-			if len(search.FilterByAvoidAirlines([]types.Flight{leg1}, params.AvoidAirlines)) == 0 {
-				continue
-			}
-			if len(search.FilterByAvoidAirlines([]types.Flight{leg2}, params.AvoidAirlines)) == 0 {
-				continue
-			}
-		}
-		if params.PreferredAirlines != "" {
-			if len(search.FilterByPreferredAirlines([]types.Flight{leg1}, params.PreferredAirlines)) == 0 {
-				continue
-			}
-			if len(search.FilterByPreferredAirlines([]types.Flight{leg2}, params.PreferredAirlines)) == 0 {
-				continue
-			}
-		}
+		// Itinerary-level max price check.
 		if params.MaxPrice > 0 && itin.TotalPrice.Amount > params.MaxPrice {
 			continue
 		}
@@ -547,6 +495,22 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 	}
 
 	return ranked, nil
+}
+
+// passesAllFilters returns true if a single flight passes all generic
+// per-flight filters (blocked airlines, zero price, alliance, departure/arrival
+// time, max duration, avoid/preferred airlines). Leg-specific checks like
+// max layovers and itinerary-level checks like max price are NOT included.
+func passesAllFilters(f types.Flight, params SearchParams) bool {
+	wrap := []types.Flight{f}
+	return len(search.FilterFlights(wrap)) > 0 &&
+		f.Price.Amount > 0 &&
+		len(search.FilterByAlliance(wrap, params.PreferredAlliance)) > 0 &&
+		len(search.FilterByDepartureTime(wrap, params.DepartureAfter, params.DepartureBefore)) > 0 &&
+		len(search.FilterByArrivalTime(wrap, params.ArrivalAfter, params.ArrivalBefore)) > 0 &&
+		len(search.FilterByMaxDuration(wrap, params.MaxDuration)) > 0 &&
+		len(search.FilterByAvoidAirlines(wrap, params.AvoidAirlines)) > 0 &&
+		len(search.FilterByPreferredAirlines(wrap, params.PreferredAirlines)) > 0
 }
 
 // buildMultiCityItinerary converts a provider.MultiCityResult into a

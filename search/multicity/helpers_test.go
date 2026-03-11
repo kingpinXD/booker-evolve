@@ -423,6 +423,113 @@ func TestStopoversForRoute(t *testing.T) {
 	}
 }
 
+// --- passesAllFilters ---
+
+func TestPassesAllFilters(t *testing.T) {
+	good := makeFlight("AC", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 300)
+
+	tests := []struct {
+		name   string
+		flight types.Flight
+		params SearchParams
+		want   bool
+	}{
+		{
+			name:   "valid flight with no constraints",
+			flight: good,
+			params: SearchParams{},
+			want:   true,
+		},
+		{
+			name:   "blocked airline rejected",
+			flight: makeFlight("EK", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 300),
+			params: SearchParams{},
+			want:   false,
+		},
+		{
+			name:   "zero price rejected",
+			flight: makeFlight("AC", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 0),
+			params: SearchParams{},
+			want:   false,
+		},
+		{
+			name:   "wrong alliance rejected",
+			flight: makeFlight("AA", "DEL", "HKG", basetime, basetime.Add(8*time.Hour), 300),
+			params: SearchParams{PreferredAlliance: "Star Alliance"},
+			want:   false,
+		},
+		{
+			name:   "correct alliance passes",
+			flight: good, // AC is Star Alliance
+			params: SearchParams{PreferredAlliance: "Star Alliance"},
+			want:   true,
+		},
+		{
+			name:   "departure too early rejected",
+			flight: makeFlight("AC", "DEL", "HKG", time.Date(2026, 3, 24, 5, 0, 0, 0, time.UTC), time.Date(2026, 3, 24, 13, 0, 0, 0, time.UTC), 300),
+			params: SearchParams{DepartureAfter: "06:00"},
+			want:   false,
+		},
+		{
+			name:   "departure within window passes",
+			flight: good, // departs 10:00
+			params: SearchParams{DepartureAfter: "06:00", DepartureBefore: "12:00"},
+			want:   true,
+		},
+		{
+			name:   "arrival too late rejected",
+			flight: makeFlight("AC", "DEL", "HKG", basetime, time.Date(2026, 3, 24, 23, 0, 0, 0, time.UTC), 300),
+			params: SearchParams{ArrivalBefore: "20:00"},
+			want:   false,
+		},
+		{
+			name:   "exceeds max duration rejected",
+			flight: makeFlight("AC", "DEL", "HKG", basetime, basetime.Add(20*time.Hour), 300),
+			params: SearchParams{MaxDuration: 10 * time.Hour},
+			want:   false,
+		},
+		{
+			name:   "within max duration passes",
+			flight: good, // 8h
+			params: SearchParams{MaxDuration: 10 * time.Hour},
+			want:   true,
+		},
+		{
+			name:   "avoided airline rejected",
+			flight: good, // AC
+			params: SearchParams{AvoidAirlines: "AC"},
+			want:   false,
+		},
+		{
+			name:   "non-avoided airline passes",
+			flight: good, // AC
+			params: SearchParams{AvoidAirlines: "UA,DL"},
+			want:   true,
+		},
+		{
+			name:   "preferred airline matches",
+			flight: good, // AC
+			params: SearchParams{PreferredAirlines: "AC,UA"},
+			want:   true,
+		},
+		{
+			name:   "preferred airline mismatch rejected",
+			flight: good, // AC
+			params: SearchParams{PreferredAirlines: "UA,DL"},
+			want:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := passesAllFilters(tt.flight, tt.params)
+			if got != tt.want {
+				t.Errorf("passesAllFilters() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestStopoversForRoute_DELYYZContainsExpectedCities(t *testing.T) {
 	stopovers := StopoversForRoute("DEL", "YYZ")
 	expected := map[string]bool{"HKG": false, "BKK": false, "IST": false, "NRT": false}

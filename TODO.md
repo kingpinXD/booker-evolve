@@ -1,53 +1,61 @@
 # TODO
 
-Carried from: Day 21 (all completed)
+Carried from: Day 22 (all completed)
 
-## Tasks 31-35: Day 21 tasks
-**Status:** completed (Day 21) -- alliance tags in ranker, stopover notes in ranker, direct-only chat, reasoning in output, lint sweep
+## Tasks 36-40: Day 22 tasks
+**Status:** completed (Day 22) -- io.Writer output routing, booking URLs, history truncation, stops column, lint sweep
 
 ---
 
-## Task 36: Fix chat output routing to use io.Writer
+## Task 41: Flex-days support in chat
 **Status:** done
-**Plan:** Add `io.Writer` parameter to `printTable`, `printJSON`, and `printJSONWithInsights`. Replace `os.Stdout` and bare `fmt.Print*` calls inside those functions with writes to the provided writer. Update `chatLoop` to pass `out`, `runSearch` to pass `os.Stdout`. Update tests to use writer directly (remove os.Pipe hacks). Write new test verifying chatLoop buffer captures table result data.
-- [x] Write test: chatLoop output buffer contains result data (price, route) after search
-- [x] Refactor printTable to accept io.Writer instead of hardcoding os.Stdout
-- [x] Refactor printJSON and printJSONWithInsights to accept io.Writer
-- [x] Update chatLoop to pass `out` writer to print functions
-- [x] Update runSearch to pass os.Stdout explicitly
-- [x] Update existing tests to use writer parameter directly
+**Plan:** Add flex_days field to tripParams, wire through buildRequestFromParams (default to 3), mergeParams, parsePartialParams, system prompt, refinement hint. TDD with 5 new tests.
+- [x] Write test: parsePartialParams recognizes flex_days field
+- [x] Write test: mergeParams preserves flex_days from prev when partial is zero
+- [x] Write test: buildRequestFromParams uses flex_days when set, defaults to defaultFlexDays when zero
+- [x] Add flex_days field to tripParams struct
+- [x] Update chatSystemPrompt to document flex_days option
+- [x] Update buildRequestFromParams to use p.FlexDays instead of hardcoded default
+- [x] Update mergeParams to handle FlexDays
+- [x] Update parsePartialParams to recognize FlexDays
+- [x] Update refinementHint to mention flex-days
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 37: Show booking URLs in table output
+## Task 42: Add today's date to chat system prompt
 **Status:** done
-**Plan:** Add "Book" column to both single-leg and multi-leg table layouts. Add legBookingURL helper.
-- [x] Write test: table output for flight with BookingURL contains the URL
-- [x] Write test: flights without BookingURL show no extra content
-- [x] Write test: multi-leg table with BookingURL
-- [x] Add legBookingURL helper + "Book" column to printTable
+**Plan:** Change chatSystemPrompt() to accept time.Time, prepend "Today's date is YYYY-MM-DD" to prompt, update chatLoop caller to pass time.Now(). Update existing tests to pass known dates.
+- [x] Write test: chatSystemPrompt output contains a YYYY-MM-DD date string
+- [x] Write test: verify format with known date
+- [x] Make chatSystemPrompt accept a date parameter
+- [x] Inject current date into system prompt text
+- [x] Update chatLoop to pass current date
+- [x] Update existing chat tests if signature changes
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 38: Conversation history truncation
+## Task 43: Show layover durations in table output
 **Status:** done
-**Plan:** Add truncateHistory sliding window (system prompt + last 20 messages). Wire into chatLoop before ChatCompletion call.
-- [x] Write test: history truncated after threshold while system prompt preserved
-- [x] Write test: short history unchanged
-- [x] Write test: chatLoop integration with history truncation
-- [x] Add truncateHistory function + maxHistoryMessages const
-- [x] Wire into chatLoop before each LLM call
+**Plan:** Add formatStops(itin) string that sums stops and layover durations. When stops > 0 and layover data exists, format as "N (Xh Ym)". Replace itineraryStops int in printTable with formatStops string. TDD with 3 new tests.
+- [x] Write test: formatStops returns "0" for direct flights
+- [x] Write test: formatStops returns "1 (2h 30m)" for connecting flights with layover
+- [x] Write test: formatStops returns "1" for connecting flights without layover data
+- [x] Add formatStops helper that includes layover time
+- [x] Replace raw itineraryStops int with formatted string in printTable
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 39: Add stops count to table output
+## Task 44: Show arrival time in table output
 **Status:** done
-**Plan:** Add `itineraryStops` helper that sums Flight.Stops() across all legs. Add "Stops" column to both single-leg and multi-leg layouts in printTable. TDD with tests for 0-stop direct and 1-stop connecting flights.
-- [x] Write test: table output contains "STOPS" header and correct counts
-- [x] Add itineraryStops helper + "Stops" column to printTable
+**Plan:** Add legArrival(itin, legIdx) following legDeparture pattern. Add "Arrival" column to single-leg table and "Leg N Arrival" columns to multi-leg table. TDD with 2 new tests + 2 updated tests.
+- [x] Write test: legArrival returns correct time from last segment
+- [x] Write test: legArrival returns empty for out-of-bounds leg
+- [x] Write test: table output contains arrival time strings
+- [x] Add legArrival helper following legDeparture pattern
+- [x] Add "Arrival" column to both single-leg and multi-leg table layouts
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 40: Lint, gofmt sweep, and build gate verification
+## Task 45: Lint, gofmt sweep, and build gate verification
 **Status:** done
-**Plan:** Run all gates, fix any violations from worktree merges or new code.
-- [x] Run gofmt -l . -- clean (0 violations)
-- [x] Run go vet ./... -- clean
-- [x] Run golangci-lint run -- 0 issues
-- [x] Run go test ./... -- all pass
+**Plan:** Run gofmt, go vet, golangci-lint, go test on full codebase after rebasing all worktree branches.
+- [x] Run gofmt -l . and fix any violations -- clean
+- [x] Run go vet ./... and fix any warnings -- clean
+- [x] Run golangci-lint run and fix any issues -- 0 issues
+- [x] Run go test ./... and verify all pass -- 15 packages pass

@@ -166,3 +166,20 @@ Added `itineraryStops` helper that sums `Flight.Stops()` across all legs. Added 
 
 ### Session 22, Task 5 -- Lint, gofmt sweep, and build gate
 All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all pass. One gofmt fix was needed after worktree rebase (fixed during task 37/38 merge).
+
+## Day 23
+
+### Session 23, Task 1 -- Flex-days support in chat
+Added flex_days field to tripParams with full wiring: buildRequestFromParams uses it (defaults to 3 when zero), mergeParams preserves it, parsePartialParams recognizes it, system prompt documents it, refinement hint mentions it. 5 new tests. Ran as parallel worktree agent.
+
+### Session 23, Task 2 -- Inject today's date into chat system prompt
+Changed chatSystemPrompt() to accept time.Time parameter, prepends "Today's date is YYYY-MM-DD" so the LLM can handle temporal references like "next Friday". Updated chatLoop to pass time.Now(). Updated existing tests to use known dates. 1 new test + 2 updated. Ran as parallel worktree agent.
+
+### Session 23, Task 3 -- Show layover durations in stops column
+Added formatStops(itin) that shows layover time alongside stop count (e.g. "1 (2h 30m)"). Sums LayoverDuration from all segments when stops > 0. Falls back to plain count when no layover data. Replaced itineraryStops int with formatStops string in printTable. 3 new tests. Ran as parallel worktree agent.
+
+### Session 23, Task 4 -- Add arrival time column to table output
+Added legArrival helper returning last segment's ArrivalTime. Added "Arrival" column to single-leg table and "Leg 1 Arrival"/"Leg 2 Arrival" to multi-leg table. 2 new tests + 2 updated table tests. Ran as parallel worktree agent.
+
+### Session 23, Task 5 -- Lint, gofmt sweep, and build gate
+All gates clean after rebasing both worktree branches: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.

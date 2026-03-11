@@ -103,4 +103,3 @@ func expandCode(code string) []string {
 	cluster = append(cluster, nearby...)
 	return cluster
 }
-

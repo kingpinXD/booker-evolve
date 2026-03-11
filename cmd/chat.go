@@ -93,7 +93,7 @@ Optional:
 - arrival_after: earliest acceptable arrival time (HH:MM, e.g. "08:00")
 - arrival_before: latest acceptable arrival time (HH:MM, e.g. "18:00")
 - max_duration_hours: maximum flight duration in hours (e.g. 12)
-- sort_by: sort results by "price" (default), "duration", or "departure"
+- sort_by: sort results by "price" (default), "duration", "departure", or "score" (by ranker score, highest first)
 - avoid_airlines: comma-separated IATA codes to exclude (e.g. "BA,LH")
 - preferred_airlines: comma-separated IATA codes to keep only (e.g. "AC,UA")
 - min_stopover_hours: minimum city stopover duration in hours for multi-city (default: 48)
@@ -400,7 +400,7 @@ func refinementHint() string {
 		"filter by departure time (departure_after/departure_before in HH:MM), " +
 		"filter by arrival time (arrival_after/arrival_before in HH:MM), " +
 		"limit flight duration with max_duration_hours, " +
-		"sort results by sort_by (price/duration/departure), " +
+		"sort results by sort_by (price/duration/departure/score), " +
 		"exclude airlines with avoid_airlines (comma-separated IATA codes, e.g. \"BA,LH\"), " +
 		"keep only specific airlines with preferred_airlines (comma-separated IATA codes, e.g. \"AC,UA\"), " +
 		"adjust stopover duration with min_stopover_hours/max_stopover_hours (default 48-144h), " +

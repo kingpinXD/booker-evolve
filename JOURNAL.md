@@ -553,3 +553,6 @@ Completed all 5 planned tasks in 7 commits with zero reverts and zero API calls.
 
 ### Session 46, Task 1 -- Wire ranker to composite strategy
 Added Ranker field and SetRanker method to Picker. When LLM picks "both" mode, the shared ranker is now passed to CompositeStrategy instead of nil. buildPicker in infra.go calls SetRanker. New test verifies composite search produces ranked (non-zero score) results.
+
+### Session 46, Task 3 -- Add "score" sort mode to SortResults
+Added "score" case to SortResults (descending, highest first). Two new tests: one verifying correct sort order, one verifying all-zero scores don't panic. Updated chat system prompt, refinement hint, and CLI flag description to mention "score" option.

@@ -28,15 +28,15 @@ Carried from: Day 44 (all completed)
 - [ ] Verify build + test + vet + lint pass
 
 ## Task 127: Add "score" sort mode to SortResults
-**Status:** pending
+**Status:** done
 **Plan:**
-- [ ] Write test: SortResults with "score" sorts by Score descending
-- [ ] Write test: SortResults with "score" and all-zero scores is stable
-- [ ] Add "score" case to SortResults switch in filter.go
-- [ ] Update chat system prompt sort_by description to include "score"
-- [ ] Update refinementHint to mention sort_by "score"
-- [ ] Update --sort-by flag description in cmd/search.go
-- [ ] Verify build + test + vet pass
+- [x] Write test: SortResults with "score" sorts by Score descending
+- [x] Write test: SortResults with "score" and all-zero scores is stable
+- [x] Add "score" case to SortResults switch in filter.go
+- [x] Update chat system prompt sort_by description to include "score"
+- [x] Update refinementHint to mention sort_by "score"
+- [x] Update --sort-by flag description in cmd/search.go
+- [x] Verify build + test + vet + lint pass
 
 ## Task 128: Fix round-trip max_price to check total itinerary price
 **Status:** pending

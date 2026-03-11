@@ -86,7 +86,7 @@ func init() {
 	f.String(keyProfile, defaultProfile, "ranking profile (budget, comfort, balanced)")
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
 	f.String(keyContext, "", "search context/preferences (e.g. 'cheapest option' or 'want to explore a city on the way')")
-	f.String(keySortBy, "price", "sort results by: price, duration, or departure")
+	f.String(keySortBy, "price", "sort results by: price, duration, departure, or score")
 	f.String(keyDepartureAfter, "", "earliest acceptable departure time (HH:MM)")
 	f.String(keyDepartureBefore, "", "latest acceptable departure time (HH:MM)")
 	f.String(keyArrivalAfter, "", "earliest acceptable arrival time (HH:MM)")

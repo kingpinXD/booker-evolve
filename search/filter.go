@@ -349,7 +349,7 @@ func flightMatchesAvoid(f types.Flight, codes map[string]bool) bool {
 }
 
 // SortResults sorts itineraries in place by the given mode.
-// Supported modes: "price" (default), "duration", "departure".
+// Supported modes: "price" (default), "duration", "departure", "score".
 // Unknown modes default to price.
 func SortResults(itins []Itinerary, sortBy string) {
 	if len(itins) < 2 {
@@ -363,6 +363,10 @@ func SortResults(itins []Itinerary, sortBy string) {
 	case "departure":
 		sort.Slice(itins, func(i, j int) bool {
 			return firstDeparture(itins[i]).Before(firstDeparture(itins[j]))
+		})
+	case "score":
+		sort.Slice(itins, func(i, j int) bool {
+			return itins[i].Score > itins[j].Score // descending
 		})
 	default: // "price" or unknown
 		sort.Slice(itins, func(i, j int) bool {

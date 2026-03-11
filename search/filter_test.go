@@ -379,6 +379,35 @@ func TestSortResults_Empty(t *testing.T) {
 	SortResults([]Itinerary{}, "duration")
 }
 
+func TestSortResults_ByScore(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itins := []Itinerary{
+		makeSortItinerary(400, 10*time.Hour, now),
+		makeSortItinerary(600, 8*time.Hour, now),
+		makeSortItinerary(800, 12*time.Hour, now),
+	}
+	itins[0].Score = 3.0
+	itins[1].Score = 9.5
+	itins[2].Score = 7.0
+	SortResults(itins, "score")
+	if itins[0].Score != 9.5 || itins[1].Score != 7.0 || itins[2].Score != 3.0 {
+		t.Errorf("SortResults(score): got scores [%.1f, %.1f, %.1f], want [9.5, 7.0, 3.0]",
+			itins[0].Score, itins[1].Score, itins[2].Score)
+	}
+}
+
+func TestSortResults_ByScore_AllZero(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itins := []Itinerary{
+		makeSortItinerary(800, 10*time.Hour, now),
+		makeSortItinerary(400, 14*time.Hour, now),
+		makeSortItinerary(600, 8*time.Hour, now),
+	}
+	// All scores zero — should not panic and order is stable (all equal).
+	SortResults(itins, "score")
+	// Just verify it didn't panic — with all-zero scores, any order is valid.
+}
+
 // --- FilterByAvoidAirlines ---
 
 func TestFilterByAvoidAirlines_MatchesAirline(t *testing.T) {

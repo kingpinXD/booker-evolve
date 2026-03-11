@@ -647,3 +647,16 @@ Enhanced legCarbon to show percentage diff when CarbonDiffPct is non-zero (e.g. 
 
 ## Session 50, Task 5 -- Chat filter reset via clear_fields
 Added ClearFields []string to tripParams. mergeParams zeroes specified fields on prev before merge, fixing sticky filter bug where DirectOnly/MaxPrice/etc couldn't be reset to zero values. parsePartialParams recognizes clear_fields. System prompt and refinement hint updated. 4 new tests. Had to switch mergeParams test comparison to reflect.DeepEqual since tripParams now has a slice field.
+
+## Session 50 -- Summary
+
+All 5 planned tasks completed. Tasks 147 (stopovers) and 148 (carbon diff) ran in parallel worktrees, cherry-picked into main. Tasks 145, 146, 149 (all cmd/chat.go) ran sequentially on main.
+
+Key additions:
+1. Result caching: chatLoop stores lastResults, intercepts "compare 1 and 3" and "details on option 2" before LLM call
+2. Stopover suggestions: proactive tip after single-leg results suggesting multi-city routing
+3. MEL/CDG stopovers: 4 new corridors (21 total, 42 bidirectional)
+4. Carbon diff display: legCarbon shows "+5%" or "-12%" when CarbonDiffPct available
+5. clear_fields: fixes sticky filter bug where zero-value fields couldn't reset
+
+Zero SerpAPI or LLM API calls used. Build, tests, vet, lint all clean.

@@ -162,3 +162,9 @@ Changing chat summary from "1 stop" to "1 stop (3h IST)" gives the LLM concrete 
 
 ## Lesson: Fallback paths should inspect the request, not return a hardcoded default
 The Picker fallback returned "direct" for every request, ignoring Leg2Date entirely. This meant LLM-less environments always used the wrong strategy for multi-city trips. Fallback/default paths are often written once during initial implementation and never revisited as the request shape gains new fields. When adding a field that changes which code path should execute (like Leg2Date selecting multicity vs direct), audit both the primary path and all fallback/error paths to ensure they respect the new field. A fallback that ignores request context is a silent correctness bug.
+
+## Lesson: Go worktree test leakage with go test ./...
+When using git worktrees inside the repo directory (.worktrees/), `go test ./...` picks up test files from all worktrees since Go follows the filesystem. Use `go test $(go list ./... | grep -v worktree)` to exclude them, or `golangci-lint run --skip-dirs '.worktrees'` for lint. This is critical when parallel worktree agents write tests that reference code not yet on the main branch.
+
+## Lesson: Adding slice fields to structs breaks == comparison
+Adding a []string field (like ClearFields) to a struct that was previously compared with == will cause compile errors. Use reflect.DeepEqual for struct comparison in tests when the struct has slice or map fields.

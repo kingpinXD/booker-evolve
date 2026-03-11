@@ -51,8 +51,8 @@ Carried from: Day 49 (all completed)
 - [ ] Verify build, test, vet pass
 
 ## Task 149: Chat filter reset via clear_fields
-**Status:** pending
-**Plan:** to be filled during implementation
+**Status:** done
+**Plan:** Add ClearFields []string to tripParams. In mergeParams, zero out fields listed in ClearFields before merge. Update parsePartialParams to accept clear_fields. Update system prompt and refinement hint. Files: cmd/chat.go, cmd/chat_test.go.
 - [ ] Add ClearFields []string to tripParams
 - [ ] Update mergeParams to skip propagation for cleared fields
 - [ ] Update parsePartialParams to recognize clear_fields

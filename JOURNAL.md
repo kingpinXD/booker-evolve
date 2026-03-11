@@ -638,3 +638,12 @@ Added lastResults cache in chatLoop, keyword detection (looksLikeComparison/look
 
 ## Session 50, Task 2 -- Proactive stopover suggestion in chat
 Added stopoverSuggestion helper that checks StopoversForRoute and displays a tip after results for single-leg trips. Shows up to 3 stopover city names and suggests setting leg2_date. Suppressed when leg2Date is already set (multi-city). 5 new tests including 2 chatLoop integration tests.
+
+## Session 50, Task 3 -- India-Melbourne and India-Paris stopover routes
+Added DEL/BOM to MEL (5 cities each, Southeast Asian corridor) and DEL/BOM to CDG (5 cities each, Gulf/Turkish corridor) stopover routes. Brings total to 21 route-specific corridors (42 bidirectional). 6 new tests. Ran in parallel worktree, cherry-picked into main.
+
+## Session 50, Task 4 -- Carbon diff annotation in display
+Enhanced legCarbon to show percentage diff when CarbonDiffPct is non-zero (e.g. "150kg (+5%)" or "120kg (-12%)"). CarbonDiffPct was already parsed from SerpAPI and in jsonLeg. 5 new tests. Ran in parallel worktree, cherry-picked into main.
+
+## Session 50, Task 5 -- Chat filter reset via clear_fields
+Added ClearFields []string to tripParams. mergeParams zeroes specified fields on prev before merge, fixing sticky filter bug where DirectOnly/MaxPrice/etc couldn't be reset to zero values. parsePartialParams recognizes clear_fields. System prompt and refinement hint updated. 4 new tests. Had to switch mergeParams test comparison to reflect.DeepEqual since tripParams now has a slice field.

@@ -42,29 +42,30 @@ func init() {
 
 // tripParams holds extracted flight search parameters from the LLM dialogue.
 type tripParams struct {
-	Origin            string  `json:"origin"`
-	Destination       string  `json:"destination"`
-	DepartureDate     string  `json:"departure_date"`
-	ReturnDate        string  `json:"return_date,omitempty"`
-	Leg2Date          string  `json:"leg2_date,omitempty"`
-	Passengers        int     `json:"passengers,omitempty"`
-	Cabin             string  `json:"cabin,omitempty"`
-	MaxPrice          float64 `json:"max_price,omitempty"`
-	DirectOnly        bool    `json:"direct_only,omitempty"`
-	FlexDays          int     `json:"flex_days,omitempty"`
-	Profile           string  `json:"profile,omitempty"`
-	PreferredAlliance string  `json:"preferred_alliance,omitempty"`
-	DepartureAfter    string  `json:"departure_after,omitempty"`
-	DepartureBefore   string  `json:"departure_before,omitempty"`
-	ArrivalAfter      string  `json:"arrival_after,omitempty"`
-	ArrivalBefore     string  `json:"arrival_before,omitempty"`
-	MaxDurationHours  int     `json:"max_duration_hours,omitempty"`
-	SortBy            string  `json:"sort_by,omitempty"`
-	AvoidAirlines     string  `json:"avoid_airlines,omitempty"`
-	PreferredAirlines string  `json:"preferred_airlines,omitempty"`
-	MinStopoverHours  int     `json:"min_stopover_hours,omitempty"`
-	MaxStopoverHours  int     `json:"max_stopover_hours,omitempty"`
-	Context           string  `json:"context,omitempty"`
+	Origin            string   `json:"origin"`
+	Destination       string   `json:"destination"`
+	DepartureDate     string   `json:"departure_date"`
+	ReturnDate        string   `json:"return_date,omitempty"`
+	Leg2Date          string   `json:"leg2_date,omitempty"`
+	Passengers        int      `json:"passengers,omitempty"`
+	Cabin             string   `json:"cabin,omitempty"`
+	MaxPrice          float64  `json:"max_price,omitempty"`
+	DirectOnly        bool     `json:"direct_only,omitempty"`
+	FlexDays          int      `json:"flex_days,omitempty"`
+	Profile           string   `json:"profile,omitempty"`
+	PreferredAlliance string   `json:"preferred_alliance,omitempty"`
+	DepartureAfter    string   `json:"departure_after,omitempty"`
+	DepartureBefore   string   `json:"departure_before,omitempty"`
+	ArrivalAfter      string   `json:"arrival_after,omitempty"`
+	ArrivalBefore     string   `json:"arrival_before,omitempty"`
+	MaxDurationHours  int      `json:"max_duration_hours,omitempty"`
+	SortBy            string   `json:"sort_by,omitempty"`
+	AvoidAirlines     string   `json:"avoid_airlines,omitempty"`
+	PreferredAirlines string   `json:"preferred_airlines,omitempty"`
+	MinStopoverHours  int      `json:"min_stopover_hours,omitempty"`
+	MaxStopoverHours  int      `json:"max_stopover_hours,omitempty"`
+	Context           string   `json:"context,omitempty"`
+	ClearFields       []string `json:"clear_fields,omitempty"`
 }
 
 // chatSystemPrompt returns the system prompt for the chat conversation.
@@ -101,6 +102,7 @@ Optional:
 - min_stopover_hours: minimum city stopover duration in hours for multi-city (default: 48)
 - max_stopover_hours: maximum city stopover duration in hours for multi-city (default: 144)
 - context: any preferences like "cheapest option" or "prefer direct flights"
+- clear_fields: array of field names to reset (e.g. ["direct_only", "max_price"]) — use when the user wants to remove a previously set filter
 
 Be a helpful travel advisor:
 - When the user is flexible on routing, suggest stopover cities that could save money (e.g. "Flying Delhi to Toronto via Bangkok often saves $300-400 and you get a 2-day city break").
@@ -306,8 +308,51 @@ func formatLayoverSummary(segs []types.Segment) string {
 }
 
 // mergeParams fills zero-value fields in partial from prev, producing
-// a complete set of params for a follow-up search.
+// a complete set of params for a follow-up search. Fields listed in
+// partial.ClearFields are zeroed before merge so sticky filters can be reset.
 func mergeParams(prev, partial tripParams) tripParams {
+	// Apply clear_fields: zero out specified fields on prev so they don't carry over.
+	cleared := make(map[string]bool, len(partial.ClearFields))
+	for _, f := range partial.ClearFields {
+		cleared[f] = true
+	}
+	if cleared["direct_only"] {
+		prev.DirectOnly = false
+	}
+	if cleared["max_price"] {
+		prev.MaxPrice = 0
+	}
+	if cleared["preferred_alliance"] {
+		prev.PreferredAlliance = ""
+	}
+	if cleared["departure_after"] {
+		prev.DepartureAfter = ""
+	}
+	if cleared["departure_before"] {
+		prev.DepartureBefore = ""
+	}
+	if cleared["arrival_after"] {
+		prev.ArrivalAfter = ""
+	}
+	if cleared["arrival_before"] {
+		prev.ArrivalBefore = ""
+	}
+	if cleared["max_duration_hours"] {
+		prev.MaxDurationHours = 0
+	}
+	if cleared["avoid_airlines"] {
+		prev.AvoidAirlines = ""
+	}
+	if cleared["preferred_airlines"] {
+		prev.PreferredAirlines = ""
+	}
+	if cleared["sort_by"] {
+		prev.SortBy = ""
+	}
+	if cleared["flex_days"] {
+		prev.FlexDays = 0
+	}
+
 	merged := partial
 	if merged.Origin == "" {
 		merged.Origin = prev.Origin
@@ -405,7 +450,8 @@ func parsePartialParams(response string) (tripParams, bool) {
 			p.ArrivalAfter != "" || p.ArrivalBefore != "" ||
 			p.MaxDurationHours != 0 ||
 			p.SortBy != "" || p.AvoidAirlines != "" || p.PreferredAirlines != "" ||
-			p.MinStopoverHours != 0 || p.MaxStopoverHours != 0 || p.Context != "" {
+			p.MinStopoverHours != 0 || p.MaxStopoverHours != 0 || p.Context != "" ||
+			len(p.ClearFields) > 0 {
 			return p, true
 		}
 	}
@@ -476,6 +522,8 @@ func refinementHint() string {
 		"exclude airlines with avoid_airlines (comma-separated IATA codes, e.g. \"BA,LH\"), " +
 		"keep only specific airlines with preferred_airlines (comma-separated IATA codes, e.g. \"AC,UA\"), " +
 		"adjust stopover duration with min_stopover_hours/max_stopover_hours (default 48-144h), " +
+		"To remove a previously set filter, use clear_fields with the field names to reset " +
+		"(e.g. {\"clear_fields\":[\"direct_only\",\"max_price\"]}). " +
 		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }

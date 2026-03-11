@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -822,7 +823,7 @@ func TestMergeParams(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := mergeParams(tt.prev, tt.partial)
-			if got != tt.want {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("mergeParams() =\n  %+v\nwant\n  %+v", got, tt.want)
 			}
 		})
@@ -2398,5 +2399,82 @@ Searching for multi-city.`,
 	// Should NOT show stopover suggestion for multi-city trip.
 	if strings.Contains(output, "Tip:") && strings.Contains(output, "leg2_date") {
 		t.Errorf("should not show stopover suggestion for multi-city trip, got:\n%s", output)
+	}
+}
+
+// --- clear_fields tests ---
+
+func TestMergeParams_ClearFieldsDirectOnly(t *testing.T) {
+	prev := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		DirectOnly: true, MaxPrice: 1000,
+	}
+	partial := tripParams{
+		ClearFields: []string{"direct_only"},
+	}
+	merged := mergeParams(prev, partial)
+	if merged.DirectOnly {
+		t.Error("DirectOnly should be cleared by clear_fields")
+	}
+	if merged.MaxPrice != 1000 {
+		t.Errorf("MaxPrice should be preserved, got %v", merged.MaxPrice)
+	}
+}
+
+func TestMergeParams_ClearFieldsMaxPrice(t *testing.T) {
+	prev := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		MaxPrice: 1200, DirectOnly: true,
+	}
+	partial := tripParams{
+		ClearFields: []string{"max_price"},
+	}
+	merged := mergeParams(prev, partial)
+	if merged.MaxPrice != 0 {
+		t.Errorf("MaxPrice should be cleared to 0, got %v", merged.MaxPrice)
+	}
+	if !merged.DirectOnly {
+		t.Error("DirectOnly should be preserved when not cleared")
+	}
+}
+
+func TestMergeParams_ClearFieldsMultiple(t *testing.T) {
+	prev := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		DirectOnly: true, MaxPrice: 1200, PreferredAlliance: "Star Alliance",
+		DepartureAfter: "06:00", AvoidAirlines: "BA",
+	}
+	partial := tripParams{
+		ClearFields: []string{"direct_only", "max_price", "preferred_alliance", "departure_after", "avoid_airlines"},
+	}
+	merged := mergeParams(prev, partial)
+	if merged.DirectOnly {
+		t.Error("DirectOnly should be cleared")
+	}
+	if merged.MaxPrice != 0 {
+		t.Errorf("MaxPrice should be cleared, got %v", merged.MaxPrice)
+	}
+	if merged.PreferredAlliance != "" {
+		t.Errorf("PreferredAlliance should be cleared, got %q", merged.PreferredAlliance)
+	}
+	if merged.DepartureAfter != "" {
+		t.Errorf("DepartureAfter should be cleared, got %q", merged.DepartureAfter)
+	}
+	if merged.AvoidAirlines != "" {
+		t.Errorf("AvoidAirlines should be cleared, got %q", merged.AvoidAirlines)
+	}
+}
+
+func TestParsePartialParams_ClearFields(t *testing.T) {
+	input := `{"clear_fields":["direct_only","max_price"]}`
+	p, ok := parsePartialParams(input)
+	if !ok {
+		t.Fatal("expected to parse partial params with clear_fields")
+	}
+	if len(p.ClearFields) != 2 {
+		t.Fatalf("ClearFields len = %d, want 2", len(p.ClearFields))
+	}
+	if p.ClearFields[0] != "direct_only" || p.ClearFields[1] != "max_price" {
+		t.Errorf("ClearFields = %v, want [direct_only max_price]", p.ClearFields)
 	}
 }

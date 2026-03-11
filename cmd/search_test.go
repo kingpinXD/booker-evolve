@@ -328,6 +328,56 @@ func TestPriceSummary_Empty(t *testing.T) {
 	}
 }
 
+func TestPriceSummary_MultiLeg_WithTripDuration(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil)
+	itin1 := makeItin(leg1, leg2)
+	itin1.TotalTrip = 96 * time.Hour // 4 days
+
+	leg1b := makeLeg("TG", "DEL", "BKK", basetime, 5*time.Hour, 200,
+		&search.Stopover{City: "Bangkok", Airport: "BKK", Duration: 48 * time.Hour})
+	leg2b := makeLeg("AC", "BKK", "YYZ", basetime.Add(48*time.Hour), 18*time.Hour, 600, nil)
+	itin2 := makeItin(leg1b, leg2b)
+	itin2.TotalTrip = 71 * time.Hour // 2d 23h
+
+	got := priceSummary([]search.Itinerary{itin1, itin2}, "USD")
+	// Should include trip duration range.
+	if !strings.Contains(got, "2d 23h") {
+		t.Errorf("priceSummary missing min trip duration, got: %q", got)
+	}
+	if !strings.Contains(got, "4d 0h") {
+		t.Errorf("priceSummary missing max trip duration, got: %q", got)
+	}
+}
+
+func TestPriceSummary_MultiLeg_SingleResult(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil)
+	itin := makeItin(leg1, leg2)
+	itin.TotalTrip = 96 * time.Hour
+
+	got := priceSummary([]search.Itinerary{itin}, "USD")
+	// Single result should show duration without range.
+	if !strings.Contains(got, "4d 0h") {
+		t.Errorf("priceSummary missing trip duration, got: %q", got)
+	}
+}
+
+func TestPriceSummary_SingleLeg_Unchanged(t *testing.T) {
+	itins := []search.Itinerary{
+		makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)),
+		makeItin(makeLeg("AA", "JFK", "LHR", basetime, 8*time.Hour, 800, nil)),
+	}
+	got := priceSummary(itins, "USD")
+	// Single-leg should not include trip duration.
+	want := "2 results | $450 - $800"
+	if got != want {
+		t.Errorf("priceSummary = %q, want %q", got, want)
+	}
+}
+
 // --- printJSON ---
 
 func TestPrintJSON_BookingURL(t *testing.T) {

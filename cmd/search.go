@@ -307,6 +307,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 }
 
 // priceSummary returns a one-line summary of price range and result count.
+// For multi-leg itineraries with TotalTrip data, appends trip duration range.
 func priceSummary(itineraries []search.Itinerary, cur string) string {
 	if len(itineraries) == 0 {
 		return ""
@@ -328,10 +329,46 @@ func priceSummary(itineraries []search.Itinerary, cur string) string {
 	if len(itineraries) == 1 {
 		noun = "result"
 	}
+	var summary string
 	if minC.Amount == maxC.Amount {
-		return fmt.Sprintf("%d %s | %s%.0f", len(itineraries), noun, sym, minC.Amount)
+		summary = fmt.Sprintf("%d %s | %s%.0f", len(itineraries), noun, sym, minC.Amount)
+	} else {
+		summary = fmt.Sprintf("%d %s | %s%.0f - %s%.0f", len(itineraries), noun, sym, minC.Amount, sym, maxC.Amount)
 	}
-	return fmt.Sprintf("%d %s | %s%.0f - %s%.0f", len(itineraries), noun, sym, minC.Amount, sym, maxC.Amount)
+
+	// For multi-leg itineraries, append trip duration range.
+	if len(itineraries[0].Legs) > 1 {
+		minTrip, maxTrip := itineraries[0].TotalTrip, itineraries[0].TotalTrip
+		hasTripData := itineraries[0].TotalTrip > 0
+		for _, itin := range itineraries[1:] {
+			if itin.TotalTrip <= 0 {
+				continue
+			}
+			hasTripData = true
+			if itin.TotalTrip < minTrip || minTrip == 0 {
+				minTrip = itin.TotalTrip
+			}
+			if itin.TotalTrip > maxTrip {
+				maxTrip = itin.TotalTrip
+			}
+		}
+		if hasTripData {
+			if minTrip == maxTrip {
+				summary += fmt.Sprintf(" | %s total", formatTripDuration(minTrip))
+			} else {
+				summary += fmt.Sprintf(" | %s - %s total", formatTripDuration(minTrip), formatTripDuration(maxTrip))
+			}
+		}
+	}
+
+	return summary
+}
+
+// formatTripDuration formats a duration as "Xd Yh" for compact display.
+func formatTripDuration(d time.Duration) string {
+	days := int(d.Hours()) / 24
+	hours := int(d.Hours()) % 24
+	return fmt.Sprintf("%dd %dh", days, hours)
 }
 
 func routeString(itin search.Itinerary) string {

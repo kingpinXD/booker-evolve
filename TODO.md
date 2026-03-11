@@ -1,60 +1,52 @@
 # TODO
 
-Carried from: Day 28 (all completed)
+Carried from: Day 29 (all completed)
 
-## Tasks 62-64: Day 28 tasks
-**Status:** completed -- airport clusters expanded to 22 metros, alliance preference filter end-to-end, build gate clean
+## Tasks 65-69: Day 29 tasks
+**Status:** completed -- multicity alliance+maxprice consistency, departure time filter, seats display, build gate clean
 
 ---
 
-## Task 65: Wire PreferredAlliance into multicity strategy
+## Task 70: Wire FilterByDepartureTime into multicity pipeline
 **Status:** done
-**Plan:** Added PreferredAlliance to multicity.SearchParams, mapped from search.Request in toSearchParams, applied FilterByAlliance in filter stage for both legs. 2 new tests.
-- [x] Write test: multicity search with PreferredAlliance filters out non-matching alliance flights
-- [x] Add PreferredAlliance string to multicity.SearchParams
-- [x] Map PreferredAlliance from search.Request in toSearchParams
-- [x] Apply FilterByAlliance in filter stage (both legs + multi-city results)
+**Plan:** Add DepartureAfter/DepartureBefore to SearchParams, map in toSearchParams, apply FilterByDepartureTime in FILTER stage + stage 4b.
+- [x] Write test: multicity search with DepartureAfter/DepartureBefore filters out flights outside time window
+- [x] Add DepartureAfter and DepartureBefore string to multicity.SearchParams
+- [x] Map DepartureAfter/DepartureBefore from search.Request in toSearchParams
+- [x] Apply FilterByDepartureTime in FILTER stage for both leg1 and leg2
+- [x] Apply FilterByDepartureTime in stage 4b for mcItineraries
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 66: Wire MaxPrice into multicity strategy
+## Task 71: Pass stops=0 to SerpAPI when direct-only
 **Status:** done
-**Plan:** Added MaxPrice to multicity.SearchParams, mapped from search.Request, filter on total combined itinerary price after COMBINE stage. 2 new tests.
-- [x] Write test: multicity search with MaxPrice filters out itineraries exceeding budget
-- [x] Add MaxPrice float64 to multicity.SearchParams
-- [x] Map MaxPrice from search.Request in toSearchParams
-- [x] Apply max price filtering on combined itineraries (total price, not per-flight)
+**Plan:** When req.MaxStops==0, add stops=0 to the SerpAPI params map.
+- [x] Write test: Search with MaxStops=0 includes stops=0 in request params
+- [x] Write test: Search with MaxStops!=0 does not include stops param
+- [x] Add stops=0 to params map when req.MaxStops == 0 in serpapi.Search()
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 67: Add departure time preference filter
+## Task 72: Send return_date to SerpAPI for round-trip requests
 **Status:** done
-**Plan:** Added DepartureAfter/DepartureBefore to search.Request, FilterByDepartureTime in filter.go, wired into direct pipeline and chat tripParams. 9 new tests.
-- [x] Add DepartureAfter and DepartureBefore string fields to search.Request
-- [x] Write test: FilterByDepartureTime keeps flights within time range, removes outside
-- [x] Implement FilterByDepartureTime in search/filter.go
-- [x] Wire into direct search pipeline in direct.go
-- [x] Add departure_after, departure_before to chat tripParams
-- [x] Update buildRequestFromParams, mergeParams, parsePartialParams
-- [x] Update chatSystemPrompt and refinementHint
-- [x] Write chat tests for departure time param extraction and merge
+**Plan:** Add SerpAPIParamReturnDate constant, include return_date in params when IsRoundTrip().
+- [x] Add SerpAPIParamReturnDate = "return_date" to config/routes.go
+- [x] Update serpapi.Search() to include return_date when req.IsRoundTrip()
+- [x] Update existing round-trip test to verify return_date param is sent
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 68: Surface SeatsLeft in JSON output and ranker prompt
+## Task 73: Fix empty city names in ranker prompt
 **Status:** done
-**Plan:** Added seats_left to jsonLeg (omitempty), legSeatsLeft helper (min across segments), [Seats: N left] tag in ranker prompt. 6 new tests.
-- [x] Write test: JSON output includes seats_left when SeatsLeft > 0
-- [x] Add seats_left to jsonLeg (omitempty)
-- [x] Add legSeatsLeft helper
-- [x] Write test: ranker prompt includes [Seats: N left] tag when available
-- [x] Add seats annotation in buildRankingPrompt
+**Plan:** Conditionally include city parenthetical only when OriginCity or DestinationCity is non-empty.
+- [x] Write test: buildRankingPrompt with empty OriginCity/DestinationCity produces clean output (no empty parens)
+- [x] Modify ranker.go line ~221 to conditionally include city parenthetical
+- [x] Verify existing ranker tests still pass
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 69: Build gate verification and session finalize
+## Task 74: Build gate verification and session finalize
 **Status:** done
-**Plan:** Post-merge verification. All gates clean after gofmt fix in strategy.go.
-- [x] Run gofmt -l . and fix violations (alignment in strategy.go)
-- [x] Run go vet ./... -- clean
-- [x] Run golangci-lint run -- 0 issues
-- [x] Run go test ./... -- all pass
+**Plan:** Full verification, fix gofmt alignment, update governance files, increment session number.
+- [x] Run gofmt -l . and fix any violations
+- [x] Run go vet ./... -- must be clean
+- [x] Run golangci-lint run -- must be 0 issues
+- [x] Run go test ./... -- all must pass
 - [x] Update JOURNAL.md with session summary
-- [x] Update LEARNINGS.md with new insights
-- [x] Increment SESSION_NUMBER to 30
+- [x] Increment SESSION_NUMBER

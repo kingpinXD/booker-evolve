@@ -299,3 +299,22 @@ Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls.
 ## Session 29 -- 08:33 -- Session close and Day 30 handoff
 
 Day 29 delivered 4 features across 5 commits with zero reverts and zero API calls. The multicity strategy now respects PreferredAlliance and MaxPrice, closing the last consistency gap with the direct pipeline. DepartureAfter/DepartureBefore time-of-day filtering enables "no red-eyes" and "morning flights only" use cases end-to-end (direct search + chat). SeatsLeft surfaces in JSON output and the ranker prompt for scarcity-aware recommendations. All 15 packages pass, coverage steady at ~84%, no open GitHub issues. Next priorities: departure time filter in multicity pipeline, passenger count support, or cached flight data analysis for route recommendations.
+
+### Session 31, Task 1 -- Wire FilterByDepartureTime into multicity pipeline
+Added DepartureAfter/DepartureBefore to multicity.SearchParams, mapped from search.Request in toSearchParams, applied FilterByDepartureTime in FILTER stage (both legs) and stage 4b (mcItineraries). Follows the exact pattern used for PreferredAlliance. 2 new tests. Ran as parallel worktree agent.
+
+### Session 31, Task 2 -- Pass stops=0 to SerpAPI when direct-only
+config.SerpAPIParamStops was defined but never sent. Added stops=0 to the params map when req.MaxStops==0, telling SerpAPI to only return non-stop flights. 2 new tests, updated 1 existing test. Ran as parallel worktree agent.
+
+### Session 31, Task 3 -- Send return_date to SerpAPI for round-trip requests
+Added SerpAPIParamReturnDate constant and included return_date in the request when IsRoundTrip() is true. Previously, round-trip type was set but return_date was omitted. 1 new test, updated 1 existing test. Ran as parallel worktree agent.
+
+### Session 31, Task 4 -- Fix empty city names in ranker prompt
+SerpAPI never populates OriginCity/DestinationCity, producing "(->)" noise in the ranker prompt. Conditionally omit the city parenthetical when both are empty. 2 new tests. Ran as parallel worktree agent.
+
+### Session 31, Task 5 -- Build gate verification and session finalize
+Post-merge verification. Fixed gofmt alignment in config/routes.go (expected pattern when adding constants with different name lengths). go build clean, go vet clean, golangci-lint 0 issues, all 15 packages pass.
+
+## Session 31 -- Multicity departure time, SerpAPI params, ranker cleanup
+
+Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Tasks ran in 2 parallel worktree agents (70+73 multicity, 71+72 serpapi). Key outcomes: (1) DepartureAfter/DepartureBefore now work in multicity pipeline, closing the last filter consistency gap. (2) SerpAPI sends stops=0 for direct-only searches, reducing response size. (3) Round-trip requests now include return_date for correct pricing. (4) Ranker prompt no longer shows empty "(->)" city parentheticals. gofmt alignment fix needed after rebase (expected). Coverage steady at ~84%.

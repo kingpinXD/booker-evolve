@@ -755,3 +755,49 @@ func TestFlightPassesPreferredAirlines(t *testing.T) {
 		t.Error("empty preferred should pass all")
 	}
 }
+
+// --- firstDeparture edge cases ---
+
+func TestFirstDeparture_ZeroLegs(t *testing.T) {
+	itin := Itinerary{Legs: nil}
+	got := firstDeparture(itin)
+	if !got.IsZero() {
+		t.Errorf("firstDeparture(zero legs) = %v, want zero time", got)
+	}
+}
+
+func TestFirstDeparture_EmptyOutbound(t *testing.T) {
+	itin := Itinerary{Legs: []Leg{{Flight: types.Flight{Outbound: nil}}}}
+	got := firstDeparture(itin)
+	if !got.IsZero() {
+		t.Errorf("firstDeparture(empty outbound) = %v, want zero time", got)
+	}
+}
+
+// --- flightPassesTimeOfDay edge cases ---
+
+func TestFlightPassesDepartureTime_EmptyOutbound(t *testing.T) {
+	noSegs := types.Flight{Outbound: nil}
+	if FlightPassesDepartureTime(noSegs, "06:00", "12:00") {
+		t.Error("empty outbound should return false when time constraints set")
+	}
+}
+
+func TestFlightPassesDepartureTime_InvalidFormat(t *testing.T) {
+	morning := types.Flight{Outbound: []types.Segment{{DepartureTime: time.Date(2026, 3, 15, 8, 0, 0, 0, time.UTC)}}}
+	// Invalid "after" format should gracefully return true (no constraint).
+	if !FlightPassesDepartureTime(morning, "not-a-time", "12:00") {
+		t.Error("invalid after format should degrade to true (no constraint)")
+	}
+	// Invalid "before" format should also degrade.
+	if !FlightPassesDepartureTime(morning, "06:00", "garbage") {
+		t.Error("invalid before format should degrade to true (no constraint)")
+	}
+}
+
+func TestFlightPassesArrivalTime_EmptyOutbound(t *testing.T) {
+	noSegs := types.Flight{Outbound: nil}
+	if FlightPassesArrivalTime(noSegs, "10:00", "18:00") {
+		t.Error("empty outbound should return false when time constraints set")
+	}
+}

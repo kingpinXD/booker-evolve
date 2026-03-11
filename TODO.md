@@ -1,6 +1,6 @@
 # TODO
 
-Carried from: Day 38 (all completed)
+Carried from: Day 40 (all completed)
 
 ## Tasks 95-99: Day 37 tasks
 **Status:** completed -- refactor stage 4b filtering, total_trip JSON, departure time CLI flags, itinerary deduplication, stopover duration control
@@ -13,40 +13,43 @@ Carried from: Day 38 (all completed)
 
 ---
 
-## Task 105: Consolidate time-of-day filter functions
-**Status:** done
-**Plan:** Extract shared filterByTimeOfDay helper from FilterByDepartureTime and FilterByArrivalTime.
-- [x] Extract filterByTimeOfDay(flights, after, before, extractTime) helper
-- [x] Rewrite FilterByDepartureTime as thin wrapper
-- [x] Rewrite FilterByArrivalTime as thin wrapper
-- [x] Verify build + test + vet pass
+## Task 110: Refactor ranker sort and extract applyScores helper
+**Status:** pending
+**Plan:**
+- [ ] Write test for sort stability with equal scores
+- [ ] Replace bubble sort in applySortByScore with sort.Slice
+- [ ] Extract duplicate score-application loop into applyScores helper
+- [ ] Verify build + test + vet pass
 
-## Task 106: Single-flight filter predicates for passesAllFilters
+## Task 111: Bidirectional route lookup in StopoversForRoute
 **Status:** done
-**Plan:** Add single-flight predicate functions to eliminate []Flight{f} wrapping in passesAllFilters.
-- [x] Write predicate tests (FlightPassesBlocked, FlightPassesAlliance, etc.)
-- [x] Implement predicates in filter.go + parseAirlineCodes helper
-- [x] Rewrite passesAllFilters in multicity.go to use predicates
-- [x] Verify existing multicity tests + build + vet pass
+**Plan:** Add reverse lookup to StopoversForRoute: check dest->origin when forward not found, filter origin/dest.
+- [x] Write test: StopoversForRoute("YYZ","DEL") returns route-specific, not fallback
+- [x] Modify StopoversForRoute to check reverse key when forward not found
+- [x] Filter origin/dest from reverse results
+- [x] Verify all existing stopover tests still pass
 
-## Task 107: Add India-UK route stopovers (DEL/BOM to LHR)
-**Status:** done
-**Plan:** Add curated stopover lists for DEL->LHR (6 cities) and BOM->LHR (6 cities).
-- [x] Write tests for StopoversForRoute("DEL","LHR") and StopoversForRoute("BOM","LHR")
-- [x] Add DELToLHRStopovers and BOMToLHRStopovers
-- [x] Register routes in stopoversMap
-- [x] Verify tests pass
+## Task 112: Add India-US West Coast stopovers (DEL/BOM to SFO)
+**Status:** pending
+**Plan:**
+- [ ] Write tests for StopoversForRoute("DEL","SFO") and StopoversForRoute("BOM","SFO")
+- [ ] Add DELToSFOStopovers and BOMToSFOStopovers
+- [ ] Register routes in stopoversMap
+- [ ] Verify tests pass
 
-## Task 108: Ranker cache hit/miss counters
-**Status:** done
-**Plan:** Add hits/misses counters to Ranker, CacheStats() method.
-- [x] Write tests: hit+miss, all misses, empty
-- [x] Add hits/misses fields, CacheStats() method
-- [x] Increment counters in Rank()
-- [x] Verify build + test + vet pass
+## Task 113: Zero-results proactive suggestions in chat
+**Status:** pending
+**Plan:**
+- [ ] Write test: zero-results output includes nearby airports when available
+- [ ] Write test: zero-results mentions flex dates
+- [ ] Implement zeroResultsSuggestion helper
+- [ ] Wire into chatLoop zero-results block
+- [ ] Verify build + test + vet pass
 
-## Task 109: Chat system prompt agent personality
-**Status:** done
-**Plan:** Enhance chatSystemPrompt to position booker as proactive travel agent per VISION.md.
-- [x] Add agent personality + stopover/tradeoff/flexibility guidance
-- [x] Verify existing chat tests pass + build + vet
+## Task 114: Stopover data consistency validation test
+**Status:** pending
+**Plan:**
+- [ ] Write test: all route stopovers exclude origin/dest airports
+- [ ] Write test: all IATA codes are 3 uppercase letters
+- [ ] Write test: MinStay < MaxStay, City/Notes non-empty
+- [ ] Verify tests pass

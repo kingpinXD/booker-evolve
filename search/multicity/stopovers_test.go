@@ -153,6 +153,58 @@ func TestStopoversForRoute_DELToLHR(t *testing.T) {
 	}
 }
 
+func TestStopoversForRoute_ReverseRoute(t *testing.T) {
+	// YYZ->DEL should return route-specific stopovers (from DEL->YYZ),
+	// not global fallback hubs.
+	got := StopoversForRoute("YYZ", "DEL")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for reverse route YYZ->DEL, got none")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	// KUL and FRA are in DEL->YYZ route-specific list but NOT in GlobalFallbackHubs.
+	// Their presence proves reverse lookup uses route-specific data.
+	for _, want := range []string{"KUL", "FRA"} {
+		if !airports[want] {
+			t.Errorf("reverse YYZ->DEL missing route-specific airport %s (would not be in fallback)", want)
+		}
+	}
+
+	// Origin and destination must be excluded.
+	if airports["YYZ"] {
+		t.Error("origin YYZ should not be in stopover list")
+	}
+	if airports["DEL"] {
+		t.Error("destination DEL should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_ReverseExcludesOriginDest(t *testing.T) {
+	// LHR->DEL reverse: DEL->LHR has CMB which is not in fallback hubs.
+	// CMB presence proves route-specific reverse lookup.
+	got := StopoversForRoute("LHR", "DEL")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for reverse LHR->DEL, got none")
+	}
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	if !airports["CMB"] {
+		t.Error("reverse LHR->DEL missing route-specific airport CMB (proves non-fallback)")
+	}
+	// Neither origin nor destination should appear.
+	if airports["LHR"] {
+		t.Error("origin LHR should not be in stopover list")
+	}
+	if airports["DEL"] {
+		t.Error("destination DEL should not be in stopover list")
+	}
+}
+
 func TestStopoversForRoute_BOMToLHR(t *testing.T) {
 	got := StopoversForRoute("BOM", "LHR")
 	if len(got) == 0 {

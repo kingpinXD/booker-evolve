@@ -581,11 +581,22 @@ var GlobalFallbackHubs = []StopoverCity{
 }
 
 // StopoversForRoute returns the candidate stopover cities for a given
-// origin-destination pair. When no route-specific stopovers exist, it
-// returns the global fallback hubs with origin/destination airports excluded.
+// origin-destination pair. It checks the forward direction first, then
+// the reverse (dest→origin), and falls back to global hubs. Reverse
+// results are filtered to exclude origin/destination airports.
 func StopoversForRoute(origin, destination string) []StopoverCity {
 	if route := stopoversMap[routeKey(origin, destination)]; route != nil {
 		return route
+	}
+	// Try reverse direction — same stopovers work both ways.
+	if route := stopoversMap[routeKey(destination, origin)]; route != nil {
+		var filtered []StopoverCity
+		for _, s := range route {
+			if s.Airport != origin && s.Airport != destination {
+				filtered = append(filtered, s)
+			}
+		}
+		return filtered
 	}
 	var hubs []StopoverCity
 	for _, h := range GlobalFallbackHubs {

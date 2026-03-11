@@ -484,3 +484,6 @@ Key outcomes:
 5. Chat system prompt now positions booker as a proactive travel agent per VISION.md.
 
 12 new tests total. All build gates pass.
+
+### Session 41, Task 1 -- Bidirectional route lookup in StopoversForRoute
+Added reverse direction lookup to StopoversForRoute: when origin->dest not found, checks dest->origin and filters origin/dest airports from results. This doubles effective route coverage (7 routes -> 14). 2 new tests verify route-specific data (not fallback) via airports unique to each route (KUL, FRA, CMB).

@@ -74,7 +74,7 @@ func newTestSearcher(t *testing.T, flights []types.Flight, llmHandler http.Handl
 		Provider:   "test",
 	}, httpclient.New(httpCfg))
 
-	return NewSearcher(reg, llmClient, WeightsBudget)
+	return NewSearcher(reg, NewRanker(llmClient, WeightsBudget))
 }
 
 // llmRankingHandler returns an http.HandlerFunc that responds with valid ranking JSON.
@@ -432,7 +432,7 @@ func TestSearch_MultiCityProvider(t *testing.T) {
 		Provider:   "test",
 	}, httpclient.New(httpCfg))
 
-	searcher := NewSearcher(reg, llmClient, WeightsBudget)
+	searcher := NewSearcher(reg, NewRanker(llmClient, WeightsBudget))
 
 	results, err := searcher.Search(context.Background(), SearchParams{
 		Origin:        "DEL",

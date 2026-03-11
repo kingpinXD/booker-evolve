@@ -75,7 +75,6 @@ import (
 	"sync"
 	"time"
 
-	"booker/llm"
 	"booker/provider"
 	"booker/search"
 	"booker/types"
@@ -164,10 +163,13 @@ type Searcher struct {
 	ranker   *Ranker
 }
 
-func NewSearcher(registry *provider.Registry, llmClient *llm.Client, weights RankingWeights) *Searcher {
+// NewSearcher creates a multi-city searcher sharing the provided Ranker.
+// Sharing a single Ranker instance lets callers update weights dynamically
+// (e.g. when a chat user switches ranking profile mid-session).
+func NewSearcher(registry *provider.Registry, ranker *Ranker) *Searcher {
 	return &Searcher{
 		registry: registry,
-		ranker:   NewRanker(llmClient, weights),
+		ranker:   ranker,
 	}
 }
 

@@ -531,3 +531,6 @@ Added Delhi (DEL+JAI) and Mumbai (BOM+PNQ) clusters to airports.go enabling Near
 
 ## Day 43, Task 5 -- Extract display formatting from cmd/search.go into cmd/display.go
 Moved 25 display/formatting functions and 4 JSON types from search.go to display.go. search.go went from 768 to 197 lines. Pure refactor, no behavior changes. All existing tests pass unchanged, lint clean.
+
+### Session 44, Task 1 -- Fix chat profile switching (dynamic ranker per search)
+Added SetWeights method to multicity.Ranker and changed NewSearcher to accept a *Ranker (shared with direct strategy). Defined weightsUpdater interface in chatLoop so profile changes mid-chat now actually update ranking weights. The old code parsed and merged profile changes but never applied them to the ranker -- effectively dead code. Integration test verifies two SetWeights calls (budget then eco) on profile switch.

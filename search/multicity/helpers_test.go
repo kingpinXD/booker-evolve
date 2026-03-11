@@ -236,7 +236,7 @@ func TestFetchFromAllProviders_EmptyRegistry(t *testing.T) {
 
 func TestNewSearcher(t *testing.T) {
 	reg := provider.NewRegistry()
-	s := NewSearcher(reg, nil, WeightsBudget)
+	s := NewSearcher(reg, NewRanker(nil, WeightsBudget))
 	if s == nil {
 		t.Fatal("NewSearcher returned nil")
 	}

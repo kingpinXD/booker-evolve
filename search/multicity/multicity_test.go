@@ -38,7 +38,7 @@ func TestDELToYYZ_March24(t *testing.T) {
 	}
 
 	llmClient := llm.New(cfg.LLM, httpClient)
-	searcher := NewSearcher(registry, llmClient, WeightsBudget)
+	searcher := NewSearcher(registry, NewRanker(llmClient, WeightsBudget))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()

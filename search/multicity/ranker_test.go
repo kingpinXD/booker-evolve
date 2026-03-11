@@ -1137,6 +1137,38 @@ func TestBuildSystemPrompt_BudgetNoCarbon(t *testing.T) {
 	}
 }
 
+func TestRanker_SetWeights(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBudget)
+	ctx := context.Background()
+
+	itins := makeTestItineraries(500, "JFK", "LHR")
+
+	// First rank with budget weights.
+	if _, err := ranker.Rank(ctx, itins); err != nil {
+		t.Fatalf("first Rank: %v", err)
+	}
+
+	// Switch to eco weights and rank again. Different weights = cache miss.
+	ranker.SetWeights(WeightsEco)
+	if _, err := ranker.Rank(ctx, itins); err != nil {
+		t.Fatalf("second Rank: %v", err)
+	}
+
+	// Should have called LLM twice (different weights = different cache keys).
+	if mock.calls != 2 {
+		t.Errorf("expected 2 LLM calls after SetWeights, got %d", mock.calls)
+	}
+
+	// Third rank with eco weights should hit cache.
+	if _, err := ranker.Rank(ctx, itins); err != nil {
+		t.Fatalf("third Rank: %v", err)
+	}
+	if mock.calls != 2 {
+		t.Errorf("expected 2 LLM calls (cache hit after SetWeights), got %d", mock.calls)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

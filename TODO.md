@@ -1,49 +1,53 @@
 # TODO
 
-Carried from: Day 41 (all completed)
+Carried from: Day 43 (all completed)
 
-## Tasks 110-114: Day 41 tasks
-**Status:** completed -- refactor ranker sort + applyScores, bidirectional route lookup, India-US West Coast stopovers, zero-results chat suggestions, stopover data consistency test
+## Tasks 115-119: Day 43 tasks
+**Status:** completed -- Kiwi doc cleanup, India-Australia stopovers, eco ranking profile, Indian airport clusters, display extraction
 
 ---
 
-## Task 115: Update stale Kiwi references in multicity pipeline docs
+## Task 120: Fix chat profile switching (dynamic ranker per search)
 **Status:** done
-**Plan:** Update package-level comments in multicity.go to reference SerpAPI instead of Kiwi.
-- [x] Replace all "Kiwi" references in doc comments with SerpAPI equivalents
-- [x] Update TODOs that reference Kiwi-specific limitations
-- [x] Verify build + vet pass
+**Plan:** Add SetWeights to Ranker, share one Ranker between direct+multicity strategies, define weightsUpdater interface for chatLoop, update weights before each search when profile changes.
+- [x] Write test: changing profile mid-chat changes ranking weights used
+- [x] Add SetWeights method to Ranker
+- [x] Share single Ranker between direct and multicity (changed NewSearcher signature)
+- [x] Wire profileWeights(params.Profile) into chatLoop before each search via weightsUpdater
+- [x] Integration test: profile switch mid-chat triggers correct weight updates
+- [x] Verify build + test + vet + lint pass
 
-## Task 116: Add India-Australia stopover routes (DEL/BOM to SYD)
-**Status:** done
-**Plan:** Add curated stopover lists for DEL->SYD and BOM->SYD corridors.
-- [x] Write tests for StopoversForRoute("DEL","SYD") and StopoversForRoute("BOM","SYD")
-- [x] Add DELToSYDStopovers (6 cities: SIN, BKK, KUL, HKG, NRT, KIX)
-- [x] Add BOMToSYDStopovers (5 cities: SIN, BKK, KUL, HKG, NRT)
-- [x] Register routes in stopoversMap
-- [x] Verify tests pass + consistency test passes
+## Task 121: Extract StripCodeFences helper to deduplicate 4 call sites
+**Status:** pending
+**Plan:**
+- [ ] Write test for llm.StripCodeFences (json fences, plain fences, no fences)
+- [ ] Add StripCodeFences to llm/llm.go
+- [ ] Replace 4 call sites: chat.go (x2), picker.go, ranker.go
+- [ ] Verify all existing tests pass
 
-## Task 117: Add eco ranking profile (carbon-weighted)
-**Status:** done
-**Plan:** Add WeightsEco profile, register in profiles map, wire into chat.
-- [x] Write test for WeightsEco profile (weights sum to 100, carbon-aware)
-- [x] Add WeightsEco to ranker.go
-- [x] Register "eco" in profiles map in cmd/search.go
-- [x] Update chat system prompt and refinement hint to mention eco profile
-- [x] Add chat test recognizing eco profile
-- [x] Verify build + test + vet pass
+## Task 122: Fix NearbySearcher ignoring SortBy
+**Status:** pending
+**Plan:**
+- [ ] Write test: NearbySearcher with SortBy="duration" returns duration-sorted results
+- [ ] Replace hardcoded price sort with search.SortResults(merged, req.SortBy)
+- [ ] Verify existing nearby tests pass
 
-## Task 118: Add Indian airport clusters (DEL, BOM metro areas)
-**Status:** done
-**Plan:** Add DEL and BOM clusters to airports.go for NearbySearcher expansion.
-- [x] Write tests: NearbyAirports("DEL") returns ["JAI"], NearbyAirports("BOM") returns ["PNQ"]
-- [x] Add "Delhi" and "Mumbai" clusters to airportClusters map
-- [x] Verify tests pass
+## Task 123: Thread user Context to multicity ranker
+**Status:** pending
+**Plan:**
+- [ ] Write test: buildRankingPrompt includes context when non-empty
+- [ ] Write test: buildRankingPrompt unchanged when context is empty
+- [ ] Add Context field to SearchParams
+- [ ] Map req.Context to SearchParams.Context in toSearchParams
+- [ ] Append context to buildRankingPrompt when non-empty
+- [ ] Verify build + test + vet pass
 
-## Task 119: Extract display formatting from cmd/search.go into cmd/display.go
-**Status:** done
-**Plan:** Move all display/formatting functions and JSON types from search.go to display.go.
-- [x] Create cmd/display.go with display functions and types
-- [x] Remove moved functions/types from cmd/search.go
-- [x] Verify build passes (same package, no import changes needed)
-- [x] Verify all cmd tests pass unchanged
+## Task 124: Respect departure time preferences in CombineLegs red-eye filter
+**Status:** pending
+**Plan:**
+- [ ] Write test: CombineLegs with DepartureAfter="01:00" allows 02:00 leg2 departures
+- [ ] Write test: CombineLegs without explicit times still rejects red-eye
+- [ ] Add DepartureAfter/DepartureBefore to CombineParams
+- [ ] Skip isRedEye check when user has explicit departure time constraints
+- [ ] Thread DepartureAfter/DepartureBefore from SearchParams to CombineParams in multicity.go
+- [ ] Verify build + test + vet pass

@@ -9,6 +9,7 @@ import (
 
 	"booker/llm"
 	"booker/search"
+	"booker/search/multicity"
 	"booker/types"
 )
 
@@ -145,7 +146,7 @@ func TestChatLoop_QuitImmediately(t *testing.T) {
 	in := strings.NewReader("quit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -176,7 +177,7 @@ Searching for flights now.`,
 	in := strings.NewReader("I want to go to Toronto\nfrom Delhi on June 15\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -246,7 +247,7 @@ Searching for flights.`,
 	in := strings.NewReader("find flights\nshow me cheaper\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -515,7 +516,7 @@ Searching for flights.`,
 	in := strings.NewReader("find flights\nshow me options\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -641,7 +642,7 @@ Switching to business class.`,
 	in := strings.NewReader("find flights\ntry business class\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -740,7 +741,7 @@ Searching for flights.`,
 	in := strings.NewReader("find flights\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -878,7 +879,7 @@ Searching.`, 15+i))
 	in := strings.NewReader(strings.Join(inputLines, "\n") + "\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1455,7 +1456,7 @@ Searching for flights.`,
 	in := strings.NewReader("find flights\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, pi, in, &out)
+	err := chatLoop(context.Background(), mock, picker, pi, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1643,7 +1644,7 @@ Searching for flights.`,
 	in := strings.NewReader("find flights\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1656,5 +1657,56 @@ Searching for flights.`,
 	// Should suggest flex_days since default is 0.
 	if !strings.Contains(output, "flex_days") {
 		t.Errorf("expected flex_days suggestion in zero-results output, got:\n%s", output)
+	}
+}
+
+// mockWeightsUpdater records calls to SetWeights for test assertions.
+type mockWeightsUpdater struct {
+	calls []multicity.RankingWeights
+}
+
+func (m *mockWeightsUpdater) SetWeights(w multicity.RankingWeights) {
+	m.calls = append(m.calls, w)
+}
+
+func TestChatLoop_ProfileSwitchUpdatesWeights(t *testing.T) {
+	// First response: initial search with budget profile.
+	// Second response: switch to eco profile.
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15","profile":"budget"}
+Searching for flights.`,
+		`{"profile":"eco"}
+Let me search with eco ranking.`,
+		"Done.",
+	}
+	mock := &chatMockLLM{responses: responses}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	wu := &mockWeightsUpdater{}
+	in := strings.NewReader("find flights\nswitch to eco\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, wu, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should have called SetWeights twice: once for "budget", once for "eco".
+	if len(wu.calls) != 2 {
+		t.Fatalf("expected 2 SetWeights calls, got %d", len(wu.calls))
+	}
+	if wu.calls[0] != multicity.WeightsBudget {
+		t.Errorf("first SetWeights should be WeightsBudget, got %+v", wu.calls[0])
+	}
+	if wu.calls[1] != multicity.WeightsEco {
+		t.Errorf("second SetWeights should be WeightsEco, got %+v", wu.calls[1])
 	}
 }

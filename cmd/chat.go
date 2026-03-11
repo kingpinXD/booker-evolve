@@ -495,13 +495,18 @@ type priceInsighter interface {
 	LastPriceInsights() search.PriceInsights
 }
 
+// weightsUpdater allows dynamic ranking weight changes mid-session.
+type weightsUpdater interface {
+	SetWeights(multicity.RankingWeights)
+}
+
 func runChat(cmd *cobra.Command, _ []string) error {
 	if !viper.GetBool(keyVerbose) {
 		log.SetOutput(io.Discard)
 	}
 
 	weights := profileWeights(viper.GetString(keyProfile))
-	picker, llmClient, rawProvider, err := buildPicker(weights, "")
+	picker, llmClient, rawProvider, ranker, err := buildPicker(weights, "")
 	if err != nil {
 		return err
 	}
@@ -509,12 +514,13 @@ func runChat(cmd *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(cmd.Context(), defaultTimeout)
 	defer cancel()
 
-	return chatLoop(ctx, llmClient, picker, rawProvider, os.Stdin, os.Stdout)
+	return chatLoop(ctx, llmClient, picker, rawProvider, ranker, os.Stdin, os.Stdout)
 }
 
 // chatLoop runs the multi-turn conversation. Separated from runChat for testability.
 // insights may be nil when no price insight provider is available.
-func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *search.Picker, insights priceInsighter, in io.Reader, out io.Writer) error {
+// wu may be nil when dynamic weight updates are not supported.
+func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *search.Picker, insights priceInsighter, wu weightsUpdater, in io.Reader, out io.Writer) error {
 	history := []llm.Message{
 		{Role: llm.RoleSystem, Content: chatSystemPrompt(time.Now())},
 	}
@@ -564,6 +570,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		}
 
 		lastParams = params
+
+		// Update ranking weights when the profile changes mid-session.
+		if params.Profile != "" && wu != nil {
+			wu.SetWeights(profileWeights(params.Profile))
+		}
 
 		// Build and execute the search.
 		req := buildRequestFromParams(params)

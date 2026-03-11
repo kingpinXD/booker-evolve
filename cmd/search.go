@@ -127,7 +127,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		log.SetOutput(io.Discard)
 	}
 
-	picker, _, rawProvider, err := buildPicker(weights, viper.GetString(keyLeg2Date))
+	picker, _, rawProvider, _, err := buildPicker(weights, viper.GetString(keyLeg2Date))
 	if err != nil {
 		return err
 	}

@@ -101,6 +101,12 @@ func NewRanker(llmClient rankerLLM, weights RankingWeights) *Ranker {
 	return &Ranker{llm: llmClient, weights: weights, cache: make(map[string][]RankResult)}
 }
 
+// SetWeights updates the ranker's weights profile for subsequent Rank calls.
+// Existing cache entries keyed to old weights will simply not match.
+func (r *Ranker) SetWeights(w RankingWeights) {
+	r.weights = w
+}
+
 // CacheStats returns the number of cache hits and misses since the Ranker was created.
 func (r *Ranker) CacheStats() (hits, misses int) {
 	return r.hits, r.misses

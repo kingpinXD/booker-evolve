@@ -15,12 +15,12 @@ Carried from: Day 18 (all completed)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 22: Wire NearbySearcher into buildPicker
-**Status:** pending
-**Plan:**
-- [ ] Import search/nearby in cmd/infra.go
-- [ ] Create NearbySearcher wrapping directStrategy in buildPicker
-- [ ] Register nearbyStrategy as third picker strategy
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Import nearby package, wrap directStrategy with nearby.NewSearcher, pass as 3rd strategy to NewPicker.
+- [x] Import search/nearby in cmd/infra.go
+- [x] Create NearbySearcher wrapping directStrategy in buildPicker
+- [x] Register nearbyStrategy as third picker strategy
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 23: Add --max-price budget filter
 **Status:** pending

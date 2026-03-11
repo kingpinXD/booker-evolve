@@ -93,6 +93,9 @@ Added refinementHint() function listing available levers (dates, nearby airports
 ### Session 18, Task 5 -- Lint and gofmt sweep
 Fixed 1 gofmt violation in search/direct/direct.go (tab alignment from worktree agent). Zero lint issues after fix. All build gates pass.
 
+### Session 19, Task 2 -- Wire NearbySearcher into buildPicker
+Imported nearby package in cmd/infra.go, wrapped directStrategy with nearby.NewSearcher, and passed it as the third strategy to NewPicker. The LLM picker can now select "nearby" when users want to compare metro-area airports. 2-line change, all tests pass.
+
 ### Session 19, Task 1 -- Add --return-date flag to search command
 Added keyReturnDate const and --return-date flag to searchCmd. Wired to req.ReturnDate in runSearch so CLI users can now trigger round-trip searches that the direct strategy already supports. Minimal 3-line change, all tests pass.
 

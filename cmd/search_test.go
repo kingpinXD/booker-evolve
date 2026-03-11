@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -470,6 +471,43 @@ func TestPrintTable_MultiLeg_BookingURL(t *testing.T) {
 	}
 	if !bytes.Contains([]byte(out), []byte("https://book.example.com/leg1")) {
 		t.Error("multi-leg table output missing leg 1 booking URL")
+	}
+}
+
+// --- printTable stops ---
+
+func TestPrintTable_StopsColumn(t *testing.T) {
+	// Direct flight (0 stops): 1 segment.
+	directLeg := makeLeg("AC", "DEL", "YYZ", basetime, 14*time.Hour, 800, nil)
+
+	// Connecting flight (1 stop): 2 segments.
+	connectingLeg := search.Leg{
+		Flight: types.Flight{
+			Outbound: []types.Segment{
+				{Airline: "LH", Origin: "DEL", Destination: "FRA", DepartureTime: basetime, ArrivalTime: basetime.Add(8 * time.Hour)},
+				{Airline: "LH", Origin: "FRA", Destination: "YYZ", DepartureTime: basetime.Add(10 * time.Hour), ArrivalTime: basetime.Add(20 * time.Hour)},
+			},
+			TotalDuration: 20 * time.Hour,
+			Price:         types.Money{Amount: 600, Currency: "USD"},
+		},
+	}
+
+	itins := []search.Itinerary{
+		makeItin(directLeg),
+		makeItin(connectingLeg),
+	}
+	out := capturePrintTable(itins, "USD")
+
+	if !bytes.Contains([]byte(out), []byte("STOPS")) {
+		t.Error("table output missing STOPS header")
+	}
+	// The table should contain "0" for the direct flight and "1" for the connecting flight.
+	// We check for both values in the output.
+	if !strings.Contains(out, " 0 ") && !strings.Contains(out, "│ 0") {
+		t.Errorf("table output missing stops=0 for direct flight, got:\n%s", out)
+	}
+	if !strings.Contains(out, " 1 ") && !strings.Contains(out, "│ 1") {
+		t.Errorf("table output missing stops=1 for connecting flight, got:\n%s", out)
 	}
 }
 

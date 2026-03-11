@@ -154,3 +154,12 @@ All gates clean after merging worktree branches: gofmt -l empty, go vet clean, g
 
 ### Session 22, Task 1 -- Fix chat output routing to use io.Writer
 Added `io.Writer` parameter to `printTable`, `printJSON`, and `printJSONWithInsights`. chatLoop now routes all search output through its `out` writer instead of hardcoding os.Stdout. Removed os.Pipe hacks from tests in favor of direct buffer writes. Added new test confirming chatLoop output buffer captures table data.
+
+### Session 22, Task 2 -- Show booking URLs in table output
+Added "Book" column to both single-leg and multi-leg table layouts. Added `legBookingURL` helper following existing `legAirlines`/`legDeparture` pattern. 3 new tests. Ran as parallel worktree agent.
+
+### Session 22, Task 3 -- Conversation history truncation
+Added `truncateHistory` sliding window keeping system prompt + last 20 messages. Wired into chatLoop before each ChatCompletion call. 3 new tests including integration test verifying long conversation stays within bounds. Ran as parallel worktree agent.
+
+### Session 22, Task 4 -- Add stops count to table output
+Added `itineraryStops` helper that sums `Flight.Stops()` across all legs. Added "Stops" column to both single-leg and multi-leg table layouts. 1 new test with direct (0) and connecting (1) flights.

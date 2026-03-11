@@ -19,30 +19,30 @@ Carried from: Day 21 (all completed)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 37: Show booking URLs in table output
-**Status:** pending
-**Plan:**
-- [ ] Write test: table output for flight with BookingURL contains the URL
-- [ ] Write test: flights without BookingURL show no extra content
-- [ ] Add booking URL display to printTable (sub-row or column)
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Add "Book" column to both single-leg and multi-leg table layouts. Add legBookingURL helper.
+- [x] Write test: table output for flight with BookingURL contains the URL
+- [x] Write test: flights without BookingURL show no extra content
+- [x] Write test: multi-leg table with BookingURL
+- [x] Add legBookingURL helper + "Book" column to printTable
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 38: Conversation history truncation
-**Status:** pending
-**Plan:**
-- [ ] Write test: history truncated after threshold while system prompt preserved
-- [ ] Write test: recent messages remain after truncation
-- [ ] Add truncateHistory function with configurable max messages
-- [ ] Wire into chatLoop before each LLM call
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Add truncateHistory sliding window (system prompt + last 20 messages). Wire into chatLoop before ChatCompletion call.
+- [x] Write test: history truncated after threshold while system prompt preserved
+- [x] Write test: short history unchanged
+- [x] Write test: chatLoop integration with history truncation
+- [x] Add truncateHistory function + maxHistoryMessages const
+- [x] Wire into chatLoop before each LLM call
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 39: Add stops count to table output
-**Status:** pending
-**Plan:**
-- [ ] Write test: table output contains "STOPS" header
-- [ ] Write test: correct stop counts for direct (0) and connecting (1+) flights
-- [ ] Add stops helper function for itineraries
-- [ ] Add "Stops" column to both single-leg and multi-leg table layouts
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Add `itineraryStops` helper that sums Flight.Stops() across all legs. Add "Stops" column to both single-leg and multi-leg layouts in printTable. TDD with tests for 0-stop direct and 1-stop connecting flights.
+- [x] Write test: table output contains "STOPS" header and correct counts
+- [x] Add itineraryStops helper + "Stops" column to printTable
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 40: Lint, gofmt sweep, and build gate verification
 **Status:** pending

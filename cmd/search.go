@@ -190,12 +190,12 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 			"#", "Score", "Price", "Route",
 			"Leg 1 Airlines", "Leg 2 Airlines",
 			"Leg 1 Departure", "Leg 2 Departure",
-			"Stopover", "Duration", "Reason", "Book",
+			"Stopover", "Stops", "Duration", "Reason", "Book",
 		})
 	} else {
 		t.AppendHeader(table.Row{
 			"#", "Score", "Price", "Route",
-			"Airlines", "Departure", "Duration", "Reason", "Book",
+			"Airlines", "Departure", "Stops", "Duration", "Reason", "Book",
 		})
 	}
 
@@ -203,6 +203,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 		converted, _ := currency.Convert(itin.TotalPrice, cur)
 		dur := formatDuration(itin.TotalTravel)
 
+		stops := itineraryStops(itin)
 		if multiLeg {
 			t.AppendRow(table.Row{
 				i + 1,
@@ -214,6 +215,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				legDeparture(itin, 0),
 				legDeparture(itin, 1),
 				stopoverString(itin),
+				stops,
 				dur,
 				itin.Reasoning,
 				legBookingURL(itin, 0),
@@ -226,6 +228,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				routeString(itin),
 				legAirlines(itin, 0),
 				legDeparture(itin, 0),
+				stops,
 				dur,
 				itin.Reasoning,
 				legBookingURL(itin, 0),
@@ -337,6 +340,15 @@ func stopoverString(itin search.Itinerary) string {
 	}
 	s := itin.Legs[0].Stopover
 	return fmt.Sprintf("%s (%s)", s.City, formatDuration(s.Duration))
+}
+
+// itineraryStops returns the total number of connections across all legs.
+func itineraryStops(itin search.Itinerary) int {
+	n := 0
+	for _, leg := range itin.Legs {
+		n += leg.Flight.Stops()
+	}
+	return n
 }
 
 func currencySymbol(cur string) string {

@@ -1408,6 +1408,32 @@ func TestPrintTable_MultiLeg_CO2BothLegs(t *testing.T) {
 
 // --- multi-leg cabin columns ---
 
+// --- total_trip in JSON ---
+
+func TestBuildJSONItineraries_TotalTrip(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(80*time.Hour), 16*time.Hour, 500, nil)
+	itin := makeItin(leg1, leg2)
+	itin.TotalTrip = 96 * time.Hour // 4 days
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	if results[0].TotalTrip != "4d 0h" {
+		t.Errorf("total_trip = %q, want %q", results[0].TotalTrip, "4d 0h")
+	}
+}
+
+func TestBuildJSONItineraries_TotalTrip_OmitEmpty(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	// Marshal to JSON and check total_trip is not present when zero.
+	data, _ := json.Marshal(results[0])
+	if strings.Contains(string(data), "total_trip") {
+		t.Errorf("total_trip should be omitted when zero, got: %s", data)
+	}
+}
+
 func TestPrintTable_MultiLeg_CabinBothLegs(t *testing.T) {
 	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
 		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})

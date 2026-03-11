@@ -34,6 +34,8 @@ const (
 	keyCurrency          = "currency"
 	keyContext           = "context"
 	keySortBy            = "sort-by"
+	keyDepartureAfter    = "departure-after"
+	keyDepartureBefore   = "departure-before"
 	keyArrivalAfter      = "arrival-after"
 	keyArrivalBefore     = "arrival-before"
 	keyMaxDuration       = "max-duration"
@@ -86,6 +88,8 @@ func init() {
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
 	f.String(keyContext, "", "search context/preferences (e.g. 'cheapest option' or 'want to explore a city on the way')")
 	f.String(keySortBy, "price", "sort results by: price, duration, or departure")
+	f.String(keyDepartureAfter, "", "earliest acceptable departure time (HH:MM)")
+	f.String(keyDepartureBefore, "", "latest acceptable departure time (HH:MM)")
 	f.String(keyArrivalAfter, "", "earliest acceptable arrival time (HH:MM)")
 	f.String(keyArrivalBefore, "", "latest acceptable arrival time (HH:MM)")
 	f.Duration(keyMaxDuration, 0, "max flight duration (e.g. 12h, 8h30m); 0 = no limit")
@@ -137,6 +141,8 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		FlexDays:          viper.GetInt(keyFlexDays),
 		MaxStops:          viper.GetInt(keyMaxStops),
 		MaxPrice:          viper.GetFloat64(keyMaxPrice),
+		DepartureAfter:    viper.GetString(keyDepartureAfter),
+		DepartureBefore:   viper.GetString(keyDepartureBefore),
 		ArrivalAfter:      viper.GetString(keyArrivalAfter),
 		ArrivalBefore:     viper.GetString(keyArrivalBefore),
 		MaxDuration:       viper.GetDuration(keyMaxDuration),
@@ -625,6 +631,7 @@ type jsonItinerary struct {
 	Currency  string    `json:"currency"`
 	Route     string    `json:"route"`
 	Duration  string    `json:"duration"`
+	TotalTrip string    `json:"total_trip,omitempty"`
 	Legs      []jsonLeg `json:"legs"`
 	Stopover  string    `json:"stopover,omitempty"`
 }
@@ -724,6 +731,11 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 			})
 		}
 
+		var totalTrip string
+		if itin.TotalTrip > 0 {
+			totalTrip = formatTripDuration(itin.TotalTrip)
+		}
+
 		out[i] = jsonItinerary{
 			Rank:      i + 1,
 			Score:     itin.Score,
@@ -732,6 +744,7 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 			Currency:  cur,
 			Route:     routeString(itin),
 			Duration:  formatDuration(itin.TotalTravel),
+			TotalTrip: totalTrip,
 			Legs:      legs,
 			Stopover:  stopoverString(itin),
 		}

@@ -302,7 +302,7 @@ func TestResultSummaryForChat_Top3(t *testing.T) {
 		makeSummaryItin("QR", "Qatar Airways", "DEL", "YYZ", 22*time.Hour, 1200, 1),
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Cabin: "economy"}
-	summary := resultSummaryForChat(itins, params)
+	summary := resultSummaryForChat(itins, params, search.PriceInsights{})
 
 	// Price range and count.
 	if !strings.Contains(summary, "5") {
@@ -388,7 +388,7 @@ func TestResultSummaryForChat_TwoResults(t *testing.T) {
 		TotalPrice: types.Money{Amount: 800, Currency: "USD"},
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
-	summary := resultSummaryForChat([]search.Itinerary{itin1, itin2}, params)
+	summary := resultSummaryForChat([]search.Itinerary{itin1, itin2}, params, search.PriceInsights{})
 
 	if !strings.Contains(summary, "2 results") {
 		t.Errorf("summary should say 2 results, got: %s", summary)
@@ -411,7 +411,7 @@ func TestResultSummaryForChat_OneResult(t *testing.T) {
 		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
-	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params, search.PriceInsights{})
 
 	if !strings.Contains(summary, "1 result") {
 		t.Errorf("summary should say 1 result, got: %s", summary)
@@ -438,7 +438,7 @@ func TestResultSummaryForChat_WithReasoning(t *testing.T) {
 		Reasoning:  "good schedule and price balance",
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
-	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params, search.PriceInsights{})
 
 	if !strings.Contains(summary, "good schedule and price balance") {
 		t.Errorf("summary should contain reasoning, got: %s", summary)
@@ -455,7 +455,7 @@ func TestResultSummaryForChat_OmitsEmptyReasoning(t *testing.T) {
 		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
-	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params, search.PriceInsights{})
 
 	// Should NOT contain "Reason:" or similar marker when reasoning is empty.
 	if strings.Contains(summary, "Reason:") {
@@ -464,7 +464,7 @@ func TestResultSummaryForChat_OmitsEmptyReasoning(t *testing.T) {
 }
 
 func TestResultSummaryForChat_Empty(t *testing.T) {
-	summary := resultSummaryForChat(nil, tripParams{})
+	summary := resultSummaryForChat(nil, tripParams{}, search.PriceInsights{})
 	if !strings.Contains(summary, "No results") {
 		t.Errorf("expected no-results message, got: %s", summary)
 	}
@@ -481,7 +481,7 @@ func TestResultSummaryForChat_FlexDaysShowsDate(t *testing.T) {
 		TotalPrice: types.Money{Amount: 850, Currency: "USD"},
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", FlexDays: 3}
-	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params, search.PriceInsights{})
 
 	// With FlexDays > 0, the departure date should appear.
 	if !strings.Contains(summary, "Jun 16") {
@@ -500,7 +500,7 @@ func TestResultSummaryForChat_NoFlexDaysOmitsDate(t *testing.T) {
 		TotalPrice: types.Money{Amount: 850, Currency: "USD"},
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
-	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params, search.PriceInsights{})
 
 	// With FlexDays == 0, no date should appear before the airline name.
 	if strings.Contains(summary, "Jun 15") {
@@ -515,10 +515,52 @@ func TestResultSummaryForChat_FlexDaysEmptySegments(t *testing.T) {
 		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
 	}
 	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", FlexDays: 2}
-	summary := resultSummaryForChat([]search.Itinerary{itin}, params)
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params, search.PriceInsights{})
 
 	if !strings.Contains(summary, "500") {
 		t.Errorf("summary should contain price even with empty segments, got: %s", summary)
+	}
+}
+
+func TestResultSummaryForChat_WithPriceInsights(t *testing.T) {
+	itin := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada"}},
+		}}},
+		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	pi := search.PriceInsights{
+		LowestPrice:       450,
+		PriceLevel:        "low",
+		TypicalPriceRange: [2]float64{600, 900},
+	}
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params, pi)
+
+	if !strings.Contains(summary, "low") {
+		t.Errorf("summary should contain price level 'low', got: %s", summary)
+	}
+	if !strings.Contains(summary, "600") || !strings.Contains(summary, "900") {
+		t.Errorf("summary should contain typical price range, got: %s", summary)
+	}
+}
+
+func TestResultSummaryForChat_NoPriceInsights(t *testing.T) {
+	itin := search.Itinerary{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada"}},
+		}}},
+		TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+	}
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	summary := resultSummaryForChat([]search.Itinerary{itin}, params, search.PriceInsights{})
+
+	if strings.Contains(summary, "Typical") {
+		t.Errorf("summary should not contain price insights when empty, got: %s", summary)
 	}
 }
 

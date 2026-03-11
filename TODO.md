@@ -9,12 +9,12 @@
 - [x] Run full verification
 
 ## Task 156: Add price insights to chat conversation history
-**Status:** pending
+**Status:** done
 **Plan:** Add optional PriceInsights parameter to resultSummaryForChat. When PriceLevel is non-empty, append typical range and level to the summary string. Update chatLoop call site to pass insights.
-- [ ] Add priceInsight param to resultSummaryForChat
-- [ ] Write test for summary with price insights
-- [ ] Update chatLoop call site
-- [ ] Run full verification
+- [x] Add priceInsight param to resultSummaryForChat
+- [x] Write test for summary with price insights
+- [x] Update chatLoop call site
+- [x] Run full verification
 
 ## Task 157: Add India-Seoul stopover corridor
 **Status:** pending

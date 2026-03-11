@@ -225,7 +225,9 @@ func chatSearch(ctx context.Context, params tripParams, picker *search.Picker, o
 // resultSummaryForChat builds a summary of search results for the conversation
 // history, including top 3 results with price, airline, duration, and stops so
 // the LLM can explain recommendations and answer comparison questions.
-func resultSummaryForChat(results []search.Itinerary, params tripParams) string {
+// When pi has a non-empty PriceLevel, typical price range info is appended
+// so the LLM can reference whether current prices are good or bad.
+func resultSummaryForChat(results []search.Itinerary, params tripParams, pi search.PriceInsights) string {
 	if len(results) == 0 {
 		return "No results found."
 	}
@@ -283,6 +285,10 @@ func resultSummaryForChat(results []search.Itinerary, params tripParams) string 
 		fmt.Fprintf(&b, ", max $%.0f", params.MaxPrice)
 	}
 	b.WriteString(".")
+	if pi.PriceLevel != "" {
+		fmt.Fprintf(&b, " Typical prices for this route: $%.0f-$%.0f (price level: %s).",
+			pi.TypicalPriceRange[0], pi.TypicalPriceRange[1], pi.PriceLevel)
+	}
 	return b.String()
 }
 
@@ -890,7 +896,7 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 
 		// Add result summary and refinement guidance to conversation history
 		// so the LLM knows what was shown and what levers are available.
-		summary := resultSummaryForChat(results, params)
+		summary := resultSummaryForChat(results, params, pi)
 		history = append(history, llm.Message{Role: llm.RoleAssistant, Content: summary})
 		history = append(history, llm.Message{Role: llm.RoleSystem, Content: refinementHint()})
 

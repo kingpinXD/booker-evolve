@@ -443,6 +443,65 @@ func TestBuildRankingPrompt_NoOvernightTag(t *testing.T) {
 	}
 }
 
+func TestBuildRankingPrompt_LegroomTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+							Legroom: "32 in",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !searchString(prompt, "[Legroom: 32 in]") {
+		t.Errorf("prompt should contain [Legroom: 32 in], got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_NoLegroomTag(t *testing.T) {
+	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 400, Currency: "USD"},
+			TotalTravel: 6 * time.Hour,
+			TotalTrip:   6 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 400, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "TG316", Origin: "DEL", Destination: "BKK",
+							OriginCity: "Delhi", DestinationCity: "Bangkok",
+							DepartureTime: dep, ArrivalTime: dep.Add(6 * time.Hour),
+							Duration: 6 * time.Hour, AirlineName: "Thai Airways",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if searchString(prompt, "[Legroom:") {
+		t.Errorf("prompt should not contain [Legroom:] when legroom is empty, got:\n%s", prompt)
+	}
+}
+
 func TestBuildRankingPrompt_NoRedEyeTag(t *testing.T) {
 	dep := time.Date(2026, 3, 24, 10, 0, 0, 0, time.UTC)
 	itineraries := []search.Itinerary{

@@ -358,6 +358,18 @@ func legAircraft(itin search.Itinerary, legIdx int) string {
 	return segs[0].Aircraft
 }
 
+// legLegroom returns the legroom from the first segment of the given leg.
+func legLegroom(itin search.Itinerary, legIdx int) string {
+	if legIdx >= len(itin.Legs) {
+		return ""
+	}
+	segs := itin.Legs[legIdx].Flight.Outbound
+	if len(segs) == 0 {
+		return ""
+	}
+	return segs[0].Legroom
+}
+
 func legAirlines(itin search.Itinerary, legIdx int) string {
 	if legIdx >= len(itin.Legs) {
 		return ""
@@ -495,6 +507,7 @@ type jsonLeg struct {
 	CarbonKg   int    `json:"carbon_kg,omitempty"`
 	BookingURL string `json:"booking_url,omitempty"`
 	Aircraft   string `json:"aircraft,omitempty"`
+	Legroom    string `json:"legroom,omitempty"`
 }
 
 // jsonItinerary is the JSON representation of a search result.
@@ -575,6 +588,7 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				CarbonKg:   leg.Flight.CarbonKg,
 				BookingURL: leg.Flight.BookingURL,
 				Aircraft:   legAircraft(itin, idx),
+				Legroom:    legLegroom(itin, idx),
 			})
 		}
 

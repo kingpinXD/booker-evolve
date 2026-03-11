@@ -662,6 +662,34 @@ func TestBuildJSONItineraries_Aircraft_OmitEmpty(t *testing.T) {
 	}
 }
 
+// --- JSON legroom ---
+
+func TestBuildJSONItineraries_Legroom(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.Outbound[0].Legroom = "32 in"
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatal("unexpected results structure")
+	}
+	if results[0].Legs[0].Legroom != "32 in" {
+		t.Errorf("legroom = %q, want %q", results[0].Legs[0].Legroom, "32 in")
+	}
+}
+
+func TestBuildJSONItineraries_Legroom_OmitEmpty(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	data, err := json.Marshal(results[0].Legs[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "legroom") {
+		t.Error("legroom should be omitted when empty")
+	}
+}
+
 // --- legCarbon ---
 
 func TestLegCarbon_WithEmissions(t *testing.T) {

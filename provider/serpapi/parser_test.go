@@ -520,6 +520,26 @@ func TestParseSegments_Aircraft(t *testing.T) {
 	}
 }
 
+func TestParseSegments_Legroom(t *testing.T) {
+	segs := []FlightSegment{{
+		DepartureAirport: Airport{ID: "DEL", Time: "2026-03-24 10:00"},
+		ArrivalAirport:   Airport{ID: "BKK", Time: "2026-03-24 16:00"},
+		Duration:         360,
+		Airline:          "Thai Airways",
+		FlightNumber:     "TG 316",
+		TravelClass:      "Economy",
+		Legroom:          "30 in",
+	}}
+
+	result, err := parseSegments(segs, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result[0].Legroom != "30 in" {
+		t.Errorf("Legroom = %q, want %q", result[0].Legroom, "30 in")
+	}
+}
+
 func TestParseFlightGroup_CarbonEmissions_Rounding(t *testing.T) {
 	g := FlightGroup{
 		Flights: []FlightSegment{{

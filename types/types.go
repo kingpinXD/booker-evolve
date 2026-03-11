@@ -102,6 +102,7 @@ type Segment struct {
 	LayoverDuration  time.Duration // time until next segment (0 if last)
 	Overnight        bool          // flight spans overnight per provider data
 	Aircraft         string        // aircraft type, e.g. "Boeing 787-9"
+	Legroom          string        // seat legroom, e.g. "30 in"
 }
 
 // Money represents a price with its currency.

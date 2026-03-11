@@ -594,3 +594,22 @@ Completed all 5 planned tasks with zero reverts and zero API calls. (1) Changed 
 ## Session 47 -- 19:33 -- Strategy reasoning, price insights, Frankfurt routes, edge case coverage
 
 Completed all 5 planned tasks in 6 commits with zero reverts and zero API calls. The headline feature is Picker.Pick now returning strategy reasoning alongside the chosen strategy -- the LLM path surfaces the parsed reason from the pickerResult JSON, while fallback paths return descriptive strings. Both callers (CLI search and chat) display the reasoning, implementing VISION.md Section 2 "explain its reasoning." Added printJSONWithInsights test coverage (was 0%), wired PriceInsights typical price range into the chat zero-results suggestion flow, expanded stopover routes with India-Frankfurt corridor (13 route-specific corridors total), and hardened filter edge cases for firstDeparture and time-of-day predicates. Three parallel worktree agents handled tasks 2, 4, and 5 concurrently. All build gates pass.
+
+### Session 48, Task 1 -- Include ranking reasoning in chat result summary
+Added Reasoning field output to resultSummaryForChat top-3 entries. When non-empty, appends "Reason: ..." after price. Straightforward 3-line change with 2 new tests.
+
+### Session 48, Task 2 -- Auto-infer ranking profile from conversation context
+Added inferProfile() scanning user messages for budget/comfort/eco keywords. Wired into chatLoop so when LLM doesn't set profile, conversation context fills it. 12 unit test cases + 1 integration test.
+
+### Session 48, Task 3 -- India to Southeast Asia stopover routes
+Added DEL/BOM to BKK corridors (6+5 cities) via Gulf and SE Asian hubs. Ran in parallel worktree. 15 route-specific corridors total.
+
+### Session 48, Task 4 -- Layover details in chat result summary
+Replaced "N stops" with formatLayoverSummary showing city+duration (e.g. "1 stop (3h IST)"). Direct flights now show "nonstop". Falls back to count when data missing. Updated 2 existing tests that checked for "0 stop".
+
+### Session 48, Task 5 -- SetRanker test + picker fallback + stale TODO cleanup
+Changed picker test to use p.SetRanker() public API instead of direct field access. Removed stale dedup TODO from multicity.go. Ran in parallel worktree.
+
+## Session 48 -- Summary
+
+Completed all 5 tasks with zero reverts and zero API calls. Chat summary now includes ranking reasoning, layover details with city+duration, and inferred ranking profiles from conversation keywords. Added India-Bangkok stopover corridors and cleaned up picker test coverage. Tasks 3 and 5 ran in parallel worktrees. All build gates pass.

@@ -153,3 +153,9 @@ Session 46 found that CompositeStrategy accepted a nil ranker without error -- i
 
 ## Lesson: Expanding a function's return values is a safe, high-leverage change
 Session 47 changed Picker.Pick from (Strategy, error) to (Strategy, string, error) to surface strategy reasoning. Go's compiler catches every call site that needs updating -- there is no risk of silent breakage. The pattern is: (1) change the signature, (2) compile to find all callers, (3) update each caller to use or discard the new value. This is safer than adding a field to a struct (which compiles silently even if no consumer reads it). When a function has useful internal information that callers should see, adding a return value is preferable to side channels (logging, struct fields) because the compiler enforces that all callers handle it.
+
+## Lesson: Keyword-based inference is cheap and reliable as LLM fallback
+When relying on LLM output for structured fields like ranking profile, a deterministic keyword scanner over conversation history provides a reliable fallback. The LLM may not always emit optional fields, but user intent is often clear from keywords ("cheapest", "comfortable", "green"). The scanner runs in O(messages * keywords) which is negligible, and the counter-based approach handles ambiguity gracefully by preferring the most-mentioned category.
+
+## Lesson: Layover data enriches LLM context for tradeoff discussion
+Changing chat summary from "1 stop" to "1 stop (3h IST)" gives the LLM concrete data points to explain tradeoffs ("the 3-hour Istanbul layover saves $200"). This required no new API calls -- segment LayoverDuration and Destination were already parsed from SerpAPI. The formatLayoverSummary function gracefully degrades to stop count when data is missing.

@@ -322,3 +322,24 @@ Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls.
 ## Session 31 -- 09:31 -- Session close and Day 32 handoff
 
 Day 31 delivered 4 features across 5 commits with zero reverts and zero API calls. The multicity pipeline now respects all filters that the direct pipeline does -- DepartureAfter/DepartureBefore was the last gap, closing the filter consistency effort started in Session 29. SerpAPI requests are now more precise: stops=0 narrows API results for direct-only searches, and return_date is included for round-trip pricing correctness. The ranker prompt is cleaner with conditional city-name parentheticals. Coverage steady at ~84% across 15 packages. No open GitHub issues. Next priorities: passenger count support, cached flight data analysis for route recommendations, or time-zone-aware arrival display.
+
+## Day 33
+
+### Session 33, Task 1 -- Post-fetch sorting in direct strategy + CLI flag
+Added SortBy field to search.Request and SortResults function in filter.go (price/duration/departure modes). Replaced hardcoded price sort in direct.go with SortResults call. Added --sort-by CLI flag. 5 new tests. Sequential on main.
+
+### Session 33, Task 2 -- Avoid airline filter
+Added FilterByAvoidAirlines to filter.go with comma-separated IATA code parsing, checking both Airline and OperatingCarrier fields. Added AvoidAirlines to search.Request and multicity.SearchParams. Wired into direct pipeline, multicity stages 3 and 4b, and --avoid-airlines CLI flag. 5 new tests. Sequential on main (shares files with Task 1).
+
+### Session 33, Task 3 -- Connection risk tags in ranker prompt
+Added connection risk tags after layover line in buildRankingPrompt: [Risky connection: Xm] for <60min layovers, [Tight connection: Xm] for 60-89min. Gives the LLM explicit signal to penalize risky connections. 3 new tests. Ran as parallel worktree agent.
+
+### Session 33, Task 4 -- Enrich JSON output with airline codes and city names
+Added AirlineCode, OriginCity, DestinationCity, OriginName, DestinationName fields to jsonLeg (omitempty). Populated from first segment data in buildJSONItineraries. 2 new tests. Ran as parallel worktree agent.
+
+### Session 33, Task 5 -- Wire sort_by into chat conversation
+Added SortBy to tripParams. Wired through parsePartialParams, mergeParams, buildRequestFromParams, system prompt, and refinement hint. 5 new tests. Sequential on main (depends on Task 1's SortBy field).
+
+## Session 33 -- Sorting, avoid airlines, connection risk, JSON enrichment, chat sort_by
+
+Completed all 5 planned tasks in 7 commits (5 task commits + 2 cherry-picks from worktrees) with zero reverts and zero API calls. Tasks 3 and 4 ran as parallel worktree agents while Tasks 1, 2, and 5 ran sequentially on main. Key outcomes: (1) SortResults enables sorting by price/duration/departure with CLI flag and chat support. (2) FilterByAvoidAirlines lets users exclude specific airlines by IATA code, wired into both direct and multicity pipelines. (3) Connection risk tags give the LLM ranker explicit signals about tight layovers. (4) JSON output now includes airline codes and city names for richer programmatic consumption. (5) sort_by is fully wired into the chat conversation loop. Coverage steady at ~84% across 15 packages. All build gates pass.

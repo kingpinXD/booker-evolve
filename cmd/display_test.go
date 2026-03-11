@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"booker/search"
+	"booker/types"
 )
 
 // --- printJSONWithInsights ---
@@ -127,5 +128,187 @@ func TestPrintJSONWithInsights_InsightsFieldValues(t *testing.T) {
 		if !strings.Contains(raw, want) {
 			t.Errorf("JSON missing %s field, got:\n%s", want, raw)
 		}
+	}
+}
+
+// --- segments in JSON output ---
+
+func TestBuildJSONItineraries_MultiSegmentLeg(t *testing.T) {
+	dep1 := basetime
+	arr1 := dep1.Add(4 * time.Hour)
+	dep2 := arr1.Add(2 * time.Hour) // 2h layover
+	arr2 := dep2.Add(5 * time.Hour)
+
+	itin := search.Itinerary{
+		Legs: []search.Leg{{
+			Flight: types.Flight{
+				Outbound: []types.Segment{
+					{
+						Airline:         "BA",
+						FlightNumber:    "BA117",
+						Origin:          "JFK",
+						Destination:     "LHR",
+						DepartureTime:   dep1,
+						ArrivalTime:     arr1,
+						Duration:        4 * time.Hour,
+						Aircraft:        "Boeing 777",
+						Legroom:         "32 in",
+						CabinClass:      types.CabinBusiness,
+						LayoverDuration: 2 * time.Hour,
+						Overnight:       false,
+					},
+					{
+						Airline:       "BA",
+						FlightNumber:  "BA223",
+						Origin:        "LHR",
+						Destination:   "CDG",
+						DepartureTime: dep2,
+						ArrivalTime:   arr2,
+						Duration:      5 * time.Hour,
+						Aircraft:      "Airbus A320",
+						Legroom:       "30 in",
+						CabinClass:    types.CabinBusiness,
+						Overnight:     true,
+					},
+				},
+				TotalDuration: 11 * time.Hour,
+				Price:         types.Money{Amount: 800, Currency: "USD"},
+			},
+		}},
+		TotalPrice:  types.Money{Amount: 800, Currency: "USD"},
+		TotalTravel: 11 * time.Hour,
+	}
+
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+	if len(results) != 1 {
+		t.Fatalf("results count = %d, want 1", len(results))
+	}
+
+	leg := results[0].Legs[0]
+	if len(leg.Segments) != 2 {
+		t.Fatalf("segments count = %d, want 2", len(leg.Segments))
+	}
+
+	// Verify first segment fields.
+	seg0 := leg.Segments[0]
+	if seg0.Airline != "BA" {
+		t.Errorf("seg[0].airline = %q, want %q", seg0.Airline, "BA")
+	}
+	if seg0.FlightNumber != "BA117" {
+		t.Errorf("seg[0].flight_number = %q, want %q", seg0.FlightNumber, "BA117")
+	}
+	if seg0.Origin != "JFK" {
+		t.Errorf("seg[0].origin = %q, want %q", seg0.Origin, "JFK")
+	}
+	if seg0.Destination != "LHR" {
+		t.Errorf("seg[0].destination = %q, want %q", seg0.Destination, "LHR")
+	}
+	if seg0.Departure != dep1.Format(time.RFC3339) {
+		t.Errorf("seg[0].departure = %q, want %q", seg0.Departure, dep1.Format(time.RFC3339))
+	}
+	if seg0.Arrival != arr1.Format(time.RFC3339) {
+		t.Errorf("seg[0].arrival = %q, want %q", seg0.Arrival, arr1.Format(time.RFC3339))
+	}
+	if seg0.Duration != "4h" {
+		t.Errorf("seg[0].duration = %q, want %q", seg0.Duration, "4h")
+	}
+	if seg0.Aircraft != "Boeing 777" {
+		t.Errorf("seg[0].aircraft = %q, want %q", seg0.Aircraft, "Boeing 777")
+	}
+	if seg0.Legroom != "32 in" {
+		t.Errorf("seg[0].legroom = %q, want %q", seg0.Legroom, "32 in")
+	}
+	if seg0.LayoverDuration != "2h" {
+		t.Errorf("seg[0].layover_duration = %q, want %q", seg0.LayoverDuration, "2h")
+	}
+	if seg0.Overnight {
+		t.Error("seg[0].overnight should be false")
+	}
+
+	// Verify second segment.
+	seg1 := leg.Segments[1]
+	if seg1.FlightNumber != "BA223" {
+		t.Errorf("seg[1].flight_number = %q, want %q", seg1.FlightNumber, "BA223")
+	}
+	if seg1.Origin != "LHR" {
+		t.Errorf("seg[1].origin = %q, want %q", seg1.Origin, "LHR")
+	}
+	if seg1.Destination != "CDG" {
+		t.Errorf("seg[1].destination = %q, want %q", seg1.Destination, "CDG")
+	}
+	if !seg1.Overnight {
+		t.Error("seg[1].overnight should be true")
+	}
+	if seg1.LayoverDuration != "" {
+		t.Errorf("seg[1].layover_duration = %q, want empty (last segment)", seg1.LayoverDuration)
+	}
+
+	// Existing leg-level fields should still be populated.
+	if leg.Origin != "JFK" {
+		t.Errorf("leg.origin = %q, want %q", leg.Origin, "JFK")
+	}
+	if leg.Dest != "CDG" {
+		t.Errorf("leg.destination = %q, want %q", leg.Dest, "CDG")
+	}
+}
+
+func TestBuildJSONItineraries_SingleSegmentLeg(t *testing.T) {
+	dep := basetime
+	arr := dep.Add(7 * time.Hour)
+
+	itin := search.Itinerary{
+		Legs: []search.Leg{{
+			Flight: types.Flight{
+				Outbound: []types.Segment{{
+					Airline:       "AC",
+					FlightNumber:  "AC850",
+					Origin:        "YYZ",
+					Destination:   "LHR",
+					DepartureTime: dep,
+					ArrivalTime:   arr,
+					Duration:      7 * time.Hour,
+				}},
+				TotalDuration: 7 * time.Hour,
+				Price:         types.Money{Amount: 500, Currency: "USD"},
+			},
+		}},
+		TotalPrice:  types.Money{Amount: 500, Currency: "USD"},
+		TotalTravel: 7 * time.Hour,
+	}
+
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+	leg := results[0].Legs[0]
+
+	if len(leg.Segments) != 1 {
+		t.Fatalf("segments count = %d, want 1", len(leg.Segments))
+	}
+	if leg.Segments[0].Airline != "AC" {
+		t.Errorf("seg[0].airline = %q, want %q", leg.Segments[0].Airline, "AC")
+	}
+	if leg.Segments[0].Origin != "YYZ" {
+		t.Errorf("seg[0].origin = %q, want %q", leg.Segments[0].Origin, "YYZ")
+	}
+}
+
+func TestBuildJSONItineraries_SegmentsOmittedWhenEmpty(t *testing.T) {
+	// A leg with no segments should produce no segments key in JSON.
+	itin := search.Itinerary{
+		Legs: []search.Leg{{
+			Flight: types.Flight{
+				Outbound:      nil,
+				TotalDuration: 0,
+				Price:         types.Money{Amount: 100, Currency: "USD"},
+			},
+		}},
+		TotalPrice:  types.Money{Amount: 100, Currency: "USD"},
+		TotalTravel: 0,
+	}
+
+	var buf bytes.Buffer
+	if err := printJSON(&buf, []search.Itinerary{itin}, "USD"); err != nil {
+		t.Fatalf("printJSON error: %v", err)
+	}
+	if strings.Contains(buf.String(), `"segments"`) {
+		t.Error("segments key should be omitted when no segments exist")
 	}
 }

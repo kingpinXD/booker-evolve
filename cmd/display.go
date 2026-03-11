@@ -415,31 +415,47 @@ func formatDuration(d time.Duration) string {
 	}
 }
 
+// jsonSegment is the JSON representation of a single non-stop flight segment.
+type jsonSegment struct {
+	Airline         string `json:"airline"`
+	FlightNumber    string `json:"flight_number,omitempty"`
+	Origin          string `json:"origin"`
+	Destination     string `json:"destination"`
+	Departure       string `json:"departure"`
+	Arrival         string `json:"arrival"`
+	Duration        string `json:"duration"`
+	Aircraft        string `json:"aircraft,omitempty"`
+	Legroom         string `json:"legroom,omitempty"`
+	LayoverDuration string `json:"layover_duration,omitempty"`
+	Overnight       bool   `json:"overnight,omitempty"`
+}
+
 // jsonLeg is the JSON representation of a single flight leg.
 type jsonLeg struct {
-	Airlines         string `json:"airlines"`
-	AirlineCode      string `json:"airline_code,omitempty"`
-	FlightNumber     string `json:"flight_number,omitempty"`
-	OperatingCarrier string `json:"operating_carrier,omitempty"`
-	CabinClass       string `json:"cabin_class,omitempty"`
-	Origin           string `json:"origin"`
-	OriginCity       string `json:"origin_city,omitempty"`
-	OriginName       string `json:"origin_name,omitempty"`
-	Dest             string `json:"destination"`
-	DestinationCity  string `json:"destination_city,omitempty"`
-	DestinationName  string `json:"destination_name,omitempty"`
-	Departure        string `json:"departure"`
-	Arrival          string `json:"arrival,omitempty"`
-	Duration         string `json:"duration"`
-	Stops            int    `json:"stops"`
-	CarbonKg         int    `json:"carbon_kg,omitempty"`
-	TypicalCarbonKg  int    `json:"typical_carbon_kg,omitempty"`
-	CarbonDiffPct    int    `json:"carbon_diff_percent,omitempty"`
-	BookingURL       string `json:"booking_url,omitempty"`
-	Aircraft         string `json:"aircraft,omitempty"`
-	Legroom          string `json:"legroom,omitempty"`
-	SeatsLeft        int    `json:"seats_left,omitempty"`
-	ArrivalNextDay   bool   `json:"arrival_next_day,omitempty"`
+	Airlines         string        `json:"airlines"`
+	AirlineCode      string        `json:"airline_code,omitempty"`
+	FlightNumber     string        `json:"flight_number,omitempty"`
+	OperatingCarrier string        `json:"operating_carrier,omitempty"`
+	CabinClass       string        `json:"cabin_class,omitempty"`
+	Origin           string        `json:"origin"`
+	OriginCity       string        `json:"origin_city,omitempty"`
+	OriginName       string        `json:"origin_name,omitempty"`
+	Dest             string        `json:"destination"`
+	DestinationCity  string        `json:"destination_city,omitempty"`
+	DestinationName  string        `json:"destination_name,omitempty"`
+	Departure        string        `json:"departure"`
+	Arrival          string        `json:"arrival,omitempty"`
+	Duration         string        `json:"duration"`
+	Stops            int           `json:"stops"`
+	CarbonKg         int           `json:"carbon_kg,omitempty"`
+	TypicalCarbonKg  int           `json:"typical_carbon_kg,omitempty"`
+	CarbonDiffPct    int           `json:"carbon_diff_percent,omitempty"`
+	BookingURL       string        `json:"booking_url,omitempty"`
+	Aircraft         string        `json:"aircraft,omitempty"`
+	Legroom          string        `json:"legroom,omitempty"`
+	SeatsLeft        int           `json:"seats_left,omitempty"`
+	ArrivalNextDay   bool          `json:"arrival_next_day,omitempty"`
+	Segments         []jsonSegment `json:"segments,omitempty"`
 }
 
 // jsonItinerary is the JSON representation of a search result.
@@ -524,6 +540,25 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 			if len(segs) > 0 {
 				nextDay = isNextDay(segs[0].DepartureTime, segs[len(segs)-1].ArrivalTime)
 			}
+			var jSegs []jsonSegment
+			for _, seg := range segs {
+				js := jsonSegment{
+					Airline:      seg.Airline,
+					FlightNumber: seg.FlightNumber,
+					Origin:       seg.Origin,
+					Destination:  seg.Destination,
+					Departure:    seg.DepartureTime.Format(time.RFC3339),
+					Arrival:      seg.ArrivalTime.Format(time.RFC3339),
+					Duration:     formatDuration(seg.Duration),
+					Aircraft:     seg.Aircraft,
+					Legroom:      seg.Legroom,
+					Overnight:    seg.Overnight,
+				}
+				if seg.LayoverDuration > 0 {
+					js.LayoverDuration = formatDuration(seg.LayoverDuration)
+				}
+				jSegs = append(jSegs, js)
+			}
 			legs = append(legs, jsonLeg{
 				Airlines:         legAirlines(itin, idx),
 				AirlineCode:      airlineCode,
@@ -548,6 +583,7 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				Legroom:          legLegroom(itin, idx),
 				SeatsLeft:        legSeatsLeft(itin, idx),
 				ArrivalNextDay:   nextDay,
+				Segments:         jSegs,
 			})
 		}
 

@@ -215,3 +215,7 @@ Added hasScores helper to detect when any itinerary has a non-zero score. printT
 
 ### Session 25, Task 4 -- Lint, gofmt sweep, and build gate
 All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.
+
+## Session 24 -- 05:22 -- Ranker enrichment and table output polish
+
+Completed all 4 planned tasks from the Day 25 session plan in 4 commits with zero reverts and zero API calls. (1) Parsed SerpAPI Overnight bool into types.Segment and added [Overnight] tag to buildRankingPrompt, giving the LLM explicit signal about overnight connections alongside the existing [Red-eye] tag. (2) Parsed aircraft type (Airplane field) from SerpAPI into types.Segment.Aircraft and surfaced it in JSON output as "aircraft" (omitempty). (3) Added hasScores helper to conditionally hide Score/Reason columns when no ranker is used, reducing table noise for direct search output; also fixed carbon emissions integer division bug by switching grams/1000 to (grams+500)/1000. (4) All lint/gofmt/vet gates clean. Coverage at ~84% across 15 packages. All tasks used mocks and existing cached data -- zero SerpAPI or LLM calls.

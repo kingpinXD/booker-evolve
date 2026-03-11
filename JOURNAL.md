@@ -93,6 +93,9 @@ Added refinementHint() function listing available levers (dates, nearby airports
 ### Session 18, Task 5 -- Lint and gofmt sweep
 Fixed 1 gofmt violation in search/direct/direct.go (tab alignment from worktree agent). Zero lint issues after fix. All build gates pass.
 
+### Session 19, Task 1 -- Add --return-date flag to search command
+Added keyReturnDate const and --return-date flag to searchCmd. Wired to req.ReturnDate in runSearch so CLI users can now trigger round-trip searches that the direct strategy already supports. Minimal 3-line change, all tests pass.
+
 ## Day 17 -- 04:30 -- Lint fix, chat refinement, airport clusters, flex-date multi-search
 
 Completed all 5 tasks in 5 commits with zero reverts and zero API calls. (1) Fixed 7 errcheck lint violations in cmd/chat.go. (2) Added result summary to chat conversation history -- after displaying search results, a summary (count + price range) is appended as an assistant message so the LLM has context for refinement requests. 2 new tests. (3) Added airport cluster data in search/airports.go -- 14 metro-area clusters with NearbyAirports O(1) lookup via reverse index, 4 tests. (4) Enhanced direct strategy to search multiple dates when FlexDays > 0, making 2*flex+1 provider calls instead of 1, genuinely finding cheaper options on adjacent dates. 2 new tests with dateTrackingProvider mock. Tasks 3 and 4 ran as parallel worktree agents. (5) Surfaced nearby-airport suggestions in chat -- system prompt now mentions alternatives, and nearbyAirportHint displays tips after param extraction. 2 new tests.

@@ -1,60 +1,53 @@
 # TODO
 
-Carried from: Day 17 (all completed)
+Carried from: Day 18 (all completed)
 
-## Task 11: Fix errcheck lint in cmd/chat.go
-**Status:** completed (Day 17)
-
-## Task 12: Add result summary to chat conversation history
-**Status:** completed (Day 17)
-
-## Task 13: Add airport cluster data
-**Status:** completed (Day 17)
-
-## Task 14: Flex-date multi-search in direct strategy
-**Status:** completed (Day 17)
-
-## Task 15: Surface airport suggestions in chat system prompt
-**Status:** completed (Day 17)
+## Task 16-20: Day 18 tasks
+**Status:** completed (Day 18) — nearby strategy, round-trip, infra refactor, refinement hints, lint sweep
 
 ---
 
-## Task 16: Nearby-airport search strategy
-**Status:** done (Day 18)
-**Plan:** Created search/nearby/ package with Searcher that expands origin/dest via airport clusters, fans out delegate calls, merges/deduplicates, sorts by price. 9 tests.
-- [x] Write tests: mock delegate strategy, verify fan-out to cluster airports
-- [x] Write tests: deduplication of results from multiple airport pairs
-- [x] Write tests: MaxResults cap, no-cluster fallback (delegate as-is)
-- [x] Implement search/nearby/nearby.go with Strategy that expands clusters
-- [x] Verify: `go test ./search/nearby/... -race`
+## Task 21: Add --return-date flag to search command
+**Status:** done
+**Plan:** Add keyReturnDate const, register --return-date flag in init(), wire to req.ReturnDate in runSearch.
+- [x] Add --return-date string flag to searchCmd in init()
+- [x] Wire viper.GetString("return-date") into req.ReturnDate in runSearch
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 17: Round-trip support in direct strategy
-**Status:** done (Day 18)
-**Plan:** Extracted searchFlights helper, added combineRoundTrip for 2-leg itineraries with summed prices. One-way path unchanged. 2 new tests.
-- [x] Write tests: round-trip produces 2-leg itinerary with combined price
-- [x] Write tests: one-way behavior unchanged when ReturnDate is empty
-- [x] Implement return-leg search and itinerary combination in direct.go
-- [x] Verify: `go test ./search/direct/... -race`
+## Task 22: Wire NearbySearcher into buildPicker
+**Status:** pending
+**Plan:**
+- [ ] Import search/nearby in cmd/infra.go
+- [ ] Create NearbySearcher wrapping directStrategy in buildPicker
+- [ ] Register nearbyStrategy as third picker strategy
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 18: Extract shared cmd infrastructure
-**Status:** done (Day 18)
-**Plan:** Created cmd/infra.go with buildPicker(weights, leg2Date) helper. Reduced ~30 duplicated lines across runSearch and runChat.
-- [x] Create cmd/infra.go with buildPicker helper
-- [x] Refactor runSearch to use buildPicker
-- [x] Refactor runChat to use buildPicker
-- [x] Verify: `go test ./cmd/... -race` (all existing tests pass)
+## Task 23: Add --max-price budget filter
+**Status:** pending
+**Plan:**
+- [ ] Add MaxPrice float64 field to search.Request
+- [ ] Write FilterByMaxPrice test in search/filter_test.go (TDD: verify fail)
+- [ ] Implement FilterByMaxPrice in search/filter.go
+- [ ] Call FilterByMaxPrice in direct.searchFlights pipeline
+- [ ] Add --max-price flag to searchCmd, wire to req.MaxPrice
+- [ ] Add max_price to tripParams in chat.go, wire to buildRequestFromParams
+- [ ] Update chatSystemPrompt to mention max_price/budget option
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 19: Structured refinement guidance in chat
-**Status:** done (Day 18)
-**Plan:** Added refinementHint() returning available levers; appended as system message to history after results. 2 new tests.
-- [x] Write test: refinement hint with specific levers appears in history after results
-- [x] Add refinementHint function returning available levers
-- [x] Append hint to conversation history after result summary
-- [x] Verify: `go test ./cmd/... -race`
+## Task 24: Surface PriceInsights in output
+**Status:** pending
+**Plan:**
+- [ ] Modify buildPicker to also return *serpapi.Provider reference
+- [ ] Write formatPriceInsights helper test (TDD)
+- [ ] Implement formatPriceInsights(insights search.PriceInsights) string
+- [ ] Call LastPriceInsights() in runSearch after strategy.Search, display below price summary
+- [ ] Add price_insights to JSON output
+- [ ] Wire into chatLoop for chat output
+- [ ] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 20: Lint and gofmt sweep
-**Status:** done (Day 18)
-**Plan:** Fixed 1 gofmt violation in direct.go (worktree agent output). Zero lint issues.
-- [x] Run gofmt -l . and fix any violations
-- [x] Run golangci-lint run and fix any issues
-- [x] Verify: zero issues reported
+## Task 25: Test multicity.Strategy.Search
+**Status:** pending
+**Plan:**
+- [ ] Write test with mock Searcher that records calls
+- [ ] Verify Search delegates to Searcher.Search with correct params from toSearchParams
+- [ ] Verify: `go test ./search/multicity/... -race`

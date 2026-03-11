@@ -22,6 +22,7 @@ import (
 // Flag/config key constants.
 const (
 	keyDate       = "date"
+	keyReturnDate = "return-date"
 	keyLeg2Date   = "leg2-date"
 	keyPassengers = "passengers"
 	keyCabin      = "cabin"
@@ -65,6 +66,7 @@ func init() {
 
 	f := searchCmd.Flags()
 	f.String(keyDate, "", "departure date for leg 1 (YYYY-MM-DD) [required]")
+	f.String(keyReturnDate, "", "return date for round-trip (YYYY-MM-DD)")
 	f.String(keyLeg2Date, "", "departure date for leg 2 (YYYY-MM-DD) [required]")
 	f.Int(keyPassengers, defaultPassengers, "number of passengers")
 	f.String(keyCabin, defaultCabin, "cabin class (economy, premium_economy, business, first)")
@@ -114,6 +116,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		Origin:        origin,
 		Destination:   destination,
 		DepartureDate: viper.GetString(keyDate),
+		ReturnDate:    viper.GetString(keyReturnDate),
 		Passengers:    viper.GetInt(keyPassengers),
 		CabinClass:    cabin,
 		FlexDays:      viper.GetInt(keyFlexDays),

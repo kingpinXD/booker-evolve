@@ -853,6 +853,113 @@ var BOMToFRAStopovers = []StopoverCity{
 	},
 }
 
+// DELToBKKStopovers are the candidate stopover cities for Delhi → Bangkok.
+//
+// Route geometry: DEL is at ~28°N, 77°E. BKK is at ~13°N, 100°E.
+// Gulf carrier hubs and South Asian crossroads are the primary corridor.
+var DELToBKKStopovers = []StopoverCity{
+	// === GULF — Primary corridor ===
+	{
+		City:    "Doha",
+		Airport: "DOH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-BKK direct on QR. Desert safaris, Museum of Islamic Art.",
+	},
+	{
+		City:    "Abu Dhabi",
+		Airport: "AUH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Etihad hub. DEL-AUH on Etihad/Air India. AUH-BKK direct on Etihad. Louvre Abu Dhabi, Sheikh Zayed Mosque.",
+	},
+	{
+		City:    "Dubai",
+		Airport: "DXB",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-BKK direct on Emirates.",
+	},
+
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. DEL-SIN frequent. SIN-BKK very frequent on SQ/Thai. Clean, safe, great food.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines/AirAsia hub. DEL-KUL on AirAsia/MAS. KUL-BKK very frequent. Petronas Towers, Batu Caves.",
+	},
+
+	// === SOUTH ASIA ===
+	{
+		City:    "Kolkata",
+		Airport: "CCU",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Eastern India gateway. DEL-CCU very frequent on AI/IndiGo. CCU-BKK direct on Thai/IndiGo. Victoria Memorial, street food.",
+	},
+}
+
+// BOMToBKKStopovers are the candidate stopover cities for Mumbai → Bangkok.
+//
+// Route geometry: BOM is at ~19°N, 73°E. BKK is at ~13°N, 100°E.
+// Gulf carrier hubs and Southeast Asian crossroads are the primary corridor.
+var BOMToBKKStopovers = []StopoverCity{
+	{
+		City:    "Doha",
+		Airport: "DOH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-BKK direct on QR.",
+	},
+	{
+		City:    "Abu Dhabi",
+		Airport: "AUH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Etihad hub. BOM-AUH on Etihad/Air India. AUH-BKK direct on Etihad.",
+	},
+	{
+		City:    "Dubai",
+		Airport: "DXB",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-BKK direct on Emirates.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. BOM-SIN frequent. SIN-BKK very frequent on SQ/Thai.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines/AirAsia hub. BOM-KUL on AirAsia/MAS. KUL-BKK very frequent.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -873,6 +980,8 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "SYD"): BOMToSYDStopovers,
 	routeKey("DEL", "FRA"): DELToFRAStopovers,
 	routeKey("BOM", "FRA"): BOMToFRAStopovers,
+	routeKey("DEL", "BKK"): DELToBKKStopovers,
+	routeKey("BOM", "BKK"): BOMToBKKStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

@@ -236,3 +236,7 @@ Replaced single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in the multi-leg t
 
 ### Session 26, Task 5 -- Lint, gofmt sweep, and build gate
 All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.
+
+## Session 25 -- 06:28 -- Data enrichment and output completeness
+
+Completed all 4 planned tasks plus lint sweep in 5 commits with zero reverts and zero API calls. (1) Parsed legroom string from SerpAPI into types.Segment.Legroom, surfaced in JSON output (omitempty), and annotated in buildRankingPrompt with [Legroom: X] tag so the LLM can factor comfort into scoring. (2) Enriched JSON output with arrival time (RFC3339) and stops count per leg, and added omitempty to Score so unranked results produce cleaner JSON. (3) Wired PriceInsights into chat mode by threading a priceInsighter interface through chatLoop -- previously the raw provider was discarded in runChat. (4) Fixed multi-leg table to show separate "Leg 1 CO2" and "Leg 2 CO2" columns instead of a single "CO2" column that only displayed leg 0 data. Coverage steady at ~84% across 15 packages. All build gates pass.

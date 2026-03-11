@@ -81,3 +81,7 @@ SerpAPI provides many fields (carbon_emissions, legroom, etc.) that aren't in ou
 ## Lesson: Watch for integer division truncation in unit conversions
 
 When converting between units (grams to kg, cents to dollars, etc.) using integer types, division truncates toward zero. CarbonKg = grams/1000 gave 0 for 800 grams. Use rounding: (grams+500)/1000 yields the nearest integer. Always add a test for values just below the divisor boundary (e.g., 800g, 499g) to catch this early.
+
+## Lesson: Multi-leg table columns must handle each leg independently
+
+When adding per-leg data columns (CO2, arrival, cabin) to the multi-leg table layout, each leg needs its own column -- do not reuse a single column with hardcoded leg index 0. The single-leg layout uses one column; the multi-leg layout must iterate. The CO2 bug (only leg 0 shown) was a 3-line fix but invisible until someone checked leg 1 data. When adding any new per-leg column, always verify both layouts.

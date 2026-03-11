@@ -1260,6 +1260,160 @@ var BOMToCDGStopovers = []StopoverCity{
 	},
 }
 
+// DELToSINStopovers are the candidate stopover cities for Delhi → Singapore.
+//
+// Route geometry: DEL is at ~28°N, 77°E. SIN is at ~1°N, 103°E.
+// Southeast and East Asia corridor — city breaks en route to Singapore.
+var DELToSINStopovers = []StopoverCity{
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Street food capital, temples, vibrant nightlife",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Petronas Towers, diverse cuisine, affordable luxury",
+	},
+
+	// === SOUTH ASIA ===
+	{
+		City:    "Kolkata",
+		Airport: "CCU",
+		Region:  "south_asia",
+		MinStay: 48 * time.Hour,
+		MaxStay: 72 * time.Hour,
+		Notes:   "Cultural capital, Victoria Memorial, street food",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Victoria Peak, dim sum, world-class shopping",
+	},
+}
+
+// BOMToSINStopovers are the candidate stopover cities for Mumbai → Singapore.
+//
+// Route geometry: BOM is at ~19°N, 73°E. SIN is at ~1°N, 103°E.
+// Southeast and East Asia corridor with strong BOM connectivity.
+var BOMToSINStopovers = []StopoverCity{
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Street food capital, temples, vibrant nightlife",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Petronas Towers, diverse cuisine, affordable luxury",
+	},
+	{
+		City:    "Colombo",
+		Airport: "CMB",
+		Region:  "south_asia",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Coastal city, colonial architecture, Sri Lankan cuisine",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Victoria Peak, dim sum, world-class shopping",
+	},
+}
+
+// DELToDXBStopovers are the candidate stopover cities for Delhi → Dubai.
+//
+// Route geometry: DEL is at ~28°N, 77°E. DXB is at ~25°N, 55°E.
+// Gulf corridor — nearby Gulf states offer city breaks en route to Dubai.
+var DELToDXBStopovers = []StopoverCity{
+	// === GULF ===
+	{
+		City:    "Doha",
+		Airport: "DOH",
+		Region:  "gulf",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Museum of Islamic Art, souq, desert excursions",
+	},
+	{
+		City:    "Bahrain",
+		Airport: "BAH",
+		Region:  "gulf",
+		MinStay: 48 * time.Hour,
+		MaxStay: 72 * time.Hour,
+		Notes:   "Bahrain Fort, pearl diving heritage, compact island",
+	},
+	{
+		City:    "Muscat",
+		Airport: "MCT",
+		Region:  "gulf",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Sultan Qaboos Mosque, wadis, fjord-like coastline",
+	},
+	{
+		City:    "Kuwait City",
+		Airport: "KWI",
+		Region:  "gulf",
+		MinStay: 48 * time.Hour,
+		MaxStay: 72 * time.Hour,
+		Notes:   "Kuwait Towers, Grand Mosque, Liberation Tower",
+	},
+}
+
+// BOMToDXBStopovers are the candidate stopover cities for Mumbai → Dubai.
+//
+// Route geometry: BOM is at ~19°N, 73°E. DXB is at ~25°N, 55°E.
+// Gulf corridor with strong BOM connectivity.
+var BOMToDXBStopovers = []StopoverCity{
+	{
+		City:    "Doha",
+		Airport: "DOH",
+		Region:  "gulf",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Museum of Islamic Art, souq, desert excursions",
+	},
+	{
+		City:    "Bahrain",
+		Airport: "BAH",
+		Region:  "gulf",
+		MinStay: 48 * time.Hour,
+		MaxStay: 72 * time.Hour,
+		Notes:   "Bahrain Fort, pearl diving heritage, compact island",
+	},
+	{
+		City:    "Muscat",
+		Airport: "MCT",
+		Region:  "gulf",
+		MinStay: 48 * time.Hour,
+		MaxStay: 96 * time.Hour,
+		Notes:   "Sultan Qaboos Mosque, wadis, fjord-like coastline",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -1288,6 +1442,10 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "MEL"): BOMToMELStopovers,
 	routeKey("DEL", "CDG"): DELToCDGStopovers,
 	routeKey("BOM", "CDG"): BOMToCDGStopovers,
+	routeKey("DEL", "SIN"): DELToSINStopovers,
+	routeKey("BOM", "SIN"): BOMToSINStopovers,
+	routeKey("DEL", "DXB"): DELToDXBStopovers,
+	routeKey("BOM", "DXB"): BOMToDXBStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

@@ -121,3 +121,6 @@ Added mergeParams and parsePartialParams to enable chat refinement loop. chatLoo
 
 ### Day 20, Task 2 -- Dynamic ranking profile from conversation
 Added profileWeights function reusing existing profiles map. Added Profile field to tripParams, --profile flag to chatCmd, profile mention in system prompt and refinement hint. runChat now uses the flag-specified profile instead of hardcoded WeightsBudget. 1 new test function (5 subtests for all profiles + unknown default).
+
+### Day 20, Task 4 -- Richer result context in chat history
+Enhanced resultSummaryForChat to accept tripParams and include top result's route, airline, duration, and price, plus search parameters (origin, dest, date, cabin, max_price). The LLM can now explain why a specific result was recommended. Added formatFlightDuration helper. Updated test + added empty-results test.

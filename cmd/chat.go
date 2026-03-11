@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"booker/llm"
 	"booker/search"
@@ -149,12 +150,14 @@ func buildRequestFromParams(p tripParams) search.Request {
 	}
 }
 
-// resultSummaryForChat builds a brief summary of search results for the
-// conversation history, so the LLM can reference them during refinement.
-func resultSummaryForChat(results []search.Itinerary) string {
+// resultSummaryForChat builds a summary of search results for the conversation
+// history, including top result details and search parameters so the LLM can
+// explain recommendations and answer "why that one?" questions.
+func resultSummaryForChat(results []search.Itinerary, params tripParams) string {
 	if len(results) == 0 {
 		return "No results found."
 	}
+
 	minPrice, maxPrice := results[0].TotalPrice.Amount, results[0].TotalPrice.Amount
 	for _, r := range results[1:] {
 		if r.TotalPrice.Amount < minPrice {
@@ -164,8 +167,45 @@ func resultSummaryForChat(results []search.Itinerary) string {
 			maxPrice = r.TotalPrice.Amount
 		}
 	}
-	return fmt.Sprintf("I found %d results. Prices range from $%.0f to $%.0f USD.",
-		len(results), minPrice, maxPrice)
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "I found %d results. Prices range from $%.0f to $%.0f USD.", len(results), minPrice, maxPrice)
+
+	// Top result details.
+	top := results[0]
+	if len(top.Legs) > 0 && len(top.Legs[0].Flight.Outbound) > 0 {
+		seg := top.Legs[0].Flight.Outbound[0]
+		airline := seg.AirlineName
+		if airline == "" {
+			airline = seg.Airline
+		}
+		fmt.Fprintf(&b, " Top result: %s->%s on %s", seg.Origin, seg.Destination, airline)
+		if top.Legs[0].Flight.TotalDuration > 0 {
+			fmt.Fprintf(&b, ", %s", formatFlightDuration(top.Legs[0].Flight.TotalDuration))
+		}
+		fmt.Fprintf(&b, ", $%.0f.", top.TotalPrice.Amount)
+	}
+
+	// Search params context.
+	fmt.Fprintf(&b, " Search: %s->%s on %s", params.Origin, params.Destination, params.DepartureDate)
+	if params.Cabin != "" {
+		fmt.Fprintf(&b, ", %s", params.Cabin)
+	}
+	if params.MaxPrice > 0 {
+		fmt.Fprintf(&b, ", max $%.0f", params.MaxPrice)
+	}
+	b.WriteString(".")
+	return b.String()
+}
+
+// formatFlightDuration formats a duration as e.g. "14h30m".
+func formatFlightDuration(d time.Duration) string {
+	h := int(d.Hours())
+	m := int(d.Minutes()) % 60
+	if m == 0 {
+		return fmt.Sprintf("%dh", h)
+	}
+	return fmt.Sprintf("%dh%dm", h, m)
 }
 
 // mergeParams fills zero-value fields in partial from prev, producing
@@ -356,7 +396,7 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 
 		// Add result summary and refinement guidance to conversation history
 		// so the LLM knows what was shown and what levers are available.
-		summary := resultSummaryForChat(results)
+		summary := resultSummaryForChat(results, params)
 		history = append(history, llm.Message{Role: llm.RoleAssistant, Content: summary})
 		history = append(history, llm.Message{Role: llm.RoleSystem, Content: refinementHint()})
 

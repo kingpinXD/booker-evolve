@@ -36,11 +36,12 @@ Carried from: Day 19 (all completed)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 29: Richer result context in chat history
-**Status:** pending
-**Plan:** Enhance resultSummaryForChat to include top result details and search parameters.
-- [ ] Write enhanced resultSummaryForChat tests (TDD: route, airline, duration, params)
-- [ ] Implement enhanced summary with top-result details and search param context
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Modify resultSummaryForChat to accept tripParams and include top result's route, airline, duration, plus the search params (origin, dest, date, cabin, max_price). Files: cmd/chat.go, cmd/chat_test.go.
+- [x] Write enhanced resultSummaryForChat tests (TDD: route, airline, duration, params)
+- [x] Implement enhanced summary with top-result details and search param context
+- [x] Update callers
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 30: Lint, gofmt sweep, and build gate verification
 **Status:** pending

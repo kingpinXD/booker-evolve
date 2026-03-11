@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"booker/llm"
 	"booker/search"
@@ -271,11 +272,21 @@ Searching for flights.`,
 
 func TestResultSummaryForChat(t *testing.T) {
 	itins := []search.Itinerary{
-		{TotalPrice: types.Money{Amount: 500, Currency: "USD"}},
+		{
+			Legs: []search.Leg{{Flight: types.Flight{
+				Price:         types.Money{Amount: 500, Currency: "USD"},
+				TotalDuration: 14*time.Hour + 30*time.Minute,
+				Outbound:      []types.Segment{{Origin: "DEL", Destination: "YYZ", Airline: "AC", AirlineName: "Air Canada"}},
+			}}},
+			TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+		},
 		{TotalPrice: types.Money{Amount: 800, Currency: "USD"}},
 		{TotalPrice: types.Money{Amount: 1200, Currency: "USD"}},
 	}
-	summary := resultSummaryForChat(itins)
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", Cabin: "economy"}
+	summary := resultSummaryForChat(itins, params)
+
+	// Price range and count.
 	if !strings.Contains(summary, "3") {
 		t.Errorf("summary should contain result count, got: %s", summary)
 	}
@@ -284,6 +295,30 @@ func TestResultSummaryForChat(t *testing.T) {
 	}
 	if !strings.Contains(summary, "1200") {
 		t.Errorf("summary should contain most expensive price, got: %s", summary)
+	}
+	// Top result details.
+	if !strings.Contains(summary, "DEL") || !strings.Contains(summary, "YYZ") {
+		t.Errorf("summary should contain route, got: %s", summary)
+	}
+	if !strings.Contains(summary, "Air Canada") {
+		t.Errorf("summary should contain airline name, got: %s", summary)
+	}
+	if !strings.Contains(summary, "14h30m") {
+		t.Errorf("summary should contain duration, got: %s", summary)
+	}
+	// Search params context.
+	if !strings.Contains(summary, "2025-06-15") {
+		t.Errorf("summary should contain departure date, got: %s", summary)
+	}
+	if !strings.Contains(summary, "economy") {
+		t.Errorf("summary should contain cabin class, got: %s", summary)
+	}
+}
+
+func TestResultSummaryForChat_Empty(t *testing.T) {
+	summary := resultSummaryForChat(nil, tripParams{})
+	if !strings.Contains(summary, "No results") {
+		t.Errorf("expected no-results message, got: %s", summary)
 	}
 }
 

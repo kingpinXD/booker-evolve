@@ -634,6 +634,34 @@ func TestBuildJSONItineraries_CabinClass(t *testing.T) {
 	}
 }
 
+// --- JSON aircraft ---
+
+func TestBuildJSONItineraries_Aircraft(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.Outbound[0].Aircraft = "Boeing 787-9"
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatal("unexpected results structure")
+	}
+	if results[0].Legs[0].Aircraft != "Boeing 787-9" {
+		t.Errorf("aircraft = %q, want %q", results[0].Legs[0].Aircraft, "Boeing 787-9")
+	}
+}
+
+func TestBuildJSONItineraries_Aircraft_OmitEmpty(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	data, err := json.Marshal(results[0].Legs[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "aircraft") {
+		t.Error("aircraft should be omitted when empty")
+	}
+}
+
 // --- legCarbon ---
 
 func TestLegCarbon_WithEmissions(t *testing.T) {

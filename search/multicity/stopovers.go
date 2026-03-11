@@ -960,6 +960,112 @@ var BOMToBKKStopovers = []StopoverCity{
 	},
 }
 
+// DELToNRTStopovers are the candidate stopover cities for Delhi → Tokyo Narita.
+//
+// Route geometry: DEL is at ~28°N, 77°E. NRT is at ~35°N, 140°E.
+// Southeast and East Asia corridor — cities with strong connectivity
+// to both India and Japan.
+var DELToNRTStopovers = []StopoverCity{
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. DEL-BKK frequent and cheap. BKK-NRT direct on Thai/ANA. Temples, street food.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. DEL-SIN frequent. SIN-NRT direct on SQ/ANA/JAL. Clean, safe, great food.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines/AirAsia hub. DEL-KUL on AirAsia/MAS. KUL-NRT direct on MAS/AirAsia X.",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. DEL-HKG frequent. HKG-NRT direct on Cathay/ANA/JAL. Victoria Peak, dim sum.",
+	},
+	{
+		City:    "Taipei",
+		Airport: "TPE",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "EVA Air/China Airlines hub. TPE-NRT very frequent. DEL-TPE on EVA/China Airlines. Night markets, temples.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. ICN-NRT very frequent. DEL-ICN on Korean Air/Air India. Palaces, street food.",
+	},
+}
+
+// BOMToNRTStopovers are the candidate stopover cities for Mumbai → Tokyo Narita.
+//
+// Route geometry: BOM is at ~19°N, 73°E. NRT is at ~35°N, 140°E.
+// Similar corridor to DEL→NRT but BOM has different hub connectivity.
+var BOMToNRTStopovers = []StopoverCity{
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-NRT direct on Thai/ANA.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. BOM-SIN frequent. SIN-NRT direct on SQ/ANA/JAL.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-NRT direct on Cathay/ANA/JAL.",
+	},
+	{
+		City:    "Taipei",
+		Airport: "TPE",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "EVA Air/China Airlines hub. TPE-NRT very frequent. BOM-TPE on EVA/China Airlines.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. ICN-NRT very frequent. BOM-ICN on Korean Air.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -982,6 +1088,8 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "FRA"): BOMToFRAStopovers,
 	routeKey("DEL", "BKK"): DELToBKKStopovers,
 	routeKey("BOM", "BKK"): BOMToBKKStopovers,
+	routeKey("DEL", "NRT"): DELToNRTStopovers,
+	routeKey("BOM", "NRT"): BOMToNRTStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

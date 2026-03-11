@@ -620,6 +620,114 @@ func TestStopoversForRoute_ReverseBKKToBOM(t *testing.T) {
 	}
 }
 
+func TestStopoversForRoute_DELToNRT(t *testing.T) {
+	got := StopoversForRoute("DEL", "NRT")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for DEL->NRT, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &DELToNRTStopovers[0] {
+		t.Error("DEL->NRT should return the route-specific slice, not a copy")
+	}
+
+	// Verify expected cities: Southeast/East Asia corridor.
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"BKK", "SIN", "HKG", "TPE", "ICN", "KUL"} {
+		if !airports[want] {
+			t.Errorf("DEL->NRT stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["DEL"] {
+		t.Error("origin DEL should not be in stopover list")
+	}
+	if airports["NRT"] {
+		t.Error("destination NRT should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_ReverseNRTToDEL(t *testing.T) {
+	got := StopoversForRoute("NRT", "DEL")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for reverse route NRT->DEL, got none")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	// TPE is in DEL->NRT route-specific list but NOT in GlobalFallbackHubs.
+	// Its presence proves reverse lookup uses route-specific data.
+	if !airports["TPE"] {
+		t.Error("reverse NRT->DEL missing route-specific airport TPE (would not be in fallback)")
+	}
+
+	if airports["NRT"] {
+		t.Error("origin NRT should not be in stopover list")
+	}
+	if airports["DEL"] {
+		t.Error("destination DEL should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_BOMToNRT(t *testing.T) {
+	got := StopoversForRoute("BOM", "NRT")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for BOM->NRT, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &BOMToNRTStopovers[0] {
+		t.Error("BOM->NRT should return the route-specific slice, not a copy")
+	}
+
+	// Verify expected cities: Southeast/East Asia corridor.
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"BKK", "SIN", "HKG", "TPE", "ICN"} {
+		if !airports[want] {
+			t.Errorf("BOM->NRT stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["BOM"] {
+		t.Error("origin BOM should not be in stopover list")
+	}
+	if airports["NRT"] {
+		t.Error("destination NRT should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_ReverseNRTToBOM(t *testing.T) {
+	got := StopoversForRoute("NRT", "BOM")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for reverse route NRT->BOM, got none")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	// TPE is in BOM->NRT route-specific list but NOT in GlobalFallbackHubs.
+	// Its presence proves reverse lookup uses route-specific data.
+	if !airports["TPE"] {
+		t.Error("reverse NRT->BOM missing route-specific airport TPE (would not be in fallback)")
+	}
+
+	if airports["NRT"] {
+		t.Error("origin NRT should not be in stopover list")
+	}
+	if airports["BOM"] {
+		t.Error("destination BOM should not be in stopover list")
+	}
+}
+
 // TestStopoverDataConsistency validates all stopover data for correctness.
 func TestStopoverDataConsistency(t *testing.T) {
 	iataRe := regexp.MustCompile(`^[A-Z]{3}$`)

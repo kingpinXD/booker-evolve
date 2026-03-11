@@ -587,3 +587,6 @@ Added 5 tests for firstDeparture and flightPassesTimeOfDay edge cases: zero-legs
 
 ### Session 47, Task 3 -- Thread PriceInsights into zero-results chat suggestion
 Added priceInsightHint(pi) helper that formats "Typical prices for this route: $X-$Y (price level: Z)" from PriceInsights. Wired into chatLoop zero-results block after existing zeroResultsSuggestion. Returns empty when PriceLevel is empty. 4 new tests: unit tests for helper with/without data, integration tests for chatLoop zero-results with/without insights provider.
+
+## Session 47 -- Summary
+Completed all 5 planned tasks with zero reverts and zero API calls. (1) Changed Picker.Pick to return strategy reasoning -- LLM path returns parsed reason, fallback returns descriptive string; both callers display it. (2) Added 5 tests for printJSONWithInsights, covering PriceInsights populated/empty and result count. (3) Added priceInsightHint helper and wired it into chatLoop zero-results block for typical price guidance. (4) Added India-Frankfurt stopover routes (DEL/BOM->FRA via Gulf hubs, 6+5 cities). (5) Added 5 filter edge case tests for firstDeparture and flightPassesTimeOfDay. Tasks 2/4/5 ran in parallel worktrees successfully.

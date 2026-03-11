@@ -323,13 +323,18 @@ func truncateHistory(history []llm.Message, maxRecent int) []llm.Message {
 	return append([]llm.Message{history[0]}, history[len(history)-maxRecent:]...)
 }
 
+// priceInsighter provides access to the last price insights from a search.
+type priceInsighter interface {
+	LastPriceInsights() search.PriceInsights
+}
+
 func runChat(cmd *cobra.Command, _ []string) error {
 	if !viper.GetBool(keyVerbose) {
 		log.SetOutput(io.Discard)
 	}
 
 	weights := profileWeights(viper.GetString(keyProfile))
-	picker, llmClient, _, err := buildPicker(weights, "")
+	picker, llmClient, rawProvider, err := buildPicker(weights, "")
 	if err != nil {
 		return err
 	}
@@ -337,11 +342,12 @@ func runChat(cmd *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(cmd.Context(), defaultTimeout)
 	defer cancel()
 
-	return chatLoop(ctx, llmClient, picker, os.Stdin, os.Stdout)
+	return chatLoop(ctx, llmClient, picker, rawProvider, os.Stdin, os.Stdout)
 }
 
 // chatLoop runs the multi-turn conversation. Separated from runChat for testability.
-func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *search.Picker, in io.Reader, out io.Writer) error {
+// insights may be nil when no price insight provider is available.
+func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *search.Picker, insights priceInsighter, in io.Reader, out io.Writer) error {
 	history := []llm.Message{
 		{Role: llm.RoleSystem, Content: chatSystemPrompt(time.Now())},
 	}
@@ -417,13 +423,20 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		}
 
 		cur := viper.GetString(keyCurrency)
+		var pi search.PriceInsights
+		if insights != nil {
+			pi = insights.LastPriceInsights()
+		}
 		switch viper.GetString(keyFormat) {
 		case "json":
-			if err := printJSON(out, results, cur); err != nil {
+			if err := printJSONWithInsights(out, results, cur, pi); err != nil {
 				_, _ = fmt.Fprintf(out, "Error: %v\n", err)
 			}
 		default:
 			printTable(out, results, cur)
+			if s := formatPriceInsights(pi); s != "" {
+				_, _ = fmt.Fprintln(out, s)
+			}
 		}
 
 		// Add result summary and refinement guidance to conversation history

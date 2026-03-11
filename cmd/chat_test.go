@@ -145,7 +145,7 @@ func TestChatLoop_QuitImmediately(t *testing.T) {
 	in := strings.NewReader("quit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -176,7 +176,7 @@ Searching for flights now.`,
 	in := strings.NewReader("I want to go to Toronto\nfrom Delhi on June 15\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -246,7 +246,7 @@ Searching for flights.`,
 	in := strings.NewReader("find flights\nshow me cheaper\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -409,7 +409,7 @@ Searching for flights.`,
 	in := strings.NewReader("find flights\nshow me options\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -535,7 +535,7 @@ Switching to business class.`,
 	in := strings.NewReader("find flights\ntry business class\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -634,7 +634,7 @@ Searching for flights.`,
 	in := strings.NewReader("find flights\nquit\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -764,7 +764,7 @@ Searching.`, 15+i))
 	in := strings.NewReader(strings.Join(inputLines, "\n") + "\n")
 	var out strings.Builder
 
-	err := chatLoop(context.Background(), mock, picker, in, &out)
+	err := chatLoop(context.Background(), mock, picker, nil, in, &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -859,4 +859,53 @@ func indexOf(s, substr string) int {
 		}
 	}
 	return -1
+}
+
+// mockPriceInsighter implements priceInsighter for testing.
+type mockPriceInsighter struct {
+	insights search.PriceInsights
+}
+
+func (m *mockPriceInsighter) LastPriceInsights() search.PriceInsights {
+	return m.insights
+}
+
+func TestChatLoop_PriceInsightsInOutput(t *testing.T) {
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 600, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 600, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+	pi := &mockPriceInsighter{
+		insights: search.PriceInsights{
+			PriceLevel:        "low",
+			LowestPrice:       450,
+			TypicalPriceRange: [2]float64{500, 900},
+		},
+	}
+
+	in := strings.NewReader("find flights\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, pi, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	if !strings.Contains(output, "Price level: low") {
+		t.Errorf("expected price insights in output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "500") || !strings.Contains(output, "900") {
+		t.Errorf("expected typical price range in output, got:\n%s", output)
+	}
 }

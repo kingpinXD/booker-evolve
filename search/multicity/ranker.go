@@ -348,11 +348,7 @@ func formatDuration(d time.Duration) string {
 
 func parseRankingResponse(response string) ([]RankResult, error) {
 	// The LLM should return raw JSON, but sometimes wraps in code fences.
-	cleaned := response
-	cleaned = strings.TrimPrefix(cleaned, "```json")
-	cleaned = strings.TrimPrefix(cleaned, "```")
-	cleaned = strings.TrimSuffix(cleaned, "```")
-	cleaned = strings.TrimSpace(cleaned)
+	cleaned := llm.StripCodeFences(response)
 
 	var results []RankResult
 	if err := json.Unmarshal([]byte(cleaned), &results); err != nil {

@@ -534,3 +534,6 @@ Moved 25 display/formatting functions and 4 JSON types from search.go to display
 
 ### Session 44, Task 1 -- Fix chat profile switching (dynamic ranker per search)
 Added SetWeights method to multicity.Ranker and changed NewSearcher to accept a *Ranker (shared with direct strategy). Defined weightsUpdater interface in chatLoop so profile changes mid-chat now actually update ranking weights. The old code parsed and merged profile changes but never applied them to the ranker -- effectively dead code. Integration test verifies two SetWeights calls (budget then eco) on profile switch.
+
+### Session 44, Task 2 -- Extract StripCodeFences helper to deduplicate 4 call sites
+Added llm.StripCodeFences function with 6-case table test. Replaced identical 4-line TrimPrefix/TrimSuffix sequences in parseTripParams, parsePartialParams, pickWithLLM, and parseRankingResponse. Net -12 lines of duplicated logic.

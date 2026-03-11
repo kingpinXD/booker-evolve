@@ -436,6 +436,54 @@ func TestChatCompletion_URLPath(t *testing.T) {
 	}
 }
 
+func TestStripCodeFences(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "json code fence",
+			input: "```json\n{\"origin\":\"DEL\"}\n```",
+			want:  "{\"origin\":\"DEL\"}",
+		},
+		{
+			name:  "plain code fence",
+			input: "```\n{\"strategy\":\"direct\"}\n```",
+			want:  "{\"strategy\":\"direct\"}",
+		},
+		{
+			name:  "no fences",
+			input: "  {\"score\":42}  ",
+			want:  "{\"score\":42}",
+		},
+		{
+			name:  "nested JSON preserved",
+			input: "```json\n{\"origin\":\"DEL\",\"legs\":[{\"dest\":\"YYZ\"}]}\n```",
+			want:  "{\"origin\":\"DEL\",\"legs\":[{\"dest\":\"YYZ\"}]}",
+		},
+		{
+			name:  "empty string",
+			input: "",
+			want:  "",
+		},
+		{
+			name:  "only fences",
+			input: "```json```",
+			want:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := StripCodeFences(tt.input)
+			if got != tt.want {
+				t.Errorf("StripCodeFences(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestNew(t *testing.T) {
 	cfg := config.LLMConfig{
 		Provider: config.LLMOpenAI,

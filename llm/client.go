@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"booker/config"
 	"booker/httpclient"
@@ -15,6 +16,15 @@ const (
 	RoleUser      = "user"
 	RoleAssistant = "assistant"
 )
+
+// StripCodeFences removes markdown code fences (```json and ```) that LLMs
+// sometimes wrap around JSON responses, and trims surrounding whitespace.
+func StripCodeFences(s string) string {
+	s = strings.TrimPrefix(s, "```json")
+	s = strings.TrimPrefix(s, "```")
+	s = strings.TrimSuffix(s, "```")
+	return strings.TrimSpace(s)
+}
 
 // Message is a single chat message.
 type Message struct {

@@ -135,12 +135,7 @@ func nearbyAirportHint(origin, destination string) string {
 func parseTripParams(response string) (tripParams, bool) {
 	// Try each line for a JSON object with required fields.
 	for _, line := range strings.Split(response, "\n") {
-		line = strings.TrimSpace(line)
-		// Strip markdown code fences.
-		line = strings.TrimPrefix(line, "```json")
-		line = strings.TrimPrefix(line, "```")
-		line = strings.TrimSuffix(line, "```")
-		line = strings.TrimSpace(line)
+		line = llm.StripCodeFences(line)
 
 		if !strings.HasPrefix(line, "{") {
 			continue
@@ -356,11 +351,7 @@ func mergeParams(prev, partial tripParams) tripParams {
 // follow-up refinements where the LLM only emits changed fields.
 func parsePartialParams(response string) (tripParams, bool) {
 	for _, line := range strings.Split(response, "\n") {
-		line = strings.TrimSpace(line)
-		line = strings.TrimPrefix(line, "```json")
-		line = strings.TrimPrefix(line, "```")
-		line = strings.TrimSuffix(line, "```")
-		line = strings.TrimSpace(line)
+		line = llm.StripCodeFences(line)
 
 		if !strings.HasPrefix(line, "{") {
 			continue

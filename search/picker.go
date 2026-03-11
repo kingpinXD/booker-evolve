@@ -82,11 +82,7 @@ func (p *Picker) pickWithLLM(ctx context.Context, req Request) (Strategy, error)
 	}
 
 	// Strip markdown code fences if present.
-	cleaned := response
-	cleaned = strings.TrimPrefix(cleaned, "```json")
-	cleaned = strings.TrimPrefix(cleaned, "```")
-	cleaned = strings.TrimSuffix(cleaned, "```")
-	cleaned = strings.TrimSpace(cleaned)
+	cleaned := llm.StripCodeFences(response)
 
 	var result pickerResult
 	if err := json.Unmarshal([]byte(cleaned), &result); err != nil {

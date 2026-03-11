@@ -18,12 +18,12 @@ Carried from: Day 43 (all completed)
 - [x] Verify build + test + vet + lint pass
 
 ## Task 121: Extract StripCodeFences helper to deduplicate 4 call sites
-**Status:** pending
-**Plan:**
-- [ ] Write test for llm.StripCodeFences (json fences, plain fences, no fences)
-- [ ] Add StripCodeFences to llm/llm.go
-- [ ] Replace 4 call sites: chat.go (x2), picker.go, ranker.go
-- [ ] Verify all existing tests pass
+**Status:** done
+**Plan:** Add StripCodeFences to llm/client.go, write 6-case table test, replace 4 call sites with single function calls.
+- [x] Write test for llm.StripCodeFences (json fences, plain fences, no fences, nested, empty, fence-only)
+- [x] Add StripCodeFences to llm/client.go
+- [x] Replace 4 call sites: chat.go (x2), picker.go, ranker.go
+- [x] Verify all existing tests pass
 
 ## Task 122: Fix NearbySearcher ignoring SortBy
 **Status:** pending

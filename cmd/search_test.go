@@ -123,6 +123,25 @@ func TestLegDeparture_OutOfBounds(t *testing.T) {
 	}
 }
 
+// --- legArrival ---
+
+func TestLegArrival_Valid(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	got := legArrival(itin, 0)
+	want := basetime.Add(7 * time.Hour).Format(outputDateTimeFmt)
+	if got != want {
+		t.Errorf("legArrival = %q, want %q", got, want)
+	}
+}
+
+func TestLegArrival_OutOfBounds(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	got := legArrival(itin, 3)
+	if got != "" {
+		t.Errorf("legArrival = %q, want empty for out-of-bounds index", got)
+	}
+}
+
 // --- stopoverString ---
 
 func TestStopoverString_WithStopover(t *testing.T) {
@@ -317,7 +336,7 @@ func TestPrintTable_SingleLeg(t *testing.T) {
 	out := capturePrintTable(itins, "USD")
 
 	// Single-leg headers should be present (go-pretty uppercases them).
-	for _, want := range []string{"SCORE", "PRICE", "ROUTE", "AIRLINES", "DEPARTURE", "DURATION"} {
+	for _, want := range []string{"SCORE", "PRICE", "ROUTE", "AIRLINES", "DEPARTURE", "ARRIVAL", "DURATION"} {
 		if !bytes.Contains([]byte(out), []byte(want)) {
 			t.Errorf("table output missing header %q", want)
 		}
@@ -349,7 +368,7 @@ func TestPrintTable_MultiLeg(t *testing.T) {
 	out := capturePrintTable(itins, "CAD")
 
 	// Multi-leg headers should be present (go-pretty uppercases them).
-	for _, want := range []string{"LEG 1 AIRLINES", "LEG 2 AIRLINES", "STOPOVER"} {
+	for _, want := range []string{"LEG 1 AIRLINES", "LEG 2 AIRLINES", "LEG 1 ARRIVAL", "LEG 2 ARRIVAL", "STOPOVER"} {
 		if !bytes.Contains([]byte(out), []byte(want)) {
 			t.Errorf("multi-leg table output missing header %q", want)
 		}

@@ -189,13 +189,14 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 		t.AppendHeader(table.Row{
 			"#", "Score", "Price", "Route",
 			"Leg 1 Airlines", "Leg 2 Airlines",
-			"Leg 1 Departure", "Leg 2 Departure",
+			"Leg 1 Departure", "Leg 1 Arrival",
+			"Leg 2 Departure", "Leg 2 Arrival",
 			"Stopover", "Stops", "Duration", "Reason", "Book",
 		})
 	} else {
 		t.AppendHeader(table.Row{
 			"#", "Score", "Price", "Route",
-			"Airlines", "Departure", "Stops", "Duration", "Reason", "Book",
+			"Airlines", "Departure", "Arrival", "Stops", "Duration", "Reason", "Book",
 		})
 	}
 
@@ -213,7 +214,9 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				legAirlines(itin, 0),
 				legAirlines(itin, 1),
 				legDeparture(itin, 0),
+				legArrival(itin, 0),
 				legDeparture(itin, 1),
+				legArrival(itin, 1),
 				stopoverString(itin),
 				stops,
 				dur,
@@ -228,6 +231,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				routeString(itin),
 				legAirlines(itin, 0),
 				legDeparture(itin, 0),
+				legArrival(itin, 0),
 				stops,
 				dur,
 				itin.Reasoning,
@@ -325,6 +329,17 @@ func legDeparture(itin search.Itinerary, legIdx int) string {
 		return ""
 	}
 	return segs[0].DepartureTime.Format(outputDateTimeFmt)
+}
+
+func legArrival(itin search.Itinerary, legIdx int) string {
+	if legIdx >= len(itin.Legs) {
+		return ""
+	}
+	segs := itin.Legs[legIdx].Flight.Outbound
+	if len(segs) == 0 {
+		return ""
+	}
+	return segs[len(segs)-1].ArrivalTime.Format(outputDateTimeFmt)
 }
 
 func legBookingURL(itin search.Itinerary, legIdx int) string {

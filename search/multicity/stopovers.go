@@ -749,6 +749,110 @@ var BOMToSYDStopovers = []StopoverCity{
 	},
 }
 
+// DELToFRAStopovers are the candidate stopover cities for Delhi → Frankfurt.
+//
+// Route geometry: DEL is at ~28°N, 77°E. FRA is at ~50°N, 8°E.
+// Gulf carrier hubs are the primary corridor — strong connectivity
+// to both India and Frankfurt via ME3 airlines and Lufthansa partners.
+var DELToFRAStopovers = []StopoverCity{
+	// === GULF — Primary corridor ===
+	{
+		City:    "Doha",
+		Airport: "DOH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-FRA direct on QR/Lufthansa. Museum of Islamic Art, desert safaris.",
+	},
+	{
+		City:    "Abu Dhabi",
+		Airport: "AUH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Etihad hub. DEL-AUH on Etihad/Air India. AUH-FRA direct on Etihad. Louvre Abu Dhabi, Sheikh Zayed Mosque.",
+	},
+	{
+		City:    "Dubai",
+		Airport: "DXB",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-FRA direct on Emirates/Lufthansa.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-FRA direct on Turkish/Lufthansa. Bosphorus, bazaars.",
+	},
+	{
+		City:    "Bahrain",
+		Airport: "BAH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Gulf Air hub. DEL-BAH on Gulf Air. BAH-FRA direct on Gulf Air. Compact, walkable, historic sites.",
+	},
+	{
+		City:    "Kuwait City",
+		Airport: "KWI",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Kuwait Airways hub. DEL-KWI on Kuwait Airways/AI. KWI-FRA direct on Kuwait Airways. Kuwait Towers, souks.",
+	},
+}
+
+// BOMToFRAStopovers are the candidate stopover cities for Mumbai → Frankfurt.
+//
+// Route geometry: BOM is at ~19°N, 73°E. FRA is at ~50°N, 8°E.
+// Gulf carrier hubs are the primary corridor with strong BOM connectivity.
+var BOMToFRAStopovers = []StopoverCity{
+	{
+		City:    "Doha",
+		Airport: "DOH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-FRA direct on QR/Lufthansa.",
+	},
+	{
+		City:    "Abu Dhabi",
+		Airport: "AUH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Etihad hub. BOM-AUH on Etihad/Air India. AUH-FRA direct on Etihad.",
+	},
+	{
+		City:    "Dubai",
+		Airport: "DXB",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-FRA direct on Emirates/Lufthansa.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-FRA direct on Turkish/Lufthansa.",
+	},
+	{
+		City:    "Bahrain",
+		Airport: "BAH",
+		Region:  "gulf",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Gulf Air hub. BOM-BAH on Gulf Air. BAH-FRA direct on Gulf Air.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -767,6 +871,8 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "SFO"): BOMToSFOStopovers,
 	routeKey("DEL", "SYD"): DELToSYDStopovers,
 	routeKey("BOM", "SYD"): BOMToSYDStopovers,
+	routeKey("DEL", "FRA"): DELToFRAStopovers,
+	routeKey("BOM", "FRA"): BOMToFRAStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

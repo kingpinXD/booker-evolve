@@ -72,4 +72,5 @@ type Stopover struct {
 	City     string        // e.g. "Hong Kong"
 	Airport  string        // IATA code, e.g. "HKG"
 	Duration time.Duration // how long the traveler stays in the city
+	Notes    string        // context about the stopover city (connectivity, food, visa, etc.)
 }

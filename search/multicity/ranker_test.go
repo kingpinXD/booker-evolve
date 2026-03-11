@@ -212,6 +212,97 @@ func TestBuildRankingPrompt_UnknownAirlineNoTag(t *testing.T) {
 	}
 }
 
+func TestBuildRankingPrompt_StopoverNotes(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 500, Currency: "USD"},
+			TotalTravel: 15 * time.Hour,
+			TotalTrip:   96 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 250, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "CX100", Origin: "DEL", Destination: "HKG",
+							OriginCity: "Delhi", DestinationCity: "Hong Kong",
+							DepartureTime: now, ArrivalTime: now.Add(7 * time.Hour),
+							Duration: 7 * time.Hour, AirlineName: "Cathay Pacific",
+						}},
+					},
+					Stopover: &search.Stopover{
+						City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour,
+						Notes: "Major Cathay Pacific hub. Great food, easy transit city.",
+					},
+				},
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 250, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "AC200", Origin: "HKG", Destination: "YYZ",
+							OriginCity: "Hong Kong", DestinationCity: "Toronto",
+							DepartureTime: now.Add(79 * time.Hour), ArrivalTime: now.Add(95 * time.Hour),
+							Duration: 16 * time.Hour, AirlineName: "Air Canada",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	if !containsAll(prompt, "Cathay Pacific hub", "Great food") {
+		t.Errorf("prompt missing stopover notes, got:\n%s", prompt)
+	}
+}
+
+func TestBuildRankingPrompt_StopoverNoNotes(t *testing.T) {
+	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
+	itineraries := []search.Itinerary{
+		{
+			TotalPrice:  types.Money{Amount: 500, Currency: "USD"},
+			TotalTravel: 15 * time.Hour,
+			TotalTrip:   96 * time.Hour,
+			Legs: []search.Leg{
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 250, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "CX100", Origin: "DEL", Destination: "HKG",
+							OriginCity: "Delhi", DestinationCity: "Hong Kong",
+							DepartureTime: now, ArrivalTime: now.Add(7 * time.Hour),
+							Duration: 7 * time.Hour, AirlineName: "Cathay Pacific",
+						}},
+					},
+					Stopover: &search.Stopover{
+						City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour,
+					},
+				},
+				{
+					Flight: types.Flight{
+						Price: types.Money{Amount: 250, Currency: "USD"},
+						Outbound: []types.Segment{{
+							FlightNumber: "AC200", Origin: "HKG", Destination: "YYZ",
+							OriginCity: "Hong Kong", DestinationCity: "Toronto",
+							DepartureTime: now.Add(79 * time.Hour), ArrivalTime: now.Add(95 * time.Hour),
+							Duration: 16 * time.Hour, AirlineName: "Air Canada",
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	prompt := buildRankingPrompt(itineraries)
+	// With no notes, the stopover line should still be present but no notes line.
+	if !containsAll(prompt, "STOPOVER: Hong Kong") {
+		t.Errorf("prompt should still show stopover, got:\n%s", prompt)
+	}
+	if searchString(prompt, "Notes:") {
+		t.Errorf("prompt should not contain Notes: when notes are empty, got:\n%s", prompt)
+	}
+}
+
 // containsAll checks that s contains every substring.
 func containsAll(s string, subs ...string) bool {
 	for _, sub := range subs {

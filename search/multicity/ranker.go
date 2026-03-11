@@ -210,6 +210,9 @@ func buildRankingPrompt(itineraries []search.Itinerary) string {
 				fmt.Fprintf(&b, "  --- STOPOVER: %s (%s) for %s ---\n",
 					leg.Stopover.City, leg.Stopover.Airport,
 					formatDuration(leg.Stopover.Duration))
+				if leg.Stopover.Notes != "" {
+					fmt.Fprintf(&b, "      Notes: %s\n", leg.Stopover.Notes)
+				}
 			}
 		}
 		b.WriteString("\n")

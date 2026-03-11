@@ -31,7 +31,6 @@ import (
 //     airport wait is miserable.
 //
 // TODO(iterate): Add time-of-day preferences (avoid red-eye on long legs).
-// TODO(iterate): Weight stopover city attractiveness into the combination.
 
 // CombineParams controls how legs are paired.
 type CombineParams struct {
@@ -138,6 +137,7 @@ func buildItinerary(leg1, leg2 types.Flight, stop StopoverCity, gap time.Duratio
 					City:     stop.City,
 					Airport:  stop.Airport,
 					Duration: gap,
+					Notes:    stop.Notes,
 				},
 			},
 			{

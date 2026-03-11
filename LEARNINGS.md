@@ -97,3 +97,7 @@ MaxPrice in direct search filters individual flights (FilterByMaxPrice on each f
 ## Lesson: Three-way parallel worktrees with sequential sub-tasks
 
 When two tasks share files (65+66 both touch multicity/), put them in one worktree running sequentially. Other independent tasks get their own worktrees. This session used 3 worktrees: one for 65+66 (sequential), one for 67, one for 68. All rebased cleanly. The gofmt alignment issue after rebase is expected when struct fields are added in one branch and other fields already existed with different alignment.
+
+## Lesson: Defined-but-unused constants reveal missing wiring
+
+Session 31 found config.SerpAPIParamStops defined but never referenced in any provider call. Grepping for unused constants during self-assessment is a low-effort way to find features that were half-implemented. Similarly, SerpAPIParamReturnDate was never sent despite the round-trip type being set -- the constant existed, the request type was correct, but the parameter was omitted. When reviewing a codebase, scan for constants and struct fields that are defined but never read; they often indicate incomplete work that is easy to finish.

@@ -318,3 +318,7 @@ Post-merge verification. Fixed gofmt alignment in config/routes.go (expected pat
 ## Session 31 -- Multicity departure time, SerpAPI params, ranker cleanup
 
 Completed all 5 planned tasks in 5 commits with zero reverts and zero API calls. Tasks ran in 2 parallel worktree agents (70+73 multicity, 71+72 serpapi). Key outcomes: (1) DepartureAfter/DepartureBefore now work in multicity pipeline, closing the last filter consistency gap. (2) SerpAPI sends stops=0 for direct-only searches, reducing response size. (3) Round-trip requests now include return_date for correct pricing. (4) Ranker prompt no longer shows empty "(->)" city parentheticals. gofmt alignment fix needed after rebase (expected). Coverage steady at ~84%.
+
+## Session 31 -- 09:31 -- Session close and Day 32 handoff
+
+Day 31 delivered 4 features across 5 commits with zero reverts and zero API calls. The multicity pipeline now respects all filters that the direct pipeline does -- DepartureAfter/DepartureBefore was the last gap, closing the filter consistency effort started in Session 29. SerpAPI requests are now more precise: stops=0 narrows API results for direct-only searches, and return_date is included for round-trip pricing correctness. The ranker prompt is cleaner with conditional city-name parentheticals. Coverage steady at ~84% across 15 packages. No open GitHub issues. Next priorities: passenger count support, cached flight data analysis for route recommendations, or time-zone-aware arrival display.

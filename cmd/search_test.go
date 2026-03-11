@@ -393,3 +393,29 @@ func TestPrintTable_MultiLeg(t *testing.T) {
 		t.Error("table output missing price summary footer")
 	}
 }
+
+// --- formatPriceInsights ---
+
+func TestFormatPriceInsights_WithData(t *testing.T) {
+	insights := search.PriceInsights{
+		LowestPrice:       450,
+		PriceLevel:        "low",
+		TypicalPriceRange: [2]float64{800, 1200},
+	}
+	got := formatPriceInsights(insights)
+	if got == "" {
+		t.Fatal("formatPriceInsights returned empty for valid insights")
+	}
+	for _, want := range []string{"low", "800", "1200"} {
+		if !bytes.Contains([]byte(got), []byte(want)) {
+			t.Errorf("formatPriceInsights missing %q in %q", want, got)
+		}
+	}
+}
+
+func TestFormatPriceInsights_Empty(t *testing.T) {
+	got := formatPriceInsights(search.PriceInsights{})
+	if got != "" {
+		t.Errorf("formatPriceInsights(empty) = %q, want empty", got)
+	}
+}

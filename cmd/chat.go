@@ -179,7 +179,7 @@ func runChat(cmd *cobra.Command, _ []string) error {
 		log.SetOutput(io.Discard)
 	}
 
-	picker, llmClient, err := buildPicker(multicity.WeightsBudget, "")
+	picker, llmClient, _, err := buildPicker(multicity.WeightsBudget, "")
 	if err != nil {
 		return err
 	}

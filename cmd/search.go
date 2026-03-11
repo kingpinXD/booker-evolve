@@ -108,7 +108,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		log.SetOutput(io.Discard)
 	}
 
-	picker, _, err := buildPicker(weights, viper.GetString(keyLeg2Date))
+	picker, _, rawProvider, err := buildPicker(weights, viper.GetString(keyLeg2Date))
 	if err != nil {
 		return err
 	}
@@ -154,11 +154,15 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	}
 
 	cur := viper.GetString(keyCurrency)
+	insights := rawProvider.LastPriceInsights()
 	switch viper.GetString(keyFormat) {
 	case "json":
-		return printJSON(results, cur)
+		return printJSONWithInsights(results, cur, insights)
 	default:
 		printTable(results, cur)
+		if s := formatPriceInsights(insights); s != "" {
+			fmt.Println(s)
+		}
 		return nil
 	}
 }
@@ -375,7 +379,48 @@ type jsonItinerary struct {
 	Stopover string    `json:"stopover,omitempty"`
 }
 
-func printJSON(itineraries []search.Itinerary, cur string) error {
+// formatPriceInsights returns a one-line summary of price insights, or empty
+// if no meaningful data is available.
+func formatPriceInsights(pi search.PriceInsights) string {
+	if pi.PriceLevel == "" {
+		return ""
+	}
+	low, high := pi.TypicalPriceRange[0], pi.TypicalPriceRange[1]
+	if low == 0 && high == 0 {
+		return fmt.Sprintf("Price level: %s", pi.PriceLevel)
+	}
+	return fmt.Sprintf("Price level: %s | Typical: $%.0f - $%.0f", pi.PriceLevel, low, high)
+}
+
+// jsonPriceInsights is the JSON representation of price insights.
+type jsonPriceInsights struct {
+	PriceLevel        string     `json:"price_level,omitempty"`
+	LowestPrice       float64    `json:"lowest_price,omitempty"`
+	TypicalPriceRange [2]float64 `json:"typical_price_range,omitempty"`
+}
+
+func printJSONWithInsights(itineraries []search.Itinerary, cur string, pi search.PriceInsights) error {
+	type jsonOutput struct {
+		Results       []jsonItinerary    `json:"results"`
+		PriceInsights *jsonPriceInsights `json:"price_insights,omitempty"`
+	}
+
+	results := buildJSONItineraries(itineraries, cur)
+	out := jsonOutput{Results: results}
+	if pi.PriceLevel != "" {
+		out.PriceInsights = &jsonPriceInsights{
+			PriceLevel:        pi.PriceLevel,
+			LowestPrice:       pi.LowestPrice,
+			TypicalPriceRange: pi.TypicalPriceRange,
+		}
+	}
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(out)
+}
+
+func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItinerary {
 	out := make([]jsonItinerary, len(itineraries))
 	for i, itin := range itineraries {
 		converted, _ := currency.Convert(itin.TotalPrice, cur)
@@ -410,7 +455,11 @@ func printJSON(itineraries []search.Itinerary, cur string) error {
 			Stopover: stopoverString(itin),
 		}
 	}
+	return out
+}
 
+func printJSON(itineraries []search.Itinerary, cur string) error {
+	out := buildJSONItineraries(itineraries, cur)
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)

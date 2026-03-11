@@ -34,15 +34,15 @@ Carried from: Day 18 (all completed)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 24: Surface PriceInsights in output
-**Status:** pending
-**Plan:**
-- [ ] Modify buildPicker to also return *serpapi.Provider reference
-- [ ] Write formatPriceInsights helper test (TDD)
-- [ ] Implement formatPriceInsights(insights search.PriceInsights) string
-- [ ] Call LastPriceInsights() in runSearch after strategy.Search, display below price summary
-- [ ] Add price_insights to JSON output
-- [ ] Wire into chatLoop for chat output
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Return raw *serpapi.Provider from buildPicker, write formatPriceInsights TDD, display after search in table + JSON.
+- [x] Modify buildPicker to also return *serpapi.Provider
+- [x] Write formatPriceInsights test (TDD) + implement
+- [x] Add printJSONWithInsights with price_insights field
+- [x] Refactor printJSON to use shared buildJSONItineraries
+- [x] Wire into runSearch (table + JSON output)
+- [x] Fix gofmt alignment
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 25: Test multicity.Strategy.Search
 **Status:** done

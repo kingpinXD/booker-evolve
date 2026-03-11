@@ -93,6 +93,9 @@ Added refinementHint() function listing available levers (dates, nearby airports
 ### Session 18, Task 5 -- Lint and gofmt sweep
 Fixed 1 gofmt violation in search/direct/direct.go (tab alignment from worktree agent). Zero lint issues after fix. All build gates pass.
 
+### Session 19, Task 4 -- Surface PriceInsights in output
+Modified buildPicker to return raw *serpapi.Provider so callers can access LastPriceInsights(). Added formatPriceInsights (TDD: 2 tests) for one-line display, printJSONWithInsights with price_insights field, and refactored printJSON to reuse buildJSONItineraries. Price insights now shown below table output and in JSON when available. 1 gofmt fix.
+
 ### Session 19, Task 3 -- Add --max-price budget filter
 Added MaxPrice field to search.Request, FilterByMaxPrice filter function with TDD (3 test cases), wired into direct.searchFlights pipeline and CLI (--max-price flag). Also added max_price to chat tripParams and system prompt so the LLM can extract budget constraints from conversation. 1 gofmt fix for struct alignment.
 

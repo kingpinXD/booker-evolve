@@ -255,3 +255,18 @@ Two gofmt struct alignment fixes (types.go, search.go). All gates clean: gofmt -
 ## Session 27 -- Ranker enrichment with aircraft type and carbon benchmarks
 
 Completed all 3 planned tasks in 3 commits with zero reverts and zero API calls. (1) Added [Aircraft: X] tag and CO2: Xkg line to buildRankingPrompt, giving the LLM explicit signals for comfort (equipment type) and environmental impact that were previously parsed but never passed to the ranker. (2) Threaded SerpAPI carbon benchmark data (TypicalForThisRoute, DifferencePercent) end-to-end: types.Flight fields, parser extraction with rounding, JSON output (omitempty), and ranker CO2 line with benchmark comparison ("CO2: 1106kg (+17% vs typical)"). (3) Two gofmt fixes for struct alignment. Coverage steady at ~84% across 15 packages. All build gates pass.
+
+## Day 28
+
+### Session 28, Task 1 -- Expand airport clusters with 8 new metro areas
+Added 8 multi-airport metro clusters to airportClusters: Bangkok (BKK/DMK), Istanbul (IST/SAW), Beijing (PEK/PKX), Osaka (KIX/ITM), Rome (FCO/CIA), Taipei (TPE/TSA), Miami (MIA/FLL), Sao Paulo (GRU/CGH/VCP). Now 22 clusters. 17 new test cases. Ran as parallel worktree agent.
+
+### Session 28, Task 2 -- Add alliance preference filter for search and chat
+Added PreferredAlliance field to search.Request and FilterByAlliance to filter.go, using existing Alliance() lookup. Wired end-to-end: direct pipeline, chat tripParams, buildRequestFromParams, mergeParams, parsePartialParams, system prompt, refinement hint. 10 new tests across search and cmd packages. Ran as parallel worktree agent.
+
+### Session 28, Task 3 -- Build gate verification
+Post-merge verification after rebasing both worktree branches. gofmt clean, go vet clean, golangci-lint 0 issues, all 15 packages pass.
+
+## Session 28 -- Airport cluster expansion and alliance preference filter
+
+Completed all 3 planned tasks in 3 commits with zero reverts and zero API calls. Tasks 1 and 2 ran in parallel worktree agents since they touched different files. (1) Expanded airport clusters from 14 to 22 metros, adding key Asian, European, and American multi-airport cities. The nearby searcher can now find cheaper alternatives at 8 more metros. (2) Added alliance preference filter end-to-end: FilterByAlliance in filter.go, PreferredAlliance on search.Request, preferred_alliance in chat tripParams with full merge/parse support, system prompt, and refinement hint. Users with frequent flyer programs can now filter to their alliance. (3) Clean post-merge build gate. Coverage steady at ~84% across 15 packages. All build gates pass.

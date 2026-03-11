@@ -85,3 +85,7 @@ When converting between units (grams to kg, cents to dollars, etc.) using intege
 ## Lesson: Multi-leg table columns must handle each leg independently
 
 When adding per-leg data columns (CO2, arrival, cabin) to the multi-leg table layout, each leg needs its own column -- do not reuse a single column with hardcoded leg index 0. The single-leg layout uses one column; the multi-leg layout must iterate. The CO2 bug (only leg 0 shown) was a 3-line fix but invisible until someone checked leg 1 data. When adding any new per-leg column, always verify both layouts.
+
+## Lesson: Parallel worktree agents work well when files are strictly disjoint
+
+Session 28 ran two worktree agents in parallel: one for airports.go (pure data addition) and one for filter.go + chat.go + strategy.go (new filter feature). Both completed independently and rebased cleanly with zero conflicts. The key was ensuring no shared files between the two tasks. When tasks touch different files in the same package, parallelization is safe -- the risk is only when they modify the same file.

@@ -47,6 +47,7 @@ type tripParams struct {
 	Passengers    int     `json:"passengers,omitempty"`
 	Cabin         string  `json:"cabin,omitempty"`
 	MaxPrice      float64 `json:"max_price,omitempty"`
+	DirectOnly    bool    `json:"direct_only,omitempty"`
 	Profile       string  `json:"profile,omitempty"`
 	Context       string  `json:"context,omitempty"`
 }
@@ -65,6 +66,7 @@ Optional:
 - passengers: number of travelers (default: 1)
 - cabin: economy, premium_economy, business, or first (default: economy)
 - max_price: maximum budget per flight in USD (e.g. 1200)
+- direct_only: true to show only non-stop flights
 - profile: ranking profile — "budget" (cheapest), "comfort" (best schedule/airline), or "balanced" (default: budget)
 - context: any preferences like "cheapest option" or "prefer direct flights"
 
@@ -135,6 +137,10 @@ func buildRequestFromParams(p tripParams) search.Request {
 	if cabin == "" {
 		cabin = defaultCabin
 	}
+	maxStops := defaultMaxStops
+	if p.DirectOnly {
+		maxStops = 0
+	}
 	return search.Request{
 		Origin:        p.Origin,
 		Destination:   p.Destination,
@@ -143,7 +149,7 @@ func buildRequestFromParams(p tripParams) search.Request {
 		Passengers:    passengers,
 		CabinClass:    types.CabinClass(cabin),
 		FlexDays:      defaultFlexDays,
-		MaxStops:      defaultMaxStops,
+		MaxStops:      maxStops,
 		MaxPrice:      p.MaxPrice,
 		MaxResults:    defaultMaxResults,
 		Context:       p.Context,
@@ -239,6 +245,9 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if merged.Context == "" {
 		merged.Context = prev.Context
 	}
+	if !merged.DirectOnly {
+		merged.DirectOnly = prev.DirectOnly
+	}
 	return merged
 }
 
@@ -264,7 +273,7 @@ func parsePartialParams(response string) (tripParams, bool) {
 		// At least one field must be set.
 		if p.Origin != "" || p.Destination != "" || p.DepartureDate != "" ||
 			p.ReturnDate != "" || p.Passengers != 0 || p.Cabin != "" ||
-			p.MaxPrice != 0 || p.Profile != "" || p.Context != "" {
+			p.MaxPrice != 0 || p.DirectOnly || p.Profile != "" || p.Context != "" {
 			return p, true
 		}
 	}

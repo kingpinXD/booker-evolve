@@ -337,6 +337,10 @@ func TestChatSystemPrompt(t *testing.T) {
 	if !strings.Contains(prompt, "nearby") {
 		t.Error("system prompt should mention nearby airports")
 	}
+	// Must mention direct_only optional field.
+	if !strings.Contains(prompt, "direct_only") {
+		t.Error("system prompt should mention direct_only option")
+	}
 }
 
 func TestNearbyAirportHint(t *testing.T) {
@@ -532,6 +536,62 @@ Switching to business class.`,
 	count := strings.Count(output, "Searching DEL -> YYZ")
 	if count < 2 {
 		t.Errorf("expected 2 searches for DEL -> YYZ, got %d in:\n%s", count, output)
+	}
+}
+
+func TestBuildRequestFromParams_DirectOnly(t *testing.T) {
+	params := tripParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2025-06-15",
+		DirectOnly:    true,
+	}
+	req := buildRequestFromParams(params)
+	if req.MaxStops != 0 {
+		t.Errorf("MaxStops = %d, want 0 when DirectOnly=true", req.MaxStops)
+	}
+}
+
+func TestBuildRequestFromParams_DirectOnlyFalse(t *testing.T) {
+	params := tripParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2025-06-15",
+		DirectOnly:    false,
+	}
+	req := buildRequestFromParams(params)
+	if req.MaxStops != defaultMaxStops {
+		t.Errorf("MaxStops = %d, want %d when DirectOnly=false", req.MaxStops, defaultMaxStops)
+	}
+}
+
+func TestParsePartialParams_DirectOnly(t *testing.T) {
+	p, ok := parsePartialParams(`{"direct_only":true}`)
+	if !ok {
+		t.Fatal("expected partial JSON with direct_only to parse")
+	}
+	if !p.DirectOnly {
+		t.Error("DirectOnly should be true")
+	}
+}
+
+func TestMergeParams_DirectOnly(t *testing.T) {
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	partial := tripParams{DirectOnly: true}
+	got := mergeParams(prev, partial)
+	if !got.DirectOnly {
+		t.Error("expected DirectOnly=true to be preserved after merge")
+	}
+	if got.Origin != "DEL" {
+		t.Errorf("Origin = %q, want %q", got.Origin, "DEL")
+	}
+
+	// When prev has DirectOnly=true and partial doesn't set it, it should carry forward.
+	prev2 := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", DirectOnly: true}
+	partial2 := tripParams{Cabin: "business"}
+	got2 := mergeParams(prev2, partial2)
+	if !got2.DirectOnly {
+		t.Error("expected DirectOnly=true to carry forward from prev")
 	}
 }
 

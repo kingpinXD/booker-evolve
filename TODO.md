@@ -1,33 +1,68 @@
 # TODO
 
-Carried from: Day 31 (all completed)
-
-## Tasks 70-74: Day 31 tasks
-**Status:** completed -- multicity departure time filter, SerpAPI stops+return_date params, ranker city name cleanup, build gate clean
-
----
+Carried from: Day 33 (all completed)
 
 ## Tasks 75-79: Day 33 tasks
 **Status:** completed -- post-fetch sorting, connection risk tags, sort_by in chat, JSON enrichment, avoid airline filter
 
-## Task 75: Post-fetch sorting in direct strategy + CLI flag
-**Status:** done
-- [x] SortResults in filter.go (price/duration/departure) + 5 tests
-- [x] --sort-by CLI flag, wired into direct.go
+---
 
-## Task 76: Connection risk tags in ranker prompt
-**Status:** done
-- [x] [Risky connection: Xm] / [Tight connection: Xm] tags in buildRankingPrompt + 3 tests
+## Tasks 80-84: Day 34 tasks
+**Status:** completed -- avoid-airlines in chat, multicity in chat, arrival time filter, max duration filter, cmd helper coverage
 
-## Task 77: Wire sort_by into chat conversation
+## Pre-task: Commit stale gofmt fix
 **Status:** done
-- [x] SortBy in tripParams, parsePartialParams, mergeParams, buildRequestFromParams, system prompt, refinement hint + 5 tests
+- [x] Commit ranker_test.go gofmt alignment fix from Session 33
 
-## Task 78: Enrich JSON output with airline codes and city names
+## Task 80: Wire AvoidAirlines into chat conversation
 **Status:** done
-- [x] AirlineCode, OriginCity, DestinationCity, OriginName, DestinationName in jsonLeg + 2 tests
+**Plan:** Add avoid_airlines to tripParams, wire through all 5 chat pipeline stages (parse/merge/build/prompt/hint), add tests.
+- [x] Add AvoidAirlines string to tripParams struct
+- [x] Wire into parsePartialParams
+- [x] Wire into mergeParams
+- [x] Wire into buildRequestFromParams
+- [x] Add to system prompt
+- [x] Add to refinement hint
+- [x] Write tests for parse/merge/build/prompt
 
-## Task 79: Avoid airline filter
+## Task 81: Wire multicity/leg2_date into chat conversation
 **Status:** done
-- [x] FilterByAvoidAirlines in filter.go + 5 tests
-- [x] Wired into direct, multicity, --avoid-airlines CLI flag
+**Plan:** Add Leg2Date to tripParams and search.Request. Wire through chat pipeline. Update multicity Strategy to prefer req.Leg2Date over constructor default. Also wire AvoidAirlines through to multicity Strategy (was missing).
+- [x] Add Leg2Date string to tripParams
+- [x] Add Leg2Date to search.Request
+- [x] Wire into parsePartialParams, mergeParams, buildRequestFromParams
+- [x] Update system prompt with leg2_date guidance
+- [x] Update refinement hint
+- [x] Modify multicity.Strategy to prefer req.Leg2Date over default
+- [x] Wire AvoidAirlines through toSearchParams (was missing)
+- [x] Write tests (chat + strategy override/fallback)
+
+## Task 82: Arrival time filter (ArrivalBefore/ArrivalAfter)
+**Status:** done
+**Plan:** Add FilterByArrivalTime in filter.go using parseHHMM. Add ArrivalAfter/ArrivalBefore to search.Request. Wire through direct, multicity, CLI, and chat.
+- [x] Add ArrivalBefore/ArrivalAfter to search.Request
+- [x] Implement FilterByArrivalTime in filter.go
+- [x] Write unit tests for FilterByArrivalTime
+- [x] Wire into direct pipeline
+- [x] Wire into multicity stages (FILTER + 4b)
+- [x] Add --arrival-after/--arrival-before CLI flags
+- [x] Wire into chat tripParams (parse/merge/build/prompt/hint)
+
+## Task 83: Max duration filter
+**Status:** done
+**Plan:** Add FilterByMaxDuration in filter.go. Add MaxDuration to search.Request. Wire through direct, multicity, CLI (--max-duration), and chat (max_duration_hours).
+- [x] Add MaxDuration to search.Request
+- [x] Implement FilterByMaxDuration in filter.go
+- [x] Write unit tests for FilterByMaxDuration
+- [x] Wire into direct pipeline
+- [x] Wire into multicity stages (FILTER + 4b)
+- [x] Add --max-duration CLI flag
+- [x] Wire into chat tripParams (max_duration_hours)
+
+## Task 84: Coverage for low-coverage cmd helpers
+**Status:** done
+**Plan:** Add edge-case tests for empty segments and out-of-bounds paths in cmd helpers.
+- [x] Add edge-case tests for legAircraft, legLegroom, legBookingURL (empty segs + OOB)
+- [x] Add edge-case tests for legCabin, legArrival, legDeparture (empty segs)
+- [x] Add edge-case tests for legSeatsLeft (OOB)
+- [x] Add edge-case tests for formatPriceInsights (PriceLevel-only, zero range)

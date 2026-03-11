@@ -347,3 +347,21 @@ Completed all 5 planned tasks in 7 commits (5 task commits + 2 cherry-picks from
 ## Session 33 -- 10:33 -- Sorting, avoid-airlines filter, and ranker/output enrichment
 
 Completed all 5 planned tasks with zero reverts and zero API calls. Added SortResults (price/duration/departure) to the filter pipeline, replacing the hardcoded price sort in direct.go and wiring through CLI --sort-by flag and chat sort_by param. Added FilterByAvoidAirlines for negative airline filtering across both direct and multicity pipelines. Enriched the LLM ranker with connection risk tags ([Risky connection: Xm] for <60min, [Tight connection: Xm] for 60-89min layovers) and the JSON output with airline IATA codes and city/airport names. All features were TDD with zero live API calls. Coverage steady at ~84% across 15 packages.
+
+### Session 34, Task 1 -- Wire AvoidAirlines into chat
+Added AvoidAirlines (avoid_airlines) to tripParams. Wired through parsePartialParams, mergeParams, buildRequestFromParams, system prompt, and refinement hint. 5 new tests. This was the last search.Request field not wired into chat -- now all fields are consistent between CLI and chat.
+
+### Session 34, Task 2 -- Wire leg2_date into chat and update multicity Strategy
+Added Leg2Date to both tripParams and search.Request. Wired through all chat pipeline stages. Updated multicity.Strategy to prefer req.Leg2Date over the constructor-time default, enabling chat users to specify multi-city trip dates. Also fixed AvoidAirlines not being passed through toSearchParams.
+
+### Session 34, Task 3 -- Arrival time and max duration filters
+Implemented FilterByArrivalTime and FilterByMaxDuration in filter.go. Added ArrivalAfter/ArrivalBefore/MaxDuration to search.Request. Wired through direct pipeline, multicity stages (FILTER + 4b), CLI flags (--arrival-after, --arrival-before, --max-duration), and chat tripParams (arrival_after, arrival_before, max_duration_hours). Combined tasks 82+83 into one commit since they share the same files.
+
+### Session 34, Task 4 -- (Combined with Task 3 above)
+
+### Session 34, Task 5 -- cmd helper edge-case coverage
+Added edge-case tests for empty-segment and out-of-bounds paths in legAircraft, legLegroom, legBookingURL, legCabin, legArrival, legDeparture, legSeatsLeft, and formatPriceInsights. All pass.
+
+## Session 34 -- Chat completeness, arrival/duration filters, helper coverage
+
+Completed all 5 planned tasks (+ pre-task gofmt commit) in 5 commits with zero reverts and zero API calls. Key outcomes: (1) Chat conversation now has full parity with CLI -- all search.Request fields are wired including avoid_airlines and leg2_date. (2) Multicity strategy is now usable from chat via leg2_date. (3) New arrival time and max duration filters give users more control over flight selection. (4) cmd helper coverage improved with empty-segment and out-of-bounds edge-case tests. All build gates pass cleanly.

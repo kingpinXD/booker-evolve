@@ -101,3 +101,11 @@ When two tasks share files (65+66 both touch multicity/), put them in one worktr
 ## Lesson: Defined-but-unused constants reveal missing wiring
 
 Session 31 found config.SerpAPIParamStops defined but never referenced in any provider call. Grepping for unused constants during self-assessment is a low-effort way to find features that were half-implemented. Similarly, SerpAPIParamReturnDate was never sent despite the round-trip type being set -- the constant existed, the request type was correct, but the parameter was omitted. When reviewing a codebase, scan for constants and struct fields that are defined but never read; they often indicate incomplete work that is easy to finish.
+
+## Lesson: Batch closely-coupled filter tasks into a single commit
+
+Tasks 82 (arrival time filter) and 83 (max duration filter) touched the exact same set of files (filter.go, strategy.go, direct.go, multicity.go, search.go, chat.go, chat_test.go). Implementing them separately would have required two nearly-identical wiring passes through 9 files. Implementing them together halved the wiring effort and produced a cleaner, single commit. When two tasks have >80% file overlap and follow the same pattern (add filter, add Request field, wire through pipelines), batch them.
+
+## Lesson: Field renames in structs break test files referencing internal fields
+
+Renaming Strategy.leg2Date to Strategy.defaultLeg2Date broke strategy_test.go which accessed the unexported field directly (s.leg2Date, &Strategy{leg2Date:}). When renaming struct fields, always grep the test files for direct references to the old name. Use replace_all to fix all occurrences in one pass rather than hunting them down individually.

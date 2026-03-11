@@ -46,8 +46,8 @@ Carried from: Day 18 (all completed)
 - [ ] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 25: Test multicity.Strategy.Search
-**Status:** pending
-**Plan:**
-- [ ] Write test with mock Searcher that records calls
-- [ ] Verify Search delegates to Searcher.Search with correct params from toSearchParams
-- [ ] Verify: `go test ./search/multicity/... -race`
+**Status:** done
+**Plan:** Used existing test helpers (newTestSearcher, validLeg1/2, llmRankingHandler) to test Strategy.Search happy path and error propagation.
+- [x] Write TestStrategy_Search with mock Searcher (happy path)
+- [x] Write TestStrategy_Search_Error (invalid date propagation)
+- [x] Verify: `go test ./search/multicity/... -race`

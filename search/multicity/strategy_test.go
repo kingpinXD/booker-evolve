@@ -1,7 +1,9 @@
 package multicity
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"booker/search"
 	"booker/types"
@@ -81,5 +83,62 @@ func TestStrategy_RequestMapping(t *testing.T) {
 	}
 	if params.MaxResults != 5 {
 		t.Errorf("MaxResults = %d, want 5", params.MaxResults)
+	}
+}
+
+// TestStrategy_Search verifies the full delegation: Strategy.Search maps the
+// search.Request to SearchParams via toSearchParams, then calls Searcher.Search,
+// returning itineraries from the underlying pipeline.
+func TestStrategy_Search(t *testing.T) {
+	flights := []types.Flight{validLeg1(), validLeg2()}
+	searcher := newTestSearcher(t, flights, llmRankingHandler(15))
+
+	leg2Date := basetime.Add(72 * time.Hour).Format(DateLayout)
+	strategy := NewStrategy(searcher, leg2Date)
+
+	req := search.Request{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: basetime.Format(DateLayout),
+		Passengers:    1,
+		CabinClass:    types.CabinEconomy,
+		FlexDays:      3,
+		MaxStops:      -1,
+		MaxResults:    5,
+	}
+
+	results, err := strategy.Search(context.Background(), req)
+	if err != nil {
+		t.Fatalf("Strategy.Search() error: %v", err)
+	}
+	if len(results) == 0 {
+		t.Fatal("Strategy.Search() returned 0 itineraries, expected at least 1")
+	}
+
+	itin := results[0]
+	if len(itin.Legs) != 2 {
+		t.Fatalf("expected 2 legs, got %d", len(itin.Legs))
+	}
+	if itin.TotalPrice.Amount <= 0 {
+		t.Errorf("TotalPrice = %.0f, expected > 0", itin.TotalPrice.Amount)
+	}
+}
+
+// TestStrategy_Search_Error verifies that errors from the Searcher propagate
+// through Strategy.Search unchanged.
+func TestStrategy_Search_Error(t *testing.T) {
+	searcher := newTestSearcher(t, nil, llmErrorHandler())
+	strategy := NewStrategy(searcher, "2026-03-30")
+
+	req := search.Request{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "not-a-date",
+		Passengers:    1,
+	}
+
+	_, err := strategy.Search(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error to propagate from Searcher, got nil")
 	}
 }

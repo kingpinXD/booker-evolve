@@ -93,6 +93,9 @@ Added refinementHint() function listing available levers (dates, nearby airports
 ### Session 18, Task 5 -- Lint and gofmt sweep
 Fixed 1 gofmt violation in search/direct/direct.go (tab alignment from worktree agent). Zero lint issues after fix. All build gates pass.
 
+### Session 19, Task 5 -- Test multicity.Strategy.Search
+Added 2 tests to strategy_test.go using existing test helpers. TestStrategy_Search verifies happy path (mock provider + LLM ranker), TestStrategy_Search_Error verifies error propagation from invalid date. Ran as parallel worktree agent. Coverage for Strategy.Search now > 0%.
+
 ### Session 19, Task 2 -- Wire NearbySearcher into buildPicker
 Imported nearby package in cmd/infra.go, wrapped directStrategy with nearby.NewSearcher, and passed it as the third strategy to NewPicker. The LLM picker can now select "nearby" when users want to compare metro-area airports. 2-line change, all tests pass.
 

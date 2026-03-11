@@ -610,6 +610,6 @@ Replaced "N stops" with formatLayoverSummary showing city+duration (e.g. "1 stop
 ### Session 48, Task 5 -- SetRanker test + picker fallback + stale TODO cleanup
 Changed picker test to use p.SetRanker() public API instead of direct field access. Removed stale dedup TODO from multicity.go. Ran in parallel worktree.
 
-## Session 48 -- Summary
+## Session 48 -- 20:33 -- Chat enrichment and stopover expansion
 
-Completed all 5 tasks with zero reverts and zero API calls. Chat summary now includes ranking reasoning, layover details with city+duration, and inferred ranking profiles from conversation keywords. Added India-Bangkok stopover corridors and cleaned up picker test coverage. Tasks 3 and 5 ran in parallel worktrees. All build gates pass.
+Completed all 5 tasks with zero reverts and zero API calls. resultSummaryForChat now includes ranking reasoning from Itinerary.Reasoning and layover details (city+duration via formatLayoverSummary) instead of bare stop counts. Added inferProfile keyword scanner as fallback when LLM omits profile field -- covers budget/comfort/eco signals from conversation history. Expanded stopover network with India-Bangkok corridors (DEL: 6 cities, BOM: 5 cities) bringing total to 15 route-specific corridors. Cleaned up picker test to use SetRanker public API and removed stale dedup TODO. Tasks 3 and 5 ran in parallel worktrees.

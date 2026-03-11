@@ -740,6 +740,23 @@ func stopoverSuggestion(origin, dest, leg2Date string) string {
 		strings.Join(cities, " or "))
 }
 
+// displayChatResults renders search results to out in the configured format
+// (table or JSON) and displays price insights if available.
+func displayChatResults(out io.Writer, results []search.Itinerary, pi search.PriceInsights) {
+	cur := viper.GetString(keyCurrency)
+	switch viper.GetString(keyFormat) {
+	case "json":
+		if err := printJSONWithInsights(out, results, cur, pi); err != nil {
+			_, _ = fmt.Fprintf(out, "Error: %v\n", err)
+		}
+	default:
+		printTable(out, results, cur)
+		if s := formatPriceInsights(pi); s != "" {
+			_, _ = fmt.Fprintln(out, s)
+		}
+	}
+}
+
 func runChat(cmd *cobra.Command, _ []string) error {
 	if !viper.GetBool(keyVerbose) {
 		log.SetOutput(io.Discard)
@@ -872,22 +889,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 			continue
 		}
 
-		cur := viper.GetString(keyCurrency)
 		var pi search.PriceInsights
 		if insights != nil {
 			pi = insights.LastPriceInsights()
 		}
-		switch viper.GetString(keyFormat) {
-		case "json":
-			if err := printJSONWithInsights(out, results, cur, pi); err != nil {
-				_, _ = fmt.Fprintf(out, "Error: %v\n", err)
-			}
-		default:
-			printTable(out, results, cur)
-			if s := formatPriceInsights(pi); s != "" {
-				_, _ = fmt.Fprintln(out, s)
-			}
-		}
+		displayChatResults(out, results, pi)
 
 		// Suggest multi-city routing for single-leg trips with known stopovers.
 		if tip := stopoverSuggestion(params.Origin, params.Destination, params.Leg2Date); tip != "" {

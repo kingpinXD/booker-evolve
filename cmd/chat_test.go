@@ -12,6 +12,8 @@ import (
 	"booker/search"
 	"booker/search/multicity"
 	"booker/types"
+
+	"github.com/spf13/viper"
 )
 
 func TestParseTripParams_ValidJSON(t *testing.T) {
@@ -2589,6 +2591,55 @@ func TestChatSearch(t *testing.T) {
 	}
 	if !strings.Contains(output, "Using direct strategy") {
 		t.Errorf("expected strategy info in output, got:\n%s", output)
+	}
+}
+
+func TestDisplayChatResults_Table(t *testing.T) {
+	results := []search.Itinerary{{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", Origin: "DEL", Destination: "YYZ"}},
+		}}},
+		TotalPrice:  types.Money{Amount: 500, Currency: "USD"},
+		TotalTravel: 14 * time.Hour,
+	}}
+	pi := search.PriceInsights{PriceLevel: "low", TypicalPriceRange: [2]float64{600, 900}}
+
+	var buf strings.Builder
+	viper.Set(keyFormat, "table")
+	viper.Set(keyCurrency, "USD")
+	displayChatResults(&buf, results, pi)
+
+	out := buf.String()
+	if !strings.Contains(out, "Air Canada") {
+		t.Errorf("expected airline in table output, got:\n%s", out)
+	}
+	// Price insights should be displayed.
+	if !strings.Contains(out, "low") {
+		t.Errorf("expected price level in output, got:\n%s", out)
+	}
+}
+
+func TestDisplayChatResults_JSON(t *testing.T) {
+	results := []search.Itinerary{{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Airline: "AC", Origin: "DEL", Destination: "YYZ"}},
+		}}},
+		TotalPrice:  types.Money{Amount: 500, Currency: "USD"},
+		TotalTravel: 14 * time.Hour,
+	}}
+
+	var buf strings.Builder
+	viper.Set(keyFormat, "json")
+	viper.Set(keyCurrency, "USD")
+	displayChatResults(&buf, results, search.PriceInsights{})
+
+	out := buf.String()
+	if !strings.Contains(out, "500") {
+		t.Errorf("expected price in JSON output, got:\n%s", out)
 	}
 }
 

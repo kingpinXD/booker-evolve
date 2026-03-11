@@ -33,9 +33,9 @@
 - [x] Run tests
 
 ## Task 159: Extract displayChatResults helper from chatLoop
-**Status:** pending
+**Status:** done
 **Plan:** Extract lines 866-882 of chatLoop (format switch, printTable/printJSON, price insights display) into displayChatResults(out, results, insights, cur). Reduces chatLoop and improves testability.
-- [ ] Extract displayChatResults function
-- [ ] Update chatLoop to call helper
-- [ ] Add unit test for displayChatResults
-- [ ] Run full verification
+- [x] Extract displayChatResults function
+- [x] Update chatLoop to call helper
+- [x] Add unit test for displayChatResults
+- [x] Run full verification

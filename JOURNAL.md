@@ -546,3 +546,7 @@ Added Context field to SearchParams, threaded through toSearchParams, added User
 
 ### Session 44, Task 5 -- Respect departure time preferences in CombineLegs red-eye filter
 CombineLegs previously hard-rejected all leg2 departures 00:00-04:59 regardless of user preferences. Added DepartureAfter/DepartureBefore fields to CombineParams. When either is set, the blanket red-eye rejection is skipped -- the user's own time constraints take precedence. Threaded from SearchParams in multicity.go. Resolves the TODO(iterate) in combiner.go.
+
+## Session 44 -- 17:32 -- Dynamic profiles, deduplication, and user-aware ranking
+
+Completed all 5 planned tasks in 7 commits with zero reverts and zero API calls. Session focused on fixing dead code paths and improving ranking quality. (1) Chat profile switching was broken -- tripParams.Profile was parsed/merged but never applied to the ranker. Added SetWeights to Ranker and a weightsUpdater interface in chatLoop so profile changes mid-chat now take effect. (2) Extracted llm.StripCodeFences to deduplicate 4 identical code-fence stripping sequences across 3 packages. (3) Fixed NearbySearcher ignoring req.SortBy by replacing hardcoded price sort with SortResults. (4) Threaded search.Request.Context to the multicity ranker, adding a USER PREFERENCES section to buildRankingPrompt -- implements VISION.md Section 3 user-aware ranking. (5) CombineLegs red-eye filter now respects user departure time preferences instead of blanket-rejecting all 00:00-04:59 departures. All build gates pass.

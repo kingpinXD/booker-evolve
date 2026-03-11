@@ -144,3 +144,6 @@ When extending a struct used across multiple presets (e.g., RankingWeights), add
 
 ## Lesson: Large file splits succeed cleanly when no logic changes
 Extracting 25 functions and 4 types from cmd/search.go (768 lines) into cmd/display.go required zero test changes -- all existing tests continued passing because the functions stayed in the same package with identical signatures. The key is moving only display/formatting code with no behavioral changes. This kind of pure-mechanical refactor is safe to run in a parallel worktree alongside feature work in disjoint files.
+
+## Lesson: Parsing and merging a config field does not mean it takes effect
+Session 44 found that chat profile switching was dead code: tripParams.Profile was parsed from LLM JSON, merged between turns, and even displayed in refinement hints -- but the ranker's weights were fixed at startup and never updated. The fix was small (SetWeights method + interface), but the bug was invisible because all the wiring looked correct at each stage. When adding a user-facing setting, trace the full path from parse -> merge -> build request -> execute. If any link only stores the value without acting on it, the feature is broken despite appearing complete.

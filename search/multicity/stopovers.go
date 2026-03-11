@@ -421,6 +421,120 @@ var BOMToJFKStopovers = []StopoverCity{
 	},
 }
 
+// DELToLHRStopovers are the candidate stopover cities for Delhi → London Heathrow.
+//
+// Route geometry: DEL is at ~28°N, 77°E. LHR is at ~51°N, 0°W.
+// Southeast Asia eastbound corridor and Istanbul westbound are the
+// primary safe corridors avoiding Middle East airspace.
+var DELToLHRStopovers = []StopoverCity{
+	// === SOUTHEAST ASIA — Primary corridor ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. DEL-BKK frequent and cheap. BKK-LHR direct on Thai/BA. Temples, street food, nightlife.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-LHR direct on Singapore Airlines. Strong DEL-SIN frequency. Clean, safe, great food.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines hub. KUL-LHR direct on MAS. Cheap DEL-KUL. Petronas Towers, Batu Caves.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-LHR direct on Cathay/BA. DEL-HKG frequent. Victoria Peak, harbour, dim sum.",
+	},
+	{
+		City:    "Colombo",
+		Airport: "CMB",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SriLankan Airlines hub. CMB-LHR direct on SriLankan. DEL-CMB frequent. Beaches, tea country, temples.",
+	},
+
+	// === EUROPE — Secondary corridor ===
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. IST-LHR very frequent. DEL-IST on Turkish. Bosphorus, bazaars, history.",
+	},
+}
+
+// BOMToLHRStopovers are the candidate stopover cities for Mumbai → London Heathrow.
+//
+// Route geometry: BOM is at ~19°N, 73°E. LHR is at ~51°N, 0°W.
+// Similar corridor to DEL→LHR but BOM has different hub connectivity.
+var BOMToLHRStopovers = []StopoverCity{
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-LHR direct on Thai/BA.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-LHR direct on Singapore Airlines. Strong BOM-SIN frequency.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines hub. KUL-LHR direct on MAS. Cheap BOM-KUL.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-LHR direct on Cathay/BA. BOM-HKG on Cathay/Air India.",
+	},
+	{
+		City:    "Colombo",
+		Airport: "CMB",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SriLankan Airlines hub. CMB-LHR direct on SriLankan. BOM-CMB short hop. Beaches, wildlife.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. IST-LHR very frequent. BOM-IST on Turkish.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -433,6 +547,8 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("DEL", "YVR"): DELToYVRStopovers,
 	routeKey("DEL", "JFK"): DELToJFKStopovers,
 	routeKey("BOM", "JFK"): BOMToJFKStopovers,
+	routeKey("DEL", "LHR"): DELToLHRStopovers,
+	routeKey("BOM", "LHR"): BOMToLHRStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

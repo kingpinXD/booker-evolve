@@ -476,6 +476,13 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 		return allItineraries[i].TotalPrice.Amount < allItineraries[j].TotalPrice.Amount
 	})
 
+	// Deduplicate itineraries with identical flights, keeping cheapest.
+	before := len(allItineraries)
+	allItineraries = deduplicateItineraries(allItineraries)
+	if dupes := before - len(allItineraries); dupes > 0 {
+		log.Printf("[multicity] deduplicated %d itineraries", dupes)
+	}
+
 	// ---------------------------------------------------------------
 	// STAGE 5: RANK
 	// Send top candidates to the LLM for intelligent scoring.
@@ -576,6 +583,43 @@ func (s *Searcher) fetchFromAllProviders(ctx context.Context, req types.SearchRe
 		allFlights = append(allFlights, results...)
 	}
 	return allFlights
+}
+
+// deduplicateItineraries removes itineraries with identical flights (same flight
+// numbers and departure times across all legs), keeping the cheapest.
+func deduplicateItineraries(itins []search.Itinerary) []search.Itinerary {
+	type entry struct {
+		idx   int
+		price float64
+	}
+	best := make(map[string]entry)
+	for i, itin := range itins {
+		key := itineraryKey(itin)
+		if prev, ok := best[key]; !ok || itin.TotalPrice.Amount < prev.price {
+			best[key] = entry{idx: i, price: itin.TotalPrice.Amount}
+		}
+	}
+	result := make([]search.Itinerary, 0, len(best))
+	for _, e := range best {
+		result = append(result, itins[e.idx])
+	}
+	// Re-sort by price since map iteration is unordered.
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].TotalPrice.Amount < result[j].TotalPrice.Amount
+	})
+	return result
+}
+
+// itineraryKey builds a dedup key from each leg's first segment flight number + departure.
+func itineraryKey(itin search.Itinerary) string {
+	var key string
+	for _, leg := range itin.Legs {
+		if len(leg.Flight.Outbound) > 0 {
+			seg := leg.Flight.Outbound[0]
+			key += seg.FlightNumber + seg.DepartureTime.Format("2006-01-02T15:04") + "|"
+		}
+	}
+	return key
 }
 
 // deduplicateFlights merges two flight slices, removing duplicates by booking URL.

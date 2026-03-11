@@ -8,6 +8,7 @@ import (
 
 	"booker/config"
 	"booker/provider"
+	"booker/search"
 	"booker/types"
 )
 
@@ -527,6 +528,63 @@ func TestPassesAllFilters(t *testing.T) {
 				t.Errorf("passesAllFilters() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// --- deduplicateItineraries ---
+
+func TestDeduplicateItineraries_KeepsCheapest(t *testing.T) {
+	dep1 := basetime
+	dep2 := basetime.Add(72 * time.Hour)
+
+	// Two itineraries with identical flights (same flight number + departure) but different prices.
+	cheap := makeTestItinerary("CX100", dep1, "AC200", dep2, 700)
+	expensive := makeTestItinerary("CX100", dep1, "AC200", dep2, 900)
+
+	got := deduplicateItineraries([]search.Itinerary{expensive, cheap})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 itinerary after dedup, got %d", len(got))
+	}
+	if got[0].TotalPrice.Amount != 700 {
+		t.Errorf("expected cheapest (700), got %.0f", got[0].TotalPrice.Amount)
+	}
+}
+
+func TestDeduplicateItineraries_DifferentFlights(t *testing.T) {
+	dep1 := basetime
+	dep2 := basetime.Add(72 * time.Hour)
+
+	a := makeTestItinerary("CX100", dep1, "AC200", dep2, 700)
+	b := makeTestItinerary("AI302", dep1, "AC200", dep2, 800)
+
+	got := deduplicateItineraries([]search.Itinerary{a, b})
+	if len(got) != 2 {
+		t.Errorf("expected 2 itineraries (different flights), got %d", len(got))
+	}
+}
+
+func TestDeduplicateItineraries_EmptyInput(t *testing.T) {
+	got := deduplicateItineraries(nil)
+	if len(got) != 0 {
+		t.Errorf("expected 0, got %d", len(got))
+	}
+}
+
+func makeTestItinerary(fn1 string, dep1 time.Time, fn2 string, dep2 time.Time, totalPrice float64) search.Itinerary {
+	return search.Itinerary{
+		Legs: []search.Leg{
+			{Flight: types.Flight{
+				Outbound:      []types.Segment{{FlightNumber: fn1, DepartureTime: dep1, ArrivalTime: dep1.Add(8 * time.Hour)}},
+				TotalDuration: 8 * time.Hour,
+				Price:         types.Money{Amount: totalPrice / 2, Currency: "USD"},
+			}},
+			{Flight: types.Flight{
+				Outbound:      []types.Segment{{FlightNumber: fn2, DepartureTime: dep2, ArrivalTime: dep2.Add(16 * time.Hour)}},
+				TotalDuration: 16 * time.Hour,
+				Price:         types.Money{Amount: totalPrice / 2, Currency: "USD"},
+			}},
+		},
+		TotalPrice: types.Money{Amount: totalPrice, Currency: "USD"},
 	}
 }
 

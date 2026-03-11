@@ -168,3 +168,9 @@ When using git worktrees inside the repo directory (.worktrees/), `go test ./...
 
 ## Lesson: Adding slice fields to structs breaks == comparison
 Adding a []string field (like ClearFields) to a struct that was previously compared with == will cause compile errors. Use reflect.DeepEqual for struct comparison in tests when the struct has slice or map fields.
+
+## Lesson: Intercept deterministic queries before the LLM to save latency and cost
+When a user request can be answered entirely from local state (e.g. "compare options 1 and 3" when results are cached), detect the intent via simple keyword matching and short-circuit the LLM call. This is faster, cheaper, and more reliable than asking the LLM to reconstruct data it does not have. The pattern is: (1) cache results after each search, (2) define keyword sets for each interceptable intent, (3) parse parameters from the user message, (4) format a response directly from cached data. Reserve the LLM for open-ended reasoning where deterministic logic cannot suffice.
+
+## Lesson: Zero-value fields create a "sticky parameter" trap in merge-based state
+When merging partial updates into accumulated state (e.g. tripParams across chat turns), zero values are indistinguishable from "not set" in Go. This makes it impossible for users to reset a field to its zero value -- the merge always keeps the previous non-zero value. The fix is an explicit clear list: the user sends `clear_fields: ["direct_only", "max_price"]` and the merge function zeroes those fields on the previous state before applying the partial update. This pattern applies to any accumulator where zero is a valid user intent distinct from "no change."

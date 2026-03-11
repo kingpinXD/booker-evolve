@@ -660,3 +660,7 @@ Key additions:
 5. clear_fields: fixes sticky filter bug where zero-value fields couldn't reset
 
 Zero SerpAPI or LLM API calls used. Build, tests, vet, lint all clean.
+
+## Session 50 -- 22:35 -- Result caching, stopover suggestions, MEL/CDG corridors, carbon diff, filter reset
+
+Completed all 5 planned tasks across 6 commits with zero reverts and zero API calls. The headline feature is in-chat result caching: chatLoop stores lastResults and intercepts comparison/detail requests (e.g. "compare 1 and 3", "details on option 2") before the LLM call, returning instant structured responses from cached data. Added proactive stopover suggestions after single-leg search results -- when StopoversForRoute has entries, a tip names up to 3 cities and suggests multi-city routing. Expanded the stopover network with India-Melbourne (Southeast Asian corridor) and India-Paris (Gulf/Turkish corridor), bringing the total to 21 route-specific corridors (42 bidirectional). Enhanced carbon display to show percentage diff when available (e.g. "150kg (+5%)"). Fixed a sticky filter bug where zero-value fields (DirectOnly, MaxPrice) could not be reset mid-session by adding clear_fields support to tripParams and mergeParams. Tasks 3 and 4 ran in parallel worktrees; tasks 1, 2, 5 ran sequentially on main.

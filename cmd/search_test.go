@@ -1327,3 +1327,29 @@ func TestPrintTable_MultiLeg_CO2BothLegs(t *testing.T) {
 		t.Errorf("multi-leg table missing leg 2 carbon value 890kg, got:\n%s", out)
 	}
 }
+
+// --- multi-leg cabin columns ---
+
+func TestPrintTable_MultiLeg_CabinBothLegs(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg1.Flight.Outbound[0].CabinClass = types.CabinBusiness
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil)
+	leg2.Flight.Outbound[0].CabinClass = types.CabinEconomy
+	itins := []search.Itinerary{makeItin(leg1, leg2)}
+	out := capturePrintTable(itins, "CAD")
+
+	// Multi-leg should have separate cabin columns for each leg.
+	if !strings.Contains(out, "LEG 1 CABIN") {
+		t.Errorf("multi-leg table missing LEG 1 CABIN header, got:\n%s", out)
+	}
+	if !strings.Contains(out, "LEG 2 CABIN") {
+		t.Errorf("multi-leg table missing LEG 2 CABIN header, got:\n%s", out)
+	}
+	if !strings.Contains(out, "business") {
+		t.Errorf("multi-leg table missing leg 1 cabin value business, got:\n%s", out)
+	}
+	if !strings.Contains(out, "economy") {
+		t.Errorf("multi-leg table missing leg 2 cabin value economy, got:\n%s", out)
+	}
+}

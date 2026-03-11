@@ -568,3 +568,7 @@ Updated search/search.go iteration plan from "currently Kiwi only" to "currently
 
 ## Session 46 -- Summary
 Completed all 5 planned tasks with zero reverts and zero API calls. (1) Wired shared ranker to CompositeStrategy via Picker.SetRanker -- "both" mode now re-ranks merged results instead of returning unscored output. (2) Consolidated duplicated itinRoute/deduplicate into exported ItinRoute/DeduplicateItineraries in search package, removing 29 lines from nearby.go. (3) Added "score" sort mode to SortResults for ranker-scored results, updated chat prompt and CLI flag. (4) Fixed round-trip max_price to filter by total itinerary price after combineRoundTrip. (5) Cleaned stale Kiwi references. Tasks 2+4 ran in parallel worktrees. All build gates pass.
+
+## Session 46 -- 18:34 -- Composite ranker, dedup consolidation, score sort, round-trip price fix
+
+Completed all 5 planned tasks: wired shared ranker to CompositeStrategy so "both" mode re-ranks merged results (was silently nil), consolidated duplicated itinRoute/DeduplicateItineraries into search package eliminating 29 lines from nearby.go, added "score" sort mode to SortResults, fixed round-trip max_price to filter by total itinerary price, and cleaned stale Kiwi references. Tasks 2 and 4 ran successfully in parallel worktrees. Zero reverts, zero API calls, all build gates pass.

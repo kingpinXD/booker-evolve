@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -307,121 +308,51 @@ func formatLayoverSummary(segs []types.Segment) string {
 	return fmt.Sprintf("%d %s (%s)", stops, word, strings.Join(layovers, ", "))
 }
 
+// jsonFieldName extracts the JSON field name from a struct field's tag.
+// Returns empty string if no json tag is present.
+func jsonFieldName(f reflect.StructField) string {
+	tag := f.Tag.Get("json")
+	if tag == "" || tag == "-" {
+		return ""
+	}
+	name, _, _ := strings.Cut(tag, ",")
+	return name
+}
+
 // mergeParams fills zero-value fields in partial from prev, producing
 // a complete set of params for a follow-up search. Fields listed in
 // partial.ClearFields are zeroed before merge so sticky filters can be reset.
+//
+// Uses reflection to iterate struct fields, so new tripParams fields
+// are automatically supported without modifying this function.
 func mergeParams(prev, partial tripParams) tripParams {
-	// Apply clear_fields: zero out specified fields on prev so they don't carry over.
-	cleared := make(map[string]bool, len(partial.ClearFields))
-	for _, f := range partial.ClearFields {
-		cleared[f] = true
-	}
-	if cleared["direct_only"] {
-		prev.DirectOnly = false
-	}
-	if cleared["max_price"] {
-		prev.MaxPrice = 0
-	}
-	if cleared["preferred_alliance"] {
-		prev.PreferredAlliance = ""
-	}
-	if cleared["departure_after"] {
-		prev.DepartureAfter = ""
-	}
-	if cleared["departure_before"] {
-		prev.DepartureBefore = ""
-	}
-	if cleared["arrival_after"] {
-		prev.ArrivalAfter = ""
-	}
-	if cleared["arrival_before"] {
-		prev.ArrivalBefore = ""
-	}
-	if cleared["max_duration_hours"] {
-		prev.MaxDurationHours = 0
-	}
-	if cleared["avoid_airlines"] {
-		prev.AvoidAirlines = ""
-	}
-	if cleared["preferred_airlines"] {
-		prev.PreferredAirlines = ""
-	}
-	if cleared["sort_by"] {
-		prev.SortBy = ""
-	}
-	if cleared["flex_days"] {
-		prev.FlexDays = 0
+	// Phase 1: Apply clear_fields — zero specified fields on prev.
+	if len(partial.ClearFields) > 0 {
+		cleared := make(map[string]bool, len(partial.ClearFields))
+		for _, f := range partial.ClearFields {
+			cleared[f] = true
+		}
+		prevV := reflect.ValueOf(&prev).Elem()
+		for i := 0; i < prevV.NumField(); i++ {
+			if name := jsonFieldName(prevV.Type().Field(i)); cleared[name] {
+				prevV.Field(i).Set(reflect.Zero(prevV.Field(i).Type()))
+			}
+		}
 	}
 
+	// Phase 2: Merge — fill zero-value fields in partial from prev.
+	// ClearFields is ephemeral and never carried over.
 	merged := partial
-	if merged.Origin == "" {
-		merged.Origin = prev.Origin
-	}
-	if merged.Destination == "" {
-		merged.Destination = prev.Destination
-	}
-	if merged.DepartureDate == "" {
-		merged.DepartureDate = prev.DepartureDate
-	}
-	if merged.ReturnDate == "" {
-		merged.ReturnDate = prev.ReturnDate
-	}
-	if merged.Leg2Date == "" {
-		merged.Leg2Date = prev.Leg2Date
-	}
-	if merged.Passengers == 0 {
-		merged.Passengers = prev.Passengers
-	}
-	if merged.Cabin == "" {
-		merged.Cabin = prev.Cabin
-	}
-	if merged.MaxPrice == 0 {
-		merged.MaxPrice = prev.MaxPrice
-	}
-	if merged.Profile == "" {
-		merged.Profile = prev.Profile
-	}
-	if merged.PreferredAlliance == "" {
-		merged.PreferredAlliance = prev.PreferredAlliance
-	}
-	if merged.DepartureAfter == "" {
-		merged.DepartureAfter = prev.DepartureAfter
-	}
-	if merged.DepartureBefore == "" {
-		merged.DepartureBefore = prev.DepartureBefore
-	}
-	if merged.ArrivalAfter == "" {
-		merged.ArrivalAfter = prev.ArrivalAfter
-	}
-	if merged.ArrivalBefore == "" {
-		merged.ArrivalBefore = prev.ArrivalBefore
-	}
-	if merged.MaxDurationHours == 0 {
-		merged.MaxDurationHours = prev.MaxDurationHours
-	}
-	if merged.SortBy == "" {
-		merged.SortBy = prev.SortBy
-	}
-	if merged.AvoidAirlines == "" {
-		merged.AvoidAirlines = prev.AvoidAirlines
-	}
-	if merged.PreferredAirlines == "" {
-		merged.PreferredAirlines = prev.PreferredAirlines
-	}
-	if merged.MinStopoverHours == 0 {
-		merged.MinStopoverHours = prev.MinStopoverHours
-	}
-	if merged.MaxStopoverHours == 0 {
-		merged.MaxStopoverHours = prev.MaxStopoverHours
-	}
-	if merged.Context == "" {
-		merged.Context = prev.Context
-	}
-	if !merged.DirectOnly {
-		merged.DirectOnly = prev.DirectOnly
-	}
-	if merged.FlexDays == 0 {
-		merged.FlexDays = prev.FlexDays
+	mergedV := reflect.ValueOf(&merged).Elem()
+	prevV := reflect.ValueOf(&prev).Elem()
+	for i := 0; i < mergedV.NumField(); i++ {
+		name := jsonFieldName(mergedV.Type().Field(i))
+		if name == "" || name == "clear_fields" {
+			continue
+		}
+		if mergedV.Field(i).IsZero() {
+			mergedV.Field(i).Set(prevV.Field(i))
+		}
 	}
 	return merged
 }

@@ -1083,6 +1083,90 @@ func TestBuildJSONItineraries_CityNames_MultiSegment(t *testing.T) {
 	}
 }
 
+// --- edge cases: empty segments ---
+
+func makeEmptySegLeg() search.Leg {
+	return search.Leg{
+		Flight: types.Flight{
+			Outbound:      nil,
+			TotalDuration: 0,
+			Price:         types.Money{Amount: 100, Currency: "USD"},
+		},
+	}
+}
+
+func TestLegAircraft_OutOfBounds(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	if got := legAircraft(itin, 5); got != "" {
+		t.Errorf("legAircraft(OOB) = %q, want empty", got)
+	}
+}
+
+func TestLegAircraft_EmptySegments(t *testing.T) {
+	itin := makeItin(makeEmptySegLeg())
+	if got := legAircraft(itin, 0); got != "" {
+		t.Errorf("legAircraft(empty segs) = %q, want empty", got)
+	}
+}
+
+func TestLegLegroom_OutOfBounds(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	if got := legLegroom(itin, 5); got != "" {
+		t.Errorf("legLegroom(OOB) = %q, want empty", got)
+	}
+}
+
+func TestLegLegroom_EmptySegments(t *testing.T) {
+	itin := makeItin(makeEmptySegLeg())
+	if got := legLegroom(itin, 0); got != "" {
+		t.Errorf("legLegroom(empty segs) = %q, want empty", got)
+	}
+}
+
+func TestLegBookingURL_OutOfBounds(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	if got := legBookingURL(itin, 5); got != "" {
+		t.Errorf("legBookingURL(OOB) = %q, want empty", got)
+	}
+}
+
+func TestLegCabin_EmptySegments(t *testing.T) {
+	itin := makeItin(makeEmptySegLeg())
+	if got := legCabin(itin, 0); got != "" {
+		t.Errorf("legCabin(empty segs) = %q, want empty", got)
+	}
+}
+
+func TestLegDeparture_EmptySegments(t *testing.T) {
+	itin := makeItin(makeEmptySegLeg())
+	if got := legDeparture(itin, 0); got != "" {
+		t.Errorf("legDeparture(empty segs) = %q, want empty", got)
+	}
+}
+
+func TestLegArrival_EmptySegments(t *testing.T) {
+	itin := makeItin(makeEmptySegLeg())
+	if got := legArrival(itin, 0); got != "" {
+		t.Errorf("legArrival(empty segs) = %q, want empty", got)
+	}
+}
+
+func TestLegSeatsLeft_OutOfBounds(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	if got := legSeatsLeft(itin, 5); got != 0 {
+		t.Errorf("legSeatsLeft(OOB) = %d, want 0", got)
+	}
+}
+
+func TestFormatPriceInsights_PriceLevelOnly(t *testing.T) {
+	// PriceLevel set but range is zero — should show only the level.
+	pi := search.PriceInsights{PriceLevel: "high"}
+	got := formatPriceInsights(pi)
+	if got != "Price level: high" {
+		t.Errorf("formatPriceInsights = %q, want %q", got, "Price level: high")
+	}
+}
+
 // --- multi-leg CO2 columns ---
 
 func TestPrintTable_MultiLeg_CO2BothLegs(t *testing.T) {

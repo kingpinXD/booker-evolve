@@ -240,3 +240,18 @@ All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test a
 ## Session 25 -- 06:28 -- Data enrichment and output completeness
 
 Completed all 4 planned tasks plus lint sweep in 5 commits with zero reverts and zero API calls. (1) Parsed legroom string from SerpAPI into types.Segment.Legroom, surfaced in JSON output (omitempty), and annotated in buildRankingPrompt with [Legroom: X] tag so the LLM can factor comfort into scoring. (2) Enriched JSON output with arrival time (RFC3339) and stops count per leg, and added omitempty to Score so unranked results produce cleaner JSON. (3) Wired PriceInsights into chat mode by threading a priceInsighter interface through chatLoop -- previously the raw provider was discarded in runChat. (4) Fixed multi-leg table to show separate "Leg 1 CO2" and "Leg 2 CO2" columns instead of a single "CO2" column that only displayed leg 0 data. Coverage steady at ~84% across 15 packages. All build gates pass.
+
+## Day 27
+
+### Session 27, Task 1 -- Add aircraft and carbon annotations to ranker prompt
+Added [Aircraft: X] tag per segment and CO2: Xkg line per leg in buildRankingPrompt. These were already parsed from SerpAPI but never shown to the LLM ranker. 4 new tests. Ran as worktree agent.
+
+### Session 27, Task 2 -- Parse carbon benchmark data from SerpAPI, surface in JSON and ranker
+Threaded TypicalForThisRoute and DifferencePercent from SerpAPI CarbonEmissions end-to-end: types.Flight gets TypicalCarbonKg and CarbonDiffPct, parser.go extracts with rounding, JSON output includes typical_carbon_kg and carbon_diff_percent (omitempty), ranker CO2 line shows benchmark comparison (e.g. "CO2: 1106kg (+17% vs typical)"). 6 new tests across serpapi, cmd, and multicity.
+
+### Session 27, Task 3 -- Lint, gofmt sweep, and build gate
+Two gofmt struct alignment fixes (types.go, search.go). All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.
+
+## Session 27 -- Ranker enrichment with aircraft type and carbon benchmarks
+
+Completed all 3 planned tasks in 3 commits with zero reverts and zero API calls. (1) Added [Aircraft: X] tag and CO2: Xkg line to buildRankingPrompt, giving the LLM explicit signals for comfort (equipment type) and environmental impact that were previously parsed but never passed to the ranker. (2) Threaded SerpAPI carbon benchmark data (TypicalForThisRoute, DifferencePercent) end-to-end: types.Flight fields, parser extraction with rounding, JSON output (omitempty), and ranker CO2 line with benchmark comparison ("CO2: 1106kg (+17% vs typical)"). (3) Two gofmt fixes for struct alignment. Coverage steady at ~84% across 15 packages. All build gates pass.

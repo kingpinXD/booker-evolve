@@ -1,59 +1,41 @@
 # TODO
 
-Carried from: Day 25 (all completed)
+Carried from: Day 26 (all completed)
 
-## Tasks 50-53: Day 25 tasks
-**Status:** completed (Day 25) -- overnight flag, aircraft type, conditional Score/Reason, carbon rounding, lint sweep
+## Tasks 50-58: Days 25-26 tasks
+**Status:** completed -- overnight flag, aircraft type, conditional Score/Reason, carbon rounding, legroom, JSON arrival/stops/score, PriceInsights in chat, multi-leg CO2, lint sweep
 
 ---
 
-## Task 54: Parse legroom from SerpAPI and annotate in ranker
+## Task 59: Add aircraft and carbon annotations to ranker prompt
 **Status:** done
-**Plan:**
-- [ ] Add Legroom string to types.Segment
-- [ ] Parse Legroom from SerpAPI FlightSegment.Legroom in parser.go
-- [ ] Write test: parser extracts legroom string
-- [ ] Add legroom field to jsonLeg struct in cmd/search.go
-- [ ] Wire legroom into buildJSONItineraries via new legLegroom helper
-- [ ] Write test: JSON output includes legroom field
-- [ ] Write test: JSON omits legroom when empty
-- [ ] Add [Legroom: Xin] annotation in buildRankingPrompt
-- [ ] Write test: buildRankingPrompt includes legroom tag
-- [ ] Verify: `go build && go test ./... && go vet ./...`
-
-## Task 55: Enrich JSON output with arrival time, stops, and omit zero score
-**Status:** done
-**Plan:** Added Arrival (RFC3339) and Stops fields to jsonLeg, added omitempty to Score in jsonItinerary, wired into buildJSONItineraries.
-- [x] Add Arrival string field to jsonLeg struct
-- [x] Wire arrival time into buildJSONItineraries (last segment ArrivalTime, RFC3339)
-- [x] Add Stops int field to jsonLeg struct
-- [x] Wire stops into buildJSONItineraries using Flight.Stops()
-- [x] Add omitempty to Score field in jsonItinerary
-- [x] Write test: JSON output includes arrival and stops fields
-- [x] Write test: JSON Score omitted when 0
+**Plan:** Added [Aircraft: X] tag per segment and CO2: Xkg line per leg in buildRankingPrompt. 4 new tests.
+- [x] Write test: buildRankingPrompt includes [Aircraft: X] tag when segment has aircraft
+- [x] Write test: buildRankingPrompt omits aircraft tag when empty
+- [x] Add `[Aircraft: X]` tag in buildRankingPrompt per segment (when non-empty)
+- [x] Write test: buildRankingPrompt includes CO2 line when CarbonKg > 0
+- [x] Write test: buildRankingPrompt omits CO2 line when CarbonKg == 0
+- [x] Add `CO2: Xkg` line in buildRankingPrompt per leg (when CarbonKg > 0)
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 56: Wire PriceInsights into chat output
+## Task 60: Parse carbon benchmark data from SerpAPI, surface in JSON and ranker
 **Status:** done
-**Plan:**
-- [ ] Update chatLoop signature to accept a PriceInsightsProvider interface or callback
-- [ ] Thread rawProvider from runChat into chatLoop
-- [ ] After printing results in chatLoop, call formatPriceInsights and display if non-empty
-- [ ] Write test: chat output includes price insights after results
-- [ ] Update existing chat tests for new chatLoop signature
-- [ ] Verify: `go build && go test ./... && go vet ./...`
-
-## Task 57: Fix multi-leg CO2 display
-**Status:** done
-**Plan:** Replaced single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in multi-leg layout header and rows.
-- [x] Replace single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in multi-leg table header
-- [x] Wire legCarbon(itin, 0) and legCarbon(itin, 1) into multi-leg table rows
-- [x] Write test: multi-leg table output shows CO2 for both legs
+**Plan:** Threaded TypicalForThisRoute and DifferencePercent end-to-end. 6 new tests.
+- [x] Add TypicalCarbonKg (int) and CarbonDiffPct (int) to types.Flight
+- [x] Write test: parser extracts TypicalCarbonKg with rounding
+- [x] Write test: parser extracts CarbonDiffPct
+- [x] Parse TypicalForThisRoute and DifferencePercent from SerpAPI in parser.go
+- [x] Write test: JSON output includes typical_carbon_kg and carbon_diff_percent
+- [x] Write test: JSON omits fields when zero
+- [x] Add typical_carbon_kg and carbon_diff_percent to jsonLeg struct (omitempty)
+- [x] Wire into buildJSONItineraries
+- [x] Write test: ranker CO2 line shows benchmark comparison
+- [x] Enhance ranker CO2 line to "CO2: Xkg (Y% vs typical)" when benchmark available
 - [x] Verify: `go build && go test ./... && go vet ./...`
 
-## Task 58: Lint, gofmt sweep, and build gate verification
+## Task 61: Lint, gofmt sweep, and build gate verification
 **Status:** done
-**Plan:** All gates clean -- no violations found.
+**Plan:** Two gofmt fixes (types.go, search.go). All gates clean.
 - [x] Run gofmt -l . and fix any violations
 - [x] Run go vet ./... and fix any warnings
 - [x] Run golangci-lint run and fix any issues

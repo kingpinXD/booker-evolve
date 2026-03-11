@@ -171,7 +171,7 @@ func TestSearcher_MaxResultsCap(t *testing.T) {
 }
 
 func TestSearcher_NoClusterFallback(t *testing.T) {
-	// DEL and BOM are not in any cluster. Should just delegate as-is.
+	// AMD and HYD are not in any cluster. Should just delegate as-is.
 	delegate := &mockStrategy{
 		name: "direct",
 		resultFn: func(req search.Request) []search.Itinerary {
@@ -181,8 +181,8 @@ func TestSearcher_NoClusterFallback(t *testing.T) {
 
 	s := NewSearcher(delegate)
 	results, err := s.Search(context.Background(), search.Request{
-		Origin:      "DEL",
-		Destination: "BOM",
+		Origin:      "AMD",
+		Destination: "HYD",
 		MaxResults:  10,
 	})
 	if err != nil {
@@ -192,7 +192,7 @@ func TestSearcher_NoClusterFallback(t *testing.T) {
 	if len(calls) != 1 {
 		t.Errorf("delegate called %d times, want 1 (no cluster expansion)", len(calls))
 	}
-	if calls[0].Origin != "DEL" || calls[0].Destination != "BOM" {
+	if calls[0].Origin != "AMD" || calls[0].Destination != "HYD" {
 		t.Errorf("unexpected request: origin=%s dest=%s", calls[0].Origin, calls[0].Destination)
 	}
 	if len(results) != 1 {

@@ -26,6 +26,8 @@ var airportClusters = map[string][]string{
 	"Taipei":        {"TPE", "TSA"},
 	"Miami":         {"MIA", "FLL"},
 	"Sao Paulo":     {"GRU", "CGH", "VCP"},
+	"Delhi":         {"DEL", "JAI"},
+	"Mumbai":        {"BOM", "PNQ"},
 }
 
 // codeToCluster is a reverse index from IATA code to its cluster slice,

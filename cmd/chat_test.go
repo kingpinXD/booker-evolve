@@ -473,10 +473,10 @@ func TestNearbyAirportHint(t *testing.T) {
 		t.Errorf("hint should mention EWR and LGA, got: %s", hint)
 	}
 
-	// DEL and BOM have no nearby airports -- hint should be empty.
-	hint = nearbyAirportHint("DEL", "BOM")
+	// AMD and HYD have no nearby airports -- hint should be empty.
+	hint = nearbyAirportHint("AMD", "HYD")
 	if hint != "" {
-		t.Errorf("expected empty hint for DEL->BOM (single airports), got: %s", hint)
+		t.Errorf("expected empty hint for AMD->HYD (single airports), got: %s", hint)
 	}
 
 	// Both have nearby airports.

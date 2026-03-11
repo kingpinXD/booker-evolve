@@ -22,12 +22,32 @@ func TestNearbyAirports_UnknownCode(t *testing.T) {
 	}
 }
 
-func TestNearbyAirports_SingleAirportMetro(t *testing.T) {
-	if got := NearbyAirports("DEL"); got != nil {
-		t.Errorf("NearbyAirports(DEL) = %v, want nil", got)
+func TestNearbyAirports_IndianClusters(t *testing.T) {
+	tests := []struct {
+		code string
+		want []string
+	}{
+		{"DEL", []string{"JAI"}},
+		{"JAI", []string{"DEL"}},
+		{"BOM", []string{"PNQ"}},
+		{"PNQ", []string{"BOM"}},
 	}
-	if got := NearbyAirports("BOM"); got != nil {
-		t.Errorf("NearbyAirports(BOM) = %v, want nil", got)
+	for _, tt := range tests {
+		got := NearbyAirports(tt.code)
+		sort.Strings(got)
+		want := make([]string, len(tt.want))
+		copy(want, tt.want)
+		sort.Strings(want)
+		if len(got) != len(want) {
+			t.Errorf("NearbyAirports(%q) = %v, want %v", tt.code, got, want)
+			continue
+		}
+		for i := range got {
+			if got[i] != want[i] {
+				t.Errorf("NearbyAirports(%q) = %v, want %v", tt.code, got, want)
+				break
+			}
+		}
 	}
 }
 

@@ -21,14 +21,14 @@ Carried from: Day 34 (all completed)
 - [x] Verify existing tests still pass
 
 ## Task 86: Operating carrier display (codeshare indicator)
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Write test for codeshare display format "AC (op. UA)"
-- [ ] Modify legAirlines to show operating carrier when different
-- [ ] Add operating_carrier to jsonLeg struct
-- [ ] Populate operating_carrier in buildJSONItineraries
-- [ ] Write tests for non-codeshare case (no change)
-- [ ] Verify existing tests still pass
+**Status:** done
+**Plan:** Modify legAirlines to append "(op. XX)" when OperatingCarrier differs from Airline. Add operating_carrier to jsonLeg. Test codeshare and non-codeshare segments. Files: cmd/search.go, cmd/search_test.go.
+- [x] Write test for codeshare display format "AC (op. UA)"
+- [x] Modify legAirlines to show operating carrier when different
+- [x] Add operating_carrier to jsonLeg struct
+- [x] Populate operating_carrier in buildJSONItineraries
+- [x] Write tests for non-codeshare case (no change)
+- [x] Verify existing tests still pass
 
 ## Task 87: Richer result summary in chat history
 **Status:** pending

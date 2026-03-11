@@ -104,6 +104,67 @@ func TestLegAirlines_OutOfBounds(t *testing.T) {
 	}
 }
 
+func TestLegAirlines_Codeshare(t *testing.T) {
+	leg := makeLeg("AC", "YYZ", "LHR", basetime, 7*time.Hour, 600, nil)
+	leg.Flight.Outbound[0].AirlineName = "Air Canada"
+	leg.Flight.Outbound[0].OperatingCarrier = "UA"
+	itin := makeItin(leg)
+	got := legAirlines(itin, 0)
+	if got != "Air Canada (op. UA)" {
+		t.Errorf("legAirlines codeshare = %q, want %q", got, "Air Canada (op. UA)")
+	}
+}
+
+func TestLegAirlines_NoCodeshare_SameCarrier(t *testing.T) {
+	leg := makeLeg("AC", "YYZ", "LHR", basetime, 7*time.Hour, 600, nil)
+	leg.Flight.Outbound[0].AirlineName = "Air Canada"
+	leg.Flight.Outbound[0].OperatingCarrier = "AC"
+	itin := makeItin(leg)
+	got := legAirlines(itin, 0)
+	if got != "Air Canada" {
+		t.Errorf("legAirlines same carrier = %q, want %q", got, "Air Canada")
+	}
+}
+
+func TestLegAirlines_NoCodeshare_EmptyCarrier(t *testing.T) {
+	leg := makeLeg("AC", "YYZ", "LHR", basetime, 7*time.Hour, 600, nil)
+	leg.Flight.Outbound[0].AirlineName = "Air Canada"
+	// OperatingCarrier empty = no codeshare annotation.
+	itin := makeItin(leg)
+	got := legAirlines(itin, 0)
+	if got != "Air Canada" {
+		t.Errorf("legAirlines empty carrier = %q, want %q", got, "Air Canada")
+	}
+}
+
+// --- JSON operating_carrier ---
+
+func TestBuildJSONItineraries_OperatingCarrier(t *testing.T) {
+	leg := makeLeg("AC", "YYZ", "LHR", basetime, 7*time.Hour, 600, nil)
+	leg.Flight.Outbound[0].OperatingCarrier = "UA"
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatal("unexpected results structure")
+	}
+	if results[0].Legs[0].OperatingCarrier != "UA" {
+		t.Errorf("operating_carrier = %q, want %q", results[0].Legs[0].OperatingCarrier, "UA")
+	}
+}
+
+func TestBuildJSONItineraries_OperatingCarrier_OmitEmpty(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	data, err := json.Marshal(results[0].Legs[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "operating_carrier") {
+		t.Error("operating_carrier should be omitted when empty")
+	}
+}
+
 // --- legDeparture ---
 
 func TestLegDeparture_Valid(t *testing.T) {

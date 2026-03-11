@@ -414,6 +414,10 @@ func legAirlines(itin search.Itinerary, legIdx int) string {
 		if name == "" {
 			name = seg.Airline
 		}
+		// Append codeshare indicator when operating carrier differs.
+		if seg.OperatingCarrier != "" && seg.OperatingCarrier != seg.Airline {
+			name += " (op. " + seg.OperatingCarrier + ")"
+		}
 		if seen[name] {
 			continue
 		}
@@ -546,27 +550,28 @@ func formatDuration(d time.Duration) string {
 
 // jsonLeg is the JSON representation of a single flight leg.
 type jsonLeg struct {
-	Airlines        string `json:"airlines"`
-	AirlineCode     string `json:"airline_code,omitempty"`
-	CabinClass      string `json:"cabin_class,omitempty"`
-	Origin          string `json:"origin"`
-	OriginCity      string `json:"origin_city,omitempty"`
-	OriginName      string `json:"origin_name,omitempty"`
-	Dest            string `json:"destination"`
-	DestinationCity string `json:"destination_city,omitempty"`
-	DestinationName string `json:"destination_name,omitempty"`
-	Departure       string `json:"departure"`
-	Arrival         string `json:"arrival,omitempty"`
-	Duration        string `json:"duration"`
-	Stops           int    `json:"stops"`
-	CarbonKg        int    `json:"carbon_kg,omitempty"`
-	TypicalCarbonKg int    `json:"typical_carbon_kg,omitempty"`
-	CarbonDiffPct   int    `json:"carbon_diff_percent,omitempty"`
-	BookingURL      string `json:"booking_url,omitempty"`
-	Aircraft        string `json:"aircraft,omitempty"`
-	Legroom         string `json:"legroom,omitempty"`
-	SeatsLeft       int    `json:"seats_left,omitempty"`
-	ArrivalNextDay  bool   `json:"arrival_next_day,omitempty"`
+	Airlines         string `json:"airlines"`
+	AirlineCode      string `json:"airline_code,omitempty"`
+	OperatingCarrier string `json:"operating_carrier,omitempty"`
+	CabinClass       string `json:"cabin_class,omitempty"`
+	Origin           string `json:"origin"`
+	OriginCity       string `json:"origin_city,omitempty"`
+	OriginName       string `json:"origin_name,omitempty"`
+	Dest             string `json:"destination"`
+	DestinationCity  string `json:"destination_city,omitempty"`
+	DestinationName  string `json:"destination_name,omitempty"`
+	Departure        string `json:"departure"`
+	Arrival          string `json:"arrival,omitempty"`
+	Duration         string `json:"duration"`
+	Stops            int    `json:"stops"`
+	CarbonKg         int    `json:"carbon_kg,omitempty"`
+	TypicalCarbonKg  int    `json:"typical_carbon_kg,omitempty"`
+	CarbonDiffPct    int    `json:"carbon_diff_percent,omitempty"`
+	BookingURL       string `json:"booking_url,omitempty"`
+	Aircraft         string `json:"aircraft,omitempty"`
+	Legroom          string `json:"legroom,omitempty"`
+	SeatsLeft        int    `json:"seats_left,omitempty"`
+	ArrivalNextDay   bool   `json:"arrival_next_day,omitempty"`
 }
 
 // jsonItinerary is the JSON representation of a search result.
@@ -632,13 +637,14 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 		for idx, leg := range itin.Legs {
 			segs := leg.Flight.Outbound
 			origin, dest, dep, arr := "", "", "", ""
-			airlineCode, originCity, destCity, originName, destName := "", "", "", "", ""
+			airlineCode, opCarrier, originCity, destCity, originName, destName := "", "", "", "", "", ""
 			if len(segs) > 0 {
 				origin = segs[0].Origin
 				dest = segs[len(segs)-1].Destination
 				dep = segs[0].DepartureTime.Format(time.RFC3339)
 				arr = segs[len(segs)-1].ArrivalTime.Format(time.RFC3339)
 				airlineCode = segs[0].Airline
+				opCarrier = segs[0].OperatingCarrier
 				originCity = segs[0].OriginCity
 				originName = segs[0].OriginName
 				destCity = segs[len(segs)-1].DestinationCity
@@ -649,27 +655,28 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				nextDay = isNextDay(segs[0].DepartureTime, segs[len(segs)-1].ArrivalTime)
 			}
 			legs = append(legs, jsonLeg{
-				Airlines:        legAirlines(itin, idx),
-				AirlineCode:     airlineCode,
-				CabinClass:      legCabin(itin, idx),
-				Origin:          origin,
-				OriginCity:      originCity,
-				OriginName:      originName,
-				Dest:            dest,
-				DestinationCity: destCity,
-				DestinationName: destName,
-				Departure:       dep,
-				Arrival:         arr,
-				Duration:        formatDuration(leg.Flight.TotalDuration),
-				Stops:           leg.Flight.Stops(),
-				CarbonKg:        leg.Flight.CarbonKg,
-				TypicalCarbonKg: leg.Flight.TypicalCarbonKg,
-				CarbonDiffPct:   leg.Flight.CarbonDiffPct,
-				BookingURL:      leg.Flight.BookingURL,
-				Aircraft:        legAircraft(itin, idx),
-				Legroom:         legLegroom(itin, idx),
-				SeatsLeft:       legSeatsLeft(itin, idx),
-				ArrivalNextDay:  nextDay,
+				Airlines:         legAirlines(itin, idx),
+				AirlineCode:      airlineCode,
+				OperatingCarrier: opCarrier,
+				CabinClass:       legCabin(itin, idx),
+				Origin:           origin,
+				OriginCity:       originCity,
+				OriginName:       originName,
+				Dest:             dest,
+				DestinationCity:  destCity,
+				DestinationName:  destName,
+				Departure:        dep,
+				Arrival:          arr,
+				Duration:         formatDuration(leg.Flight.TotalDuration),
+				Stops:            leg.Flight.Stops(),
+				CarbonKg:         leg.Flight.CarbonKg,
+				TypicalCarbonKg:  leg.Flight.TypicalCarbonKg,
+				CarbonDiffPct:    leg.Flight.CarbonDiffPct,
+				BookingURL:       leg.Flight.BookingURL,
+				Aircraft:         legAircraft(itin, idx),
+				Legroom:          legLegroom(itin, idx),
+				SeatsLeft:        legSeatsLeft(itin, idx),
+				ArrivalNextDay:   nextDay,
 			})
 		}
 

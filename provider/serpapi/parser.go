@@ -50,7 +50,7 @@ func parseFlightGroup(g FlightGroup) (types.Flight, error) {
 		Outbound:      segments,
 		TotalDuration: time.Duration(g.TotalDuration) * time.Minute,
 		BookingURL:    g.BookingToken,
-		CarbonKg:      g.CarbonEmissions.ThisFlight / 1000,
+		CarbonKg:      (g.CarbonEmissions.ThisFlight + 500) / 1000,
 	}, nil
 }
 

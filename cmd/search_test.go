@@ -404,8 +404,12 @@ func TestPrintTable_NoReasoning(t *testing.T) {
 	itin.Reasoning = ""
 	out := capturePrintTable([]search.Itinerary{itin}, "USD")
 
-	if !bytes.Contains([]byte(out), []byte("REASON")) {
-		t.Error("table output missing REASON header even when reasoning is empty")
+	// When all scores are 0, Score and Reason columns should be hidden.
+	if strings.Contains(out, "REASON") {
+		t.Error("table output should hide REASON header when all scores are 0")
+	}
+	if strings.Contains(out, "SCORE") {
+		t.Error("table output should hide SCORE header when all scores are 0")
 	}
 }
 
@@ -696,6 +700,56 @@ func TestBuildJSONItineraries_CarbonKg_OmitEmpty(t *testing.T) {
 	}
 	if bytes.Contains(data, []byte(`"carbon_kg"`)) {
 		t.Error("zero carbon_kg should be omitted from JSON with omitempty")
+	}
+}
+
+// --- hasScores ---
+
+func TestHasScores_AllZero(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 0
+	if hasScores([]search.Itinerary{itin}) {
+		t.Error("hasScores should return false when all scores are 0")
+	}
+}
+
+func TestHasScores_SomeNonZero(t *testing.T) {
+	itin1 := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin1.Score = 0
+	itin2 := makeItin(makeLeg("AA", "JFK", "LHR", basetime, 8*time.Hour, 500, nil))
+	itin2.Score = 72
+	if !hasScores([]search.Itinerary{itin1, itin2}) {
+		t.Error("hasScores should return true when any score is non-zero")
+	}
+}
+
+// --- conditional Score/Reason columns in table ---
+
+func TestPrintTable_HidesScoreReasonWhenNoScores(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 0
+	itin.Reasoning = ""
+	out := capturePrintTable([]search.Itinerary{itin}, "USD")
+
+	if strings.Contains(out, "SCORE") {
+		t.Errorf("table should not contain SCORE header when all scores are 0, got:\n%s", out)
+	}
+	if strings.Contains(out, "REASON") {
+		t.Errorf("table should not contain REASON header when all scores are 0, got:\n%s", out)
+	}
+}
+
+func TestPrintTable_ShowsScoreReasonWhenScored(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 85
+	itin.Reasoning = "good price"
+	out := capturePrintTable([]search.Itinerary{itin}, "USD")
+
+	if !strings.Contains(out, "SCORE") {
+		t.Errorf("table should contain SCORE header when scores exist, got:\n%s", out)
+	}
+	if !strings.Contains(out, "REASON") {
+		t.Errorf("table should contain REASON header when scores exist, got:\n%s", out)
 	}
 }
 

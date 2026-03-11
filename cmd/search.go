@@ -178,37 +178,66 @@ func isMultiLeg(itineraries []search.Itinerary) bool {
 	return false
 }
 
+// hasScores returns true if any itinerary has a non-zero score.
+func hasScores(itineraries []search.Itinerary) bool {
+	for _, itin := range itineraries {
+		if itin.Score != 0 {
+			return true
+		}
+	}
+	return false
+}
+
 func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 	t := table.NewWriter()
 	t.SetOutputMirror(w)
 	t.SetStyle(table.StyleRounded)
 
 	multiLeg := isMultiLeg(itineraries)
+	scored := hasScores(itineraries)
 
+	// Build header dynamically based on layout and whether scores exist.
+	var header table.Row
 	if multiLeg {
-		t.AppendHeader(table.Row{
-			"#", "Score", "Price", "Route",
+		header = table.Row{"#"}
+		if scored {
+			header = append(header, "Score")
+		}
+		header = append(header, "Price", "Route",
 			"Leg 1 Airlines", "Leg 2 Airlines", "Cabin",
 			"Leg 1 Departure", "Leg 1 Arrival",
 			"Leg 2 Departure", "Leg 2 Arrival",
-			"Stopover", "Stops", "Duration", "CO2", "Reason", "Book",
-		})
+			"Stopover", "Stops", "Duration", "CO2")
+		if scored {
+			header = append(header, "Reason")
+		}
+		header = append(header, "Book")
 	} else {
-		t.AppendHeader(table.Row{
-			"#", "Score", "Price", "Route",
-			"Airlines", "Cabin", "Departure", "Arrival", "Stops", "Duration", "CO2", "Reason", "Book",
-		})
+		header = table.Row{"#"}
+		if scored {
+			header = append(header, "Score")
+		}
+		header = append(header, "Price", "Route",
+			"Airlines", "Cabin", "Departure", "Arrival", "Stops", "Duration", "CO2")
+		if scored {
+			header = append(header, "Reason")
+		}
+		header = append(header, "Book")
 	}
+	t.AppendHeader(header)
 
 	for i, itin := range itineraries {
 		converted, _ := currency.Convert(itin.TotalPrice, cur)
 		dur := formatDuration(itin.TotalTravel)
-
 		stops := formatStops(itin)
+
+		var row table.Row
 		if multiLeg {
-			t.AppendRow(table.Row{
-				i + 1,
-				fmt.Sprintf("%.0f", itin.Score),
+			row = table.Row{i + 1}
+			if scored {
+				row = append(row, fmt.Sprintf("%.0f", itin.Score))
+			}
+			row = append(row,
 				fmt.Sprintf("%s%.0f", currencySymbol(cur), converted.Amount),
 				routeString(itin),
 				legAirlines(itin, 0),
@@ -221,14 +250,17 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				stopoverString(itin),
 				stops,
 				dur,
-				legCarbon(itin, 0),
-				itin.Reasoning,
-				legBookingURL(itin, 0),
-			})
+				legCarbon(itin, 0))
+			if scored {
+				row = append(row, itin.Reasoning)
+			}
+			row = append(row, legBookingURL(itin, 0))
 		} else {
-			t.AppendRow(table.Row{
-				i + 1,
-				fmt.Sprintf("%.0f", itin.Score),
+			row = table.Row{i + 1}
+			if scored {
+				row = append(row, fmt.Sprintf("%.0f", itin.Score))
+			}
+			row = append(row,
 				fmt.Sprintf("%s%.0f", currencySymbol(cur), converted.Amount),
 				routeString(itin),
 				legAirlines(itin, 0),
@@ -237,11 +269,13 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				legArrival(itin, 0),
 				stops,
 				dur,
-				legCarbon(itin, 0),
-				itin.Reasoning,
-				legBookingURL(itin, 0),
-			})
+				legCarbon(itin, 0))
+			if scored {
+				row = append(row, itin.Reasoning)
+			}
+			row = append(row, legBookingURL(itin, 0))
 		}
+		t.AppendRow(row)
 	}
 
 	_, _ = fmt.Fprintln(w)

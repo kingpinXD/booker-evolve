@@ -500,6 +500,32 @@ func TestParseSegments_NotOvernight(t *testing.T) {
 	}
 }
 
+func TestParseFlightGroup_CarbonEmissions_Rounding(t *testing.T) {
+	g := FlightGroup{
+		Flights: []FlightSegment{{
+			DepartureAirport: Airport{ID: "DEL", Time: "2026-03-24 03:30"},
+			ArrivalAirport:   Airport{ID: "HKG", Time: "2026-03-24 11:30"},
+			Duration:         480,
+			Airline:          "IndiGo",
+			FlightNumber:     "6E 1234",
+			TravelClass:      "Economy",
+		}},
+		TotalDuration: 480,
+		Price:         350,
+		CarbonEmissions: CarbonEmissions{
+			ThisFlight: 800, // 800 grams should round to 1 kg, not truncate to 0
+		},
+	}
+
+	f, err := parseFlightGroup(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.CarbonKg != 1 {
+		t.Errorf("CarbonKg = %d, want 1 (800g should round to 1kg)", f.CarbonKg)
+	}
+}
+
 func TestParsePriceInsights(t *testing.T) {
 	resp := &Response{
 		PriceInsights: PriceInsights{

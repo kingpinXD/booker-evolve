@@ -903,3 +903,29 @@ func TestBuildJSONItineraries_ScorePresent(t *testing.T) {
 		t.Errorf("score = %f, want 85", results[0].Score)
 	}
 }
+
+// --- multi-leg CO2 columns ---
+
+func TestPrintTable_MultiLeg_CO2BothLegs(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg1.Flight.CarbonKg = 450
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil)
+	leg2.Flight.CarbonKg = 890
+	itins := []search.Itinerary{makeItin(leg1, leg2)}
+	out := capturePrintTable(itins, "CAD")
+
+	// Multi-leg should have separate CO2 columns for each leg.
+	if !strings.Contains(out, "LEG 1 CO2") {
+		t.Errorf("multi-leg table missing LEG 1 CO2 header, got:\n%s", out)
+	}
+	if !strings.Contains(out, "LEG 2 CO2") {
+		t.Errorf("multi-leg table missing LEG 2 CO2 header, got:\n%s", out)
+	}
+	if !strings.Contains(out, "450kg") {
+		t.Errorf("multi-leg table missing leg 1 carbon value 450kg, got:\n%s", out)
+	}
+	if !strings.Contains(out, "890kg") {
+		t.Errorf("multi-leg table missing leg 2 carbon value 890kg, got:\n%s", out)
+	}
+}

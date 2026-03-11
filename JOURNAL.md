@@ -230,3 +230,6 @@ Added Arrival (RFC3339) and Stops fields to jsonLeg in JSON output. Added omitem
 
 ### Session 26, Task 3 -- Wire PriceInsights into chat output
 Threaded priceInsighter interface through chatLoop so chat mode displays price level context after results (table and JSON). Previously discarded rawProvider is now captured and passed through. Updated all existing chat tests for new signature.
+
+### Session 26, Task 4 -- Fix multi-leg CO2 display
+Replaced single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in the multi-leg table layout. Previously only leg 0's carbon data was shown. Minimal 3-line change in search.go plus one new test.

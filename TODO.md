@@ -44,12 +44,12 @@ Carried from: Day 25 (all completed)
 - [ ] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 57: Fix multi-leg CO2 display
-**Status:** pending
-**Plan:**
-- [ ] Replace single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in multi-leg table header
-- [ ] Wire legCarbon(itin, 0) and legCarbon(itin, 1) into multi-leg table rows
-- [ ] Write test: multi-leg table output shows CO2 for both legs
-- [ ] Verify: `go build && go test ./... && go vet ./...`
+**Status:** done
+**Plan:** Replaced single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in multi-leg layout header and rows.
+- [x] Replace single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in multi-leg table header
+- [x] Wire legCarbon(itin, 0) and legCarbon(itin, 1) into multi-leg table rows
+- [x] Write test: multi-leg table output shows CO2 for both legs
+- [x] Verify: `go build && go test ./... && go vet ./...`
 
 ## Task 58: Lint, gofmt sweep, and build gate verification
 **Status:** pending

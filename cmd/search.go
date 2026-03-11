@@ -207,7 +207,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 			"Leg 1 Airlines", "Leg 2 Airlines", "Cabin",
 			"Leg 1 Departure", "Leg 1 Arrival",
 			"Leg 2 Departure", "Leg 2 Arrival",
-			"Stopover", "Stops", "Duration", "CO2")
+			"Stopover", "Stops", "Duration", "Leg 1 CO2", "Leg 2 CO2")
 		if scored {
 			header = append(header, "Reason")
 		}
@@ -250,7 +250,8 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				stopoverString(itin),
 				stops,
 				dur,
-				legCarbon(itin, 0))
+				legCarbon(itin, 0),
+				legCarbon(itin, 1))
 			if scored {
 				row = append(row, itin.Reasoning)
 			}

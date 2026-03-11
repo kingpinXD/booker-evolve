@@ -823,8 +823,8 @@ func TestBuildRankingPrompt_RiskyConnection(t *testing.T) {
 								Duration: 3 * time.Hour, AirlineName: "American Airlines",
 							},
 							{
-								FlightNumber:    "AA200", Origin: "ORD", Destination: "LAX",
-								OriginCity:      "Chicago", DestinationCity: "Los Angeles",
+								FlightNumber: "AA200", Origin: "ORD", Destination: "LAX",
+								OriginCity: "Chicago", DestinationCity: "Los Angeles",
 								DepartureTime:   dep.Add(3*time.Hour + 45*time.Minute),
 								ArrivalTime:     dep.Add(7*time.Hour + 45*time.Minute),
 								Duration:        4 * time.Hour,
@@ -863,8 +863,8 @@ func TestBuildRankingPrompt_TightConnection(t *testing.T) {
 								Duration: 3 * time.Hour, AirlineName: "United Airlines",
 							},
 							{
-								FlightNumber:    "UA200", Origin: "DEN", Destination: "JFK",
-								OriginCity:      "Denver", DestinationCity: "New York",
+								FlightNumber: "UA200", Origin: "DEN", Destination: "JFK",
+								OriginCity: "Denver", DestinationCity: "New York",
 								DepartureTime:   dep.Add(4*time.Hour + 15*time.Minute),
 								ArrivalTime:     dep.Add(8*time.Hour + 15*time.Minute),
 								Duration:        4 * time.Hour,
@@ -903,8 +903,8 @@ func TestBuildRankingPrompt_NoConnectionTag(t *testing.T) {
 								Duration: 3 * time.Hour, AirlineName: "Delta Air Lines",
 							},
 							{
-								FlightNumber:    "DL200", Origin: "MSP", Destination: "SEA",
-								OriginCity:      "Minneapolis", DestinationCity: "Seattle",
+								FlightNumber: "DL200", Origin: "MSP", Destination: "SEA",
+								OriginCity: "Minneapolis", DestinationCity: "Seattle",
 								DepartureTime:   dep.Add(5 * time.Hour),
 								ArrivalTime:     dep.Add(9 * time.Hour),
 								Duration:        4 * time.Hour,

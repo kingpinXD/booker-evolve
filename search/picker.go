@@ -46,26 +46,33 @@ func (p *Picker) Pick(ctx context.Context, req Request) (Strategy, string, error
 
 	// No context or no LLM — use heuristic fallback.
 	if req.Context == "" || p.llm == nil {
-		s := p.fallback()
-		return s, "default for single-leg route", nil
+		s, reason := p.fallback(req)
+		return s, reason, nil
 	}
 
 	picked, reason, err := p.pickWithLLM(ctx, req)
 	if err != nil {
-		s := p.fallback()
+		s, _ := p.fallback(req)
 		return s, "LLM unavailable, using default", nil
 	}
 	return picked, reason, nil
 }
 
-// fallback returns "direct" if available, otherwise the first strategy.
-func (p *Picker) fallback() Strategy {
+// fallback inspects the request shape and returns an appropriate strategy.
+// When Leg2Date is set, prefers "multicity"; otherwise prefers "direct".
+func (p *Picker) fallback(req Request) (Strategy, string) {
+	preferred := "direct"
+	reason := "default for single-leg route"
+	if req.Leg2Date != "" {
+		preferred = "multicity"
+		reason = "default for multi-city route"
+	}
 	for _, s := range p.strategies {
-		if s.Name() == "direct" {
-			return s
+		if s.Name() == preferred {
+			return s, reason
 		}
 	}
-	return p.strategies[0]
+	return p.strategies[0], reason
 }
 
 type pickerResult struct {

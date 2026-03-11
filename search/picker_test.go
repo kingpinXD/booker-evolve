@@ -51,8 +51,62 @@ func TestPicker_FallbackNoContext(t *testing.T) {
 	if got.Name() != "direct" {
 		t.Errorf("got strategy %q, want %q", got.Name(), "direct")
 	}
-	if reason == "" {
-		t.Error("expected non-empty reason for fallback")
+	if reason != "default for single-leg route" {
+		t.Errorf("reason = %q, want %q", reason, "default for single-leg route")
+	}
+}
+
+func TestPicker_FallbackWithLeg2Date(t *testing.T) {
+	direct := &fakeStrategy{name: "direct", desc: "Direct flights"}
+	mc := &fakeStrategy{name: "multicity", desc: "Multi-city with stopover"}
+	p := NewPicker(nil, direct, mc)
+
+	// Leg2Date set — should fall back to "multicity".
+	got, reason, err := p.Pick(context.Background(), Request{Leg2Date: "2025-07-15"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Name() != "multicity" {
+		t.Errorf("got strategy %q, want %q", got.Name(), "multicity")
+	}
+	if reason != "default for multi-city route" {
+		t.Errorf("reason = %q, want %q", reason, "default for multi-city route")
+	}
+}
+
+func TestPicker_FallbackWithReturnDate(t *testing.T) {
+	direct := &fakeStrategy{name: "direct", desc: "Direct flights"}
+	mc := &fakeStrategy{name: "multicity", desc: "Multi-city with stopover"}
+	p := NewPicker(nil, direct, mc)
+
+	// ReturnDate set — direct handles round-trips.
+	got, reason, err := p.Pick(context.Background(), Request{ReturnDate: "2025-07-20"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Name() != "direct" {
+		t.Errorf("got strategy %q, want %q", got.Name(), "direct")
+	}
+	if reason != "default for single-leg route" {
+		t.Errorf("reason = %q, want %q", reason, "default for single-leg route")
+	}
+}
+
+func TestPicker_FallbackLeg2DateNoMulticityStrategy(t *testing.T) {
+	direct := &fakeStrategy{name: "direct", desc: "Direct flights"}
+	nearby := &fakeStrategy{name: "nearby", desc: "Nearby airports"}
+	p := NewPicker(nil, direct, nearby)
+
+	// Leg2Date set but no multicity strategy — should fall back to first.
+	got, reason, err := p.Pick(context.Background(), Request{Leg2Date: "2025-07-15"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Name() != "direct" {
+		t.Errorf("got strategy %q, want %q (first registered)", got.Name(), "direct")
+	}
+	if reason != "default for multi-city route" {
+		t.Errorf("reason = %q, want %q", reason, "default for multi-city route")
 	}
 }
 

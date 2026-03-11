@@ -613,3 +613,6 @@ Changed picker test to use p.SetRanker() public API instead of direct field acce
 ## Session 48 -- 20:33 -- Chat enrichment and stopover expansion
 
 Completed all 5 tasks with zero reverts and zero API calls. resultSummaryForChat now includes ranking reasoning from Itinerary.Reasoning and layover details (city+duration via formatLayoverSummary) instead of bare stop counts. Added inferProfile keyword scanner as fallback when LLM omits profile field -- covers budget/comfort/eco signals from conversation history. Expanded stopover network with India-Bangkok corridors (DEL: 6 cities, BOM: 5 cities) bringing total to 15 route-specific corridors. Cleaned up picker test to use SetRanker public API and removed stale dedup TODO. Tasks 3 and 5 ran in parallel worktrees.
+
+### Session 49, Task 1 -- Request-aware Picker fallback
+Refactored fallback() to accept Request and inspect Leg2Date: returns "multicity" when Leg2Date is set, "direct" otherwise. Updated reason strings to be accurate. Added 4 new tests (Leg2Date, ReturnDate, plain single-leg, Leg2Date without multicity strategy). All 15 picker tests pass.

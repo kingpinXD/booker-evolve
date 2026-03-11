@@ -30,12 +30,12 @@ Carried from: Day 40 (all completed)
 - [x] Verify all existing stopover tests still pass
 
 ## Task 112: Add India-US West Coast stopovers (DEL/BOM to SFO)
-**Status:** pending
-**Plan:**
-- [ ] Write tests for StopoversForRoute("DEL","SFO") and StopoversForRoute("BOM","SFO")
-- [ ] Add DELToSFOStopovers and BOMToSFOStopovers
-- [ ] Register routes in stopoversMap
-- [ ] Verify tests pass
+**Status:** done
+**Plan:** Add curated stopover lists for DEL->SFO (6 cities) and BOM->SFO (5 cities).
+- [x] Write tests for StopoversForRoute("DEL","SFO") and StopoversForRoute("BOM","SFO")
+- [x] Add DELToSFOStopovers and BOMToSFOStopovers
+- [x] Register routes in stopoversMap
+- [x] Verify tests pass
 
 ## Task 113: Zero-results proactive suggestions in chat
 **Status:** pending

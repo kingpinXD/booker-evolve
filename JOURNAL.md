@@ -487,3 +487,6 @@ Key outcomes:
 
 ### Session 41, Task 1 -- Bidirectional route lookup in StopoversForRoute
 Added reverse direction lookup to StopoversForRoute: when origin->dest not found, checks dest->origin and filters origin/dest airports from results. This doubles effective route coverage (7 routes -> 14). 2 new tests verify route-specific data (not fallback) via airports unique to each route (KUL, FRA, CMB).
+
+### Session 41, Task 2 -- Add India-US West Coast stopovers (DEL/BOM to SFO)
+Added DELToSFOStopovers (6 cities: NRT, ICN, HKG, BKK, SIN, IST) and BOMToSFOStopovers (5 cities: NRT, HKG, BKK, SIN, IST). Primary corridor via East Asia Pacific routing. Total route-specific corridors: 9 (was 7). 2 new tests.

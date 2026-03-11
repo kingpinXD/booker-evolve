@@ -235,3 +235,62 @@ func TestStopoversForRoute_BOMToLHR(t *testing.T) {
 		t.Error("destination LHR should not be in stopover list")
 	}
 }
+
+func TestStopoversForRoute_DELToSFO(t *testing.T) {
+	got := StopoversForRoute("DEL", "SFO")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for DEL->SFO, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &DELToSFOStopovers[0] {
+		t.Error("DEL->SFO should return the route-specific slice, not a copy")
+	}
+
+	// Verify expected cities: primary Pacific corridor via East Asia.
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"NRT", "ICN", "HKG", "BKK", "SIN"} {
+		if !airports[want] {
+			t.Errorf("DEL->SFO stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["DEL"] {
+		t.Error("origin DEL should not be in stopover list")
+	}
+	if airports["SFO"] {
+		t.Error("destination SFO should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_BOMToSFO(t *testing.T) {
+	got := StopoversForRoute("BOM", "SFO")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for BOM->SFO, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &BOMToSFOStopovers[0] {
+		t.Error("BOM->SFO should return the route-specific slice, not a copy")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"NRT", "HKG", "BKK", "SIN"} {
+		if !airports[want] {
+			t.Errorf("BOM->SFO stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["BOM"] {
+		t.Error("origin BOM should not be in stopover list")
+	}
+	if airports["SFO"] {
+		t.Error("destination SFO should not be in stopover list")
+	}
+}

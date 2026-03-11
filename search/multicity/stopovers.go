@@ -535,6 +535,114 @@ var BOMToLHRStopovers = []StopoverCity{
 	},
 }
 
+// DELToSFOStopovers are the candidate stopover cities for Delhi → San Francisco.
+//
+// Route geometry: DEL is at ~28°N, 77°E. SFO is at ~37°N, 122°W.
+// High-demand corridor for the Indian tech diaspora to the US West Coast.
+// Pacific routing via East Asia is the primary safe corridor.
+var DELToSFOStopovers = []StopoverCity{
+	// === EAST ASIA — Primary corridor ===
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-SFO direct on ANA/JAL/United. DEL-NRT on JAL/ANA. Natural Pacific gateway.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. ICN-SFO direct on Korean Air/Asiana/United. DEL-ICN on Korean Air.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-SFO direct on Cathay/United. DEL-HKG frequent.",
+	},
+
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BKK-SFO via NRT/ICN connection. DEL-BKK frequent and cheap.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-SFO direct on Singapore Airlines/United. Strong DEL-SIN frequency.",
+	},
+
+	// === EUROPE — Secondary corridor ===
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. IST-SFO direct on Turkish. DEL-IST on Turkish. Westbound option.",
+	},
+}
+
+// BOMToSFOStopovers are the candidate stopover cities for Mumbai → San Francisco.
+//
+// Route geometry: BOM is at ~19°N, 73°E. SFO is at ~37°N, 122°W.
+// High-demand corridor for the Indian tech diaspora to the US West Coast.
+var BOMToSFOStopovers = []StopoverCity{
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-SFO direct on ANA/JAL/United. BOM-NRT on ANA.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. HKG-SFO direct on Cathay/United. BOM-HKG on Cathay/Air India.",
+	},
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-SFO via connection.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. SIN-SFO direct on Singapore Airlines/United. Strong BOM-SIN frequency.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. IST-SFO direct on Turkish. BOM-IST on Turkish.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -549,6 +657,8 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "JFK"): BOMToJFKStopovers,
 	routeKey("DEL", "LHR"): DELToLHRStopovers,
 	routeKey("BOM", "LHR"): BOMToLHRStopovers,
+	routeKey("DEL", "SFO"): DELToSFOStopovers,
+	routeKey("BOM", "SFO"): BOMToSFOStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

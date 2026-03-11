@@ -283,6 +283,144 @@ var DELToYVRStopovers = []StopoverCity{
 	},
 }
 
+// DELToJFKStopovers are the candidate stopover cities for Delhi → New York JFK.
+//
+// Route geometry: DEL is at ~28°N, 77°E. JFK is at ~40°N, 73°W.
+// High-demand corridor for the Indian diaspora to the US East Coast.
+// Eastbound via Asia-Pacific and westbound via Europe are both viable.
+var DELToJFKStopovers = []StopoverCity{
+	// === EAST/SOUTHEAST ASIA — Primary corridor ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. Excellent DEL-HKG frequency. HKG-JFK direct on Cathay.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. Strong DEL-SIN connectivity. SIN-JFK direct on Singapore Airlines.",
+	},
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. Cheap DEL-BKK. BKK-JFK via connection through NRT or ICN.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-JFK direct on multiple carriers. Strong Pacific gateway.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. ICN-JFK direct on Korean Air. DEL-ICN on Korean Air/Air India.",
+	},
+
+	// === EUROPE — Secondary corridor ===
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. IST-JFK direct. DEL-IST on Turkish. Strong option.",
+	},
+	{
+		City:    "London",
+		Airport: "LHR",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "BA hub. DEL-LHR on Air India/BA. LHR-JFK very frequent.",
+	},
+	{
+		City:    "Frankfurt",
+		Airport: "FRA",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Lufthansa hub. DEL-FRA on Lufthansa/Air India. FRA-JFK direct.",
+	},
+}
+
+// BOMToJFKStopovers are the candidate stopover cities for Mumbai → New York JFK.
+//
+// Route geometry: BOM is at ~19°N, 73°E. JFK is at ~40°N, 73°W.
+// High-demand corridor for the Indian diaspora to the US East Coast.
+var BOMToJFKStopovers = []StopoverCity{
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-JFK via connection.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Singapore Airlines hub. Strong BOM-SIN frequency. SIN-JFK direct on SQ.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-JFK direct on Cathay.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-JFK direct on multiple carriers.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-JFK direct.",
+	},
+	{
+		City:    "London",
+		Airport: "LHR",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "BA hub. BOM-LHR on BA/Air India/Virgin. LHR-JFK very frequent.",
+	},
+	{
+		City:    "Frankfurt",
+		Airport: "FRA",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Lufthansa hub. BOM-FRA on Lufthansa. FRA-JFK direct.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -293,6 +431,8 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("DEL", "YYZ"): DELToYYZStopovers,
 	routeKey("BOM", "YYZ"): BOMToYYZStopovers,
 	routeKey("DEL", "YVR"): DELToYVRStopovers,
+	routeKey("DEL", "JFK"): DELToJFKStopovers,
+	routeKey("BOM", "JFK"): BOMToJFKStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

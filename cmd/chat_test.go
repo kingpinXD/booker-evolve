@@ -1505,3 +1505,76 @@ func TestBuildRequestFromParams_StopoverDuration(t *testing.T) {
 		t.Errorf("MaxStopover = %v, want 96h", req.MaxStopover)
 	}
 }
+
+// --- filterSuggestion ---
+
+func TestFilterSuggestion_WithFilters(t *testing.T) {
+	tests := []struct {
+		name   string
+		params tripParams
+		want   []string // substrings that should appear in the suggestion
+	}{
+		{
+			name:   "direct only",
+			params: tripParams{DirectOnly: true},
+			want:   []string{"direct_only"},
+		},
+		{
+			name:   "max price",
+			params: tripParams{MaxPrice: 500},
+			want:   []string{"max_price"},
+		},
+		{
+			name:   "departure time",
+			params: tripParams{DepartureAfter: "08:00"},
+			want:   []string{"departure"},
+		},
+		{
+			name:   "arrival time",
+			params: tripParams{ArrivalBefore: "18:00"},
+			want:   []string{"arrival"},
+		},
+		{
+			name:   "max duration",
+			params: tripParams{MaxDurationHours: 8},
+			want:   []string{"max_duration"},
+		},
+		{
+			name:   "preferred alliance",
+			params: tripParams{PreferredAlliance: "Star Alliance"},
+			want:   []string{"preferred_alliance"},
+		},
+		{
+			name:   "avoid airlines",
+			params: tripParams{AvoidAirlines: "BA,LH"},
+			want:   []string{"avoid_airlines"},
+		},
+		{
+			name:   "preferred airlines",
+			params: tripParams{PreferredAirlines: "AC"},
+			want:   []string{"preferred_airlines"},
+		},
+		{
+			name:   "multiple filters",
+			params: tripParams{DirectOnly: true, MaxPrice: 500, PreferredAlliance: "OneWorld"},
+			want:   []string{"direct_only", "max_price", "preferred_alliance"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := filterSuggestion(tt.params)
+			for _, sub := range tt.want {
+				if !strings.Contains(got, sub) {
+					t.Errorf("filterSuggestion() = %q, missing %q", got, sub)
+				}
+			}
+		})
+	}
+}
+
+func TestFilterSuggestion_NoFilters(t *testing.T) {
+	got := filterSuggestion(tripParams{})
+	if got != "" {
+		t.Errorf("filterSuggestion() = %q, want empty for no active filters", got)
+	}
+}

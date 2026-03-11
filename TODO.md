@@ -31,27 +31,27 @@ Carried from: Day 37 (all completed)
 - [x] Verify build + test + vet + lint pass
 
 ## Task 102: Add India-US route stopovers (DEL/BOM to JFK)
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Write tests for StopoversForRoute("DEL","JFK") and StopoversForRoute("BOM","JFK")
-- [ ] Add DELToJFKStopovers with curated cities
-- [ ] Add BOMToJFKStopovers with curated cities
-- [ ] Register routes in stopoversMap
-- [ ] Verify tests pass
+**Status:** done
+**Plan:** Add curated stopover lists for DEL->JFK (8 cities) and BOM->JFK (7 cities), register in stopoversMap, write tests.
+- [x] Write tests for StopoversForRoute("DEL","JFK") and StopoversForRoute("BOM","JFK")
+- [x] Add DELToJFKStopovers with curated cities
+- [x] Add BOMToJFKStopovers with curated cities
+- [x] Register routes in stopoversMap
+- [x] Verify tests pass
 
 ## Task 103: Consolidate stage 3 filter logging
-**Status:** pending
-**Plan:** to be filled during implementation
+**Status:** in-progress
+**Plan:** Extract applyFilter helper to reduce ~60 lines of before/after counting to a compact loop.
 - [ ] Extract applyFilter helper or use compact loop pattern
 - [ ] Replace verbose before/after counting with consolidated logic
 - [ ] Verify existing multicity tests pass
 - [ ] Verify build + vet pass
 
 ## Task 104: No-results filter suggestion in chat
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Write tests for filterSuggestion with various active filters
-- [ ] Write test for filterSuggestion with no filters (empty result)
-- [ ] Implement filterSuggestion(params tripParams) string
-- [ ] Wire into chatLoop after no-results message
-- [ ] Verify build + test + vet pass
+**Status:** done
+**Plan:** Add filterSuggestion(tripParams) that checks active filters and suggests relaxing them. Wire into chatLoop.
+- [x] Write tests for filterSuggestion with various active filters
+- [x] Write test for filterSuggestion with no filters (empty result)
+- [x] Implement filterSuggestion(params tripParams) string
+- [x] Wire into chatLoop after no-results message
+- [x] Verify build + test + vet pass

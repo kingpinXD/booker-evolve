@@ -434,3 +434,9 @@ Removed KiwiID field from StopoverCity struct, all KiwiID assignments in 3 route
 
 ### Session 38, Task 2 -- Simplify fetchWithDualSort to single fetch
 Replaced fetchWithDualSort (which made two identical API calls since SerpAPI ignores SortBy) with a direct fetchFromAllProviders call. Removed deduplicateFlights helper and all associated tests. Kiwi sort constants kept in config/routes.go since the inactive Kiwi provider still references them. Net removal: ~90 lines of dead code + tests.
+
+### Session 38, Task 3 -- Add India-US route stopovers (DEL/BOM to JFK)
+Added DELToJFKStopovers (8 cities) and BOMToJFKStopovers (7 cities) with curated Asia-Pacific and European hubs. Registered in stopoversMap. 2 new tests verify route-specific (not fallback) results and check expected airports. Implemented in parallel worktree, merged to main with KiwiID stripped (compatible with task 1).
+
+### Session 38, Task 5 -- No-results filter suggestion in chat
+Added filterSuggestion(tripParams) that checks 8 optional filter categories and suggests relaxing them when search returns zero results. Wired into chatLoop after the no-results message. 10 new tests (9 table-driven for active filters + 1 no-filters case). Implemented in parallel worktree.

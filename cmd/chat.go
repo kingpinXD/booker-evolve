@@ -413,6 +413,41 @@ func refinementHint() string {
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }
 
+// filterSuggestion returns a hint about which active filters might be causing
+// zero results. Returns empty string when no optional filters are active.
+func filterSuggestion(p tripParams) string {
+	var filters []string
+	if p.DirectOnly {
+		filters = append(filters, "direct_only")
+	}
+	if p.MaxPrice > 0 {
+		filters = append(filters, "max_price")
+	}
+	if p.DepartureAfter != "" || p.DepartureBefore != "" {
+		filters = append(filters, "departure time window")
+	}
+	if p.ArrivalAfter != "" || p.ArrivalBefore != "" {
+		filters = append(filters, "arrival time window")
+	}
+	if p.MaxDurationHours > 0 {
+		filters = append(filters, "max_duration_hours")
+	}
+	if p.PreferredAlliance != "" {
+		filters = append(filters, "preferred_alliance")
+	}
+	if p.AvoidAirlines != "" {
+		filters = append(filters, "avoid_airlines")
+	}
+	if p.PreferredAirlines != "" {
+		filters = append(filters, "preferred_airlines")
+	}
+	if len(filters) == 0 {
+		return ""
+	}
+	return "Active filters that may be limiting results: " + strings.Join(filters, ", ") +
+		". Try relaxing some of these constraints."
+}
+
 // truncateHistory keeps the first system message and the most recent maxRecent
 // non-system messages, dropping older messages to prevent token overflow.
 func truncateHistory(history []llm.Message, maxRecent int) []llm.Message {
@@ -518,6 +553,9 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 
 		if len(results) == 0 {
 			_, _ = fmt.Fprintln(out, "No flights found. Try different dates or airports.")
+			if hint := filterSuggestion(params); hint != "" {
+				_, _ = fmt.Fprintln(out, hint)
+			}
 			continue
 		}
 

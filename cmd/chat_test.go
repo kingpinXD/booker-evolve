@@ -1062,6 +1062,59 @@ func (m *mockPriceInsighter) LastPriceInsights() search.PriceInsights {
 	return m.insights
 }
 
+func TestParsePartialParams_AvoidAirlines(t *testing.T) {
+	p, ok := parsePartialParams(`{"avoid_airlines":"BA,LH"}`)
+	if !ok {
+		t.Fatal("expected partial JSON with avoid_airlines to parse")
+	}
+	if p.AvoidAirlines != "BA,LH" {
+		t.Errorf("AvoidAirlines = %q, want %q", p.AvoidAirlines, "BA,LH")
+	}
+}
+
+func TestMergeParams_AvoidAirlines(t *testing.T) {
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", AvoidAirlines: "BA,LH"}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.AvoidAirlines != "BA,LH" {
+		t.Errorf("AvoidAirlines = %q, want %q (preserved from prev)", got.AvoidAirlines, "BA,LH")
+	}
+
+	// Partial overrides prev.
+	partial2 := tripParams{AvoidAirlines: "UA"}
+	got2 := mergeParams(prev, partial2)
+	if got2.AvoidAirlines != "UA" {
+		t.Errorf("AvoidAirlines = %q, want %q (overridden by partial)", got2.AvoidAirlines, "UA")
+	}
+}
+
+func TestBuildRequestFromParams_AvoidAirlines(t *testing.T) {
+	params := tripParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2025-06-15",
+		AvoidAirlines: "BA,LH",
+	}
+	req := buildRequestFromParams(params)
+	if req.AvoidAirlines != "BA,LH" {
+		t.Errorf("AvoidAirlines = %q, want %q", req.AvoidAirlines, "BA,LH")
+	}
+}
+
+func TestChatSystemPrompt_AvoidAirlines(t *testing.T) {
+	prompt := chatSystemPrompt(time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC))
+	if !strings.Contains(prompt, "avoid_airlines") {
+		t.Error("system prompt should mention avoid_airlines")
+	}
+}
+
+func TestRefinementHint_AvoidAirlines(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "avoid_airlines") {
+		t.Error("refinement hint should mention avoid_airlines")
+	}
+}
+
 func TestChatLoop_PriceInsightsInOutput(t *testing.T) {
 	responses := []string{
 		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}

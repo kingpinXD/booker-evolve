@@ -54,6 +54,7 @@ type tripParams struct {
 	DepartureAfter    string  `json:"departure_after,omitempty"`
 	DepartureBefore   string  `json:"departure_before,omitempty"`
 	SortBy            string  `json:"sort_by,omitempty"`
+	AvoidAirlines     string  `json:"avoid_airlines,omitempty"`
 	Context           string  `json:"context,omitempty"`
 }
 
@@ -80,6 +81,7 @@ Optional:
 - departure_after: earliest acceptable departure time (HH:MM, e.g. "06:00")
 - departure_before: latest acceptable departure time (HH:MM, e.g. "22:00")
 - sort_by: sort results by "price" (default), "duration", or "departure"
+- avoid_airlines: comma-separated IATA codes to exclude (e.g. "BA,LH")
 - context: any preferences like "cheapest option" or "prefer direct flights"
 
 Ask clarifying questions to gather missing information. Be conversational but concise.
@@ -171,6 +173,7 @@ func buildRequestFromParams(p tripParams) search.Request {
 		DepartureAfter:    p.DepartureAfter,
 		DepartureBefore:   p.DepartureBefore,
 		SortBy:            p.SortBy,
+		AvoidAirlines:     p.AvoidAirlines,
 		MaxResults:        defaultMaxResults,
 		Context:           p.Context,
 	}
@@ -274,6 +277,9 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if merged.SortBy == "" {
 		merged.SortBy = prev.SortBy
 	}
+	if merged.AvoidAirlines == "" {
+		merged.AvoidAirlines = prev.AvoidAirlines
+	}
 	if merged.Context == "" {
 		merged.Context = prev.Context
 	}
@@ -311,7 +317,7 @@ func parsePartialParams(response string) (tripParams, bool) {
 			p.MaxPrice != 0 || p.DirectOnly || p.FlexDays != 0 ||
 			p.Profile != "" || p.PreferredAlliance != "" ||
 			p.DepartureAfter != "" || p.DepartureBefore != "" ||
-			p.SortBy != "" || p.Context != "" {
+			p.SortBy != "" || p.AvoidAirlines != "" || p.Context != "" {
 			return p, true
 		}
 	}
@@ -339,6 +345,7 @@ func refinementHint() string {
 		"filter by preferred_alliance (Star Alliance/OneWorld/SkyTeam), " +
 		"filter by departure time (departure_after/departure_before in HH:MM), " +
 		"sort results by sort_by (price/duration/departure), " +
+		"exclude airlines with avoid_airlines (comma-separated IATA codes, e.g. \"BA,LH\"), " +
 		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }

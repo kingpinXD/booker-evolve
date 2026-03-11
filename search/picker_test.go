@@ -274,7 +274,7 @@ func TestPicker_BothPassesRankerToComposite(t *testing.T) {
 	ranker := &fakeRanker{}
 	mock := &mockLLM{response: `{"strategy": "both", "reason": "compare"}`}
 	p := NewPicker(mock, s1, s2)
-	p.ranker = ranker
+	p.SetRanker(ranker)
 
 	strategy, _, err := p.Pick(context.Background(), Request{Context: "compare options"})
 	if err != nil {

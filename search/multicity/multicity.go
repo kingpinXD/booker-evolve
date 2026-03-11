@@ -62,9 +62,6 @@
 //
 // TODO(iterate): Add support for more than one intermediate stop
 // (e.g. DEL → BKK → NRT → YYZ for three-city itineraries).
-//
-// TODO(iterate): Deduplicate itineraries that differ only in price
-// (same flights, different booking providers).
 package multicity
 
 import (

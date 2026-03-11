@@ -769,6 +769,72 @@ Searching.`, 15+i))
 	}
 }
 
+func TestParsePartialParams_FlexDays(t *testing.T) {
+	p, ok := parsePartialParams(`{"flex_days":5}`)
+	if !ok {
+		t.Fatal("expected partial JSON with flex_days to parse")
+	}
+	if p.FlexDays != 5 {
+		t.Errorf("FlexDays = %d, want 5", p.FlexDays)
+	}
+}
+
+func TestMergeParams_FlexDays(t *testing.T) {
+	// FlexDays=5 from prev is preserved when partial has FlexDays=0.
+	prev := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15", FlexDays: 5}
+	partial := tripParams{Cabin: "business"}
+	got := mergeParams(prev, partial)
+	if got.FlexDays != 5 {
+		t.Errorf("FlexDays = %d, want 5 (preserved from prev)", got.FlexDays)
+	}
+
+	// Partial FlexDays=7 overrides prev FlexDays=5.
+	partial2 := tripParams{FlexDays: 7}
+	got2 := mergeParams(prev, partial2)
+	if got2.FlexDays != 7 {
+		t.Errorf("FlexDays = %d, want 7 (overridden by partial)", got2.FlexDays)
+	}
+}
+
+func TestBuildRequestFromParams_FlexDays(t *testing.T) {
+	// FlexDays=5 in params produces req.FlexDays=5.
+	params := tripParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2025-06-15",
+		FlexDays:      5,
+	}
+	req := buildRequestFromParams(params)
+	if req.FlexDays != 5 {
+		t.Errorf("FlexDays = %d, want 5", req.FlexDays)
+	}
+
+	// FlexDays=0 produces req.FlexDays=defaultFlexDays (3).
+	params2 := tripParams{
+		Origin:        "DEL",
+		Destination:   "YYZ",
+		DepartureDate: "2025-06-15",
+	}
+	req2 := buildRequestFromParams(params2)
+	if req2.FlexDays != defaultFlexDays {
+		t.Errorf("FlexDays = %d, want %d (default)", req2.FlexDays, defaultFlexDays)
+	}
+}
+
+func TestChatSystemPrompt_FlexDays(t *testing.T) {
+	prompt := chatSystemPrompt()
+	if !strings.Contains(prompt, "flex_days") {
+		t.Error("system prompt should mention flex_days")
+	}
+}
+
+func TestRefinementHint_FlexDays(t *testing.T) {
+	hint := refinementHint()
+	if !strings.Contains(hint, "flex_days") {
+		t.Error("refinement hint should mention flex_days")
+	}
+}
+
 func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && indexOf(s, substr) >= 0
 }

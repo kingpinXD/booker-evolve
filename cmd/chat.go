@@ -48,6 +48,7 @@ type tripParams struct {
 	Cabin         string  `json:"cabin,omitempty"`
 	MaxPrice      float64 `json:"max_price,omitempty"`
 	DirectOnly    bool    `json:"direct_only,omitempty"`
+	FlexDays      int     `json:"flex_days,omitempty"`
 	Profile       string  `json:"profile,omitempty"`
 	Context       string  `json:"context,omitempty"`
 }
@@ -67,6 +68,7 @@ Optional:
 - cabin: economy, premium_economy, business, or first (default: economy)
 - max_price: maximum budget per flight in USD (e.g. 1200)
 - direct_only: true to show only non-stop flights
+- flex_days: search ± N days around departure date (default: 3)
 - profile: ranking profile — "budget" (cheapest), "comfort" (best schedule/airline), or "balanced" (default: budget)
 - context: any preferences like "cheapest option" or "prefer direct flights"
 
@@ -141,6 +143,10 @@ func buildRequestFromParams(p tripParams) search.Request {
 	if p.DirectOnly {
 		maxStops = 0
 	}
+	flexDays := p.FlexDays
+	if flexDays == 0 {
+		flexDays = defaultFlexDays
+	}
 	return search.Request{
 		Origin:        p.Origin,
 		Destination:   p.Destination,
@@ -148,7 +154,7 @@ func buildRequestFromParams(p tripParams) search.Request {
 		ReturnDate:    p.ReturnDate,
 		Passengers:    passengers,
 		CabinClass:    types.CabinClass(cabin),
-		FlexDays:      defaultFlexDays,
+		FlexDays:      flexDays,
 		MaxStops:      maxStops,
 		MaxPrice:      p.MaxPrice,
 		MaxResults:    defaultMaxResults,
@@ -248,6 +254,9 @@ func mergeParams(prev, partial tripParams) tripParams {
 	if !merged.DirectOnly {
 		merged.DirectOnly = prev.DirectOnly
 	}
+	if merged.FlexDays == 0 {
+		merged.FlexDays = prev.FlexDays
+	}
 	return merged
 }
 
@@ -273,7 +282,8 @@ func parsePartialParams(response string) (tripParams, bool) {
 		// At least one field must be set.
 		if p.Origin != "" || p.Destination != "" || p.DepartureDate != "" ||
 			p.ReturnDate != "" || p.Passengers != 0 || p.Cabin != "" ||
-			p.MaxPrice != 0 || p.DirectOnly || p.Profile != "" || p.Context != "" {
+			p.MaxPrice != 0 || p.DirectOnly || p.FlexDays != 0 ||
+			p.Profile != "" || p.Context != "" {
 			return p, true
 		}
 	}
@@ -296,6 +306,7 @@ func refinementHint() string {
 		"try different dates, search nearby airports for cheaper fares, " +
 		"change cabin class (economy/business/first), filter to direct flights only, " +
 		"adjust number of passengers, add a return date for round-trip pricing, " +
+		"adjust date flexibility (flex_days), " +
 		"or change ranking profile (budget/comfort/balanced). " +
 		"When the user requests a change, re-emit a JSON object with ONLY the changed fields. " +
 		"For example, to switch to business class: {\"cabin\":\"business\"}"

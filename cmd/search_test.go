@@ -942,6 +942,64 @@ func TestBuildJSONItineraries_ScorePresent(t *testing.T) {
 
 // --- multi-leg CO2 columns ---
 
+// --- legSeatsLeft ---
+
+func TestLegSeatsLeft_MinAcrossSegments(t *testing.T) {
+	leg := search.Leg{
+		Flight: types.Flight{
+			Outbound: []types.Segment{
+				{Airline: "LH", Origin: "DEL", Destination: "FRA", DepartureTime: basetime, ArrivalTime: basetime.Add(8 * time.Hour), SeatsLeft: 5},
+				{Airline: "LH", Origin: "FRA", Destination: "YYZ", DepartureTime: basetime.Add(10 * time.Hour), ArrivalTime: basetime.Add(20 * time.Hour), SeatsLeft: 3},
+			},
+			TotalDuration: 20 * time.Hour,
+			Price:         types.Money{Amount: 600, Currency: "USD"},
+		},
+	}
+	itin := makeItin(leg)
+	got := legSeatsLeft(itin, 0)
+	if got != 3 {
+		t.Errorf("legSeatsLeft = %d, want 3 (min across segments)", got)
+	}
+}
+
+func TestLegSeatsLeft_NoData(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	got := legSeatsLeft(itin, 0)
+	if got != 0 {
+		t.Errorf("legSeatsLeft = %d, want 0 when no segment has SeatsLeft", got)
+	}
+}
+
+// --- JSON seats_left ---
+
+func TestBuildJSONItineraries_SeatsLeft(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.Outbound[0].SeatsLeft = 3
+	results := buildJSONItineraries([]search.Itinerary{makeItin(leg)}, "USD")
+
+	if len(results) != 1 || len(results[0].Legs) != 1 {
+		t.Fatal("unexpected results structure")
+	}
+	if results[0].Legs[0].SeatsLeft != 3 {
+		t.Errorf("seats_left = %d, want 3", results[0].Legs[0].SeatsLeft)
+	}
+}
+
+func TestBuildJSONItineraries_SeatsLeft_OmitEmpty(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	results := buildJSONItineraries([]search.Itinerary{itin}, "USD")
+
+	data, err := json.Marshal(results[0].Legs[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "seats_left") {
+		t.Error("seats_left should be omitted when 0")
+	}
+}
+
+// --- multi-leg CO2 columns ---
+
 func TestPrintTable_MultiLeg_CO2BothLegs(t *testing.T) {
 	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
 		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})

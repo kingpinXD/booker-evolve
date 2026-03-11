@@ -105,6 +105,7 @@ type Segment struct {
 	Overnight        bool          // flight spans overnight per provider data
 	Aircraft         string        // aircraft type, e.g. "Boeing 787-9"
 	Legroom          string        // seat legroom, e.g. "30 in"
+	SeatsLeft        int           // remaining seats; 0 means unknown
 }
 
 // Money represents a price with its currency.

@@ -371,6 +371,23 @@ func legLegroom(itin search.Itinerary, legIdx int) string {
 	return segs[0].Legroom
 }
 
+// legSeatsLeft returns the minimum SeatsLeft across all segments of the given leg.
+// Returns 0 if no segment has seat data.
+func legSeatsLeft(itin search.Itinerary, legIdx int) int {
+	if legIdx >= len(itin.Legs) {
+		return 0
+	}
+	minSeats := 0
+	for _, seg := range itin.Legs[legIdx].Flight.Outbound {
+		if seg.SeatsLeft > 0 {
+			if minSeats == 0 || seg.SeatsLeft < minSeats {
+				minSeats = seg.SeatsLeft
+			}
+		}
+	}
+	return minSeats
+}
+
 func legAirlines(itin search.Itinerary, legIdx int) string {
 	if legIdx >= len(itin.Legs) {
 		return ""
@@ -513,6 +530,7 @@ type jsonLeg struct {
 	BookingURL      string `json:"booking_url,omitempty"`
 	Aircraft        string `json:"aircraft,omitempty"`
 	Legroom         string `json:"legroom,omitempty"`
+	SeatsLeft       int    `json:"seats_left,omitempty"`
 }
 
 // jsonItinerary is the JSON representation of a search result.
@@ -599,6 +617,7 @@ func buildJSONItineraries(itineraries []search.Itinerary, cur string) []jsonItin
 				BookingURL:      leg.Flight.BookingURL,
 				Aircraft:        legAircraft(itin, idx),
 				Legroom:         legLegroom(itin, idx),
+				SeatsLeft:       legSeatsLeft(itin, idx),
 			})
 		}
 

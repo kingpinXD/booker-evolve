@@ -428,3 +428,6 @@ Users can now customize city stopover duration via --min-stopover/--max-stopover
 ## Session 37 -- Refactoring, deduplication, and user control
 
 Completed all 5 planned tasks in 4 commits with zero reverts and zero API calls. Used parallel worktree for Task 1 (refactor) while working on Tasks 2-3 on main. Key outcomes: (1) Stage 4b filter code reduced from ~70 lines to ~15 via passesAllFilters helper. (2) JSON output includes total_trip duration for multi-leg itineraries. (3) CLI now has departure time and stopover duration flags (completing chat-CLI parity). (4) Multicity deduplicates identical-flight itineraries, keeping cheapest. (5) Users can control stopover city visit length. 26 new tests total. All build gates pass.
+
+### Session 38, Task 1 -- Remove KiwiID from StopoverCity and SearchParams
+Removed KiwiID field from StopoverCity struct, all KiwiID assignments in 3 route-specific + 8 global fallback entries, OriginKiwiID/DestinationKiwiID from SearchParams, and KiwiID refs in fetch goroutines and diagnostic_test.go. Left types.SearchRequest untouched (Kiwi provider reads it). No behavioral change for SerpAPI pipeline.

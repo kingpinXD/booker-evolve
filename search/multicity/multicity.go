@@ -96,11 +96,6 @@ type SearchParams struct {
 	Origin      string // IATA code, e.g. "DEL"
 	Destination string // IATA code, e.g. "YYZ"
 
-	// OriginKiwiID and DestinationKiwiID are the Kiwi location identifiers.
-	// Use "Airport:XXX" format — "City:" format returns empty results.
-	OriginKiwiID      string
-	DestinationKiwiID string
-
 	// DepartureDate is the target date in YYYY-MM-DD format.
 	// The search is flexible: we look at ±FlexDays around this date.
 	DepartureDate string
@@ -267,24 +262,20 @@ func (s *Searcher) Search(ctx context.Context, params SearchParams) ([]search.It
 				params.Origin, stop.City, params.Destination)
 
 			leg1Req := types.SearchRequest{
-				Origin:            params.Origin,
-				Destination:       stop.Airport,
-				DepartureDate:     targetDate,
-				Passengers:        params.Passengers,
-				CabinClass:        params.CabinClass,
-				OriginKiwiID:      params.OriginKiwiID,
-				DestinationKiwiID: stop.KiwiID,
+				Origin:        params.Origin,
+				Destination:   stop.Airport,
+				DepartureDate: targetDate,
+				Passengers:    params.Passengers,
+				CabinClass:    params.CabinClass,
 			}
 			leg1Results := s.fetchWithDualSort(ctx, leg1Req)
 
 			leg2Req := types.SearchRequest{
-				Origin:            stop.Airport,
-				Destination:       params.Destination,
-				DepartureDate:     leg2Date,
-				Passengers:        params.Passengers,
-				CabinClass:        params.CabinClass,
-				OriginKiwiID:      stop.KiwiID,
-				DestinationKiwiID: params.DestinationKiwiID,
+				Origin:        stop.Airport,
+				Destination:   params.Destination,
+				DepartureDate: leg2Date,
+				Passengers:    params.Passengers,
+				CabinClass:    params.CabinClass,
 			}
 			leg2Results := s.fetchWithDualSort(ctx, leg2Req)
 

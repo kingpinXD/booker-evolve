@@ -52,10 +52,6 @@ type StopoverCity struct {
 	// Airport is the primary IATA airport code.
 	Airport string
 
-	// KiwiID is the Kiwi API location identifier (e.g. "City:hong_kong_hk").
-	// Kiwi uses its own location format, not raw IATA codes.
-	KiwiID string
-
 	// Region helps group stopovers for diverse itinerary suggestions.
 	Region string
 
@@ -85,7 +81,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Hong Kong",
 		Airport: "HKG",
-		KiwiID:  "Airport:HKG",
 		Region:  "east_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -94,7 +89,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Singapore",
 		Airport: "SIN",
-		KiwiID:  "Airport:SIN",
 		Region:  "southeast_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -103,7 +97,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Bangkok",
 		Airport: "BKK",
-		KiwiID:  "Airport:BKK",
 		Region:  "southeast_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -112,7 +105,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Tokyo",
 		Airport: "NRT",
-		KiwiID:  "Airport:NRT",
 		Region:  "east_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -121,7 +113,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Seoul",
 		Airport: "ICN",
-		KiwiID:  "Airport:ICN",
 		Region:  "east_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -130,7 +121,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Kuala Lumpur",
 		Airport: "KUL",
-		KiwiID:  "Airport:KUL",
 		Region:  "southeast_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -144,7 +134,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Istanbul",
 		Airport: "IST",
-		KiwiID:  "Airport:IST",
 		Region:  "europe",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -153,7 +142,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "London",
 		Airport: "LHR",
-		KiwiID:  "Airport:LHR",
 		Region:  "europe",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -162,7 +150,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Frankfurt",
 		Airport: "FRA",
-		KiwiID:  "Airport:FRA",
 		Region:  "europe",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -171,7 +158,6 @@ var DELToYYZStopovers = []StopoverCity{
 	{
 		City:    "Paris",
 		Airport: "CDG",
-		KiwiID:  "Airport:CDG",
 		Region:  "europe",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -187,7 +173,6 @@ var BOMToYYZStopovers = []StopoverCity{
 	{
 		City:    "Bangkok",
 		Airport: "BKK",
-		KiwiID:  "Airport:BKK",
 		Region:  "southeast_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -196,7 +181,6 @@ var BOMToYYZStopovers = []StopoverCity{
 	{
 		City:    "Singapore",
 		Airport: "SIN",
-		KiwiID:  "Airport:SIN",
 		Region:  "southeast_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -205,7 +189,6 @@ var BOMToYYZStopovers = []StopoverCity{
 	{
 		City:    "Hong Kong",
 		Airport: "HKG",
-		KiwiID:  "Airport:HKG",
 		Region:  "east_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -214,7 +197,6 @@ var BOMToYYZStopovers = []StopoverCity{
 	{
 		City:    "Kuala Lumpur",
 		Airport: "KUL",
-		KiwiID:  "Airport:KUL",
 		Region:  "southeast_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -223,7 +205,6 @@ var BOMToYYZStopovers = []StopoverCity{
 	{
 		City:    "Tokyo",
 		Airport: "NRT",
-		KiwiID:  "Airport:NRT",
 		Region:  "east_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -232,7 +213,6 @@ var BOMToYYZStopovers = []StopoverCity{
 	{
 		City:    "Istanbul",
 		Airport: "IST",
-		KiwiID:  "Airport:IST",
 		Region:  "europe",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -241,7 +221,6 @@ var BOMToYYZStopovers = []StopoverCity{
 	{
 		City:    "London",
 		Airport: "LHR",
-		KiwiID:  "Airport:LHR",
 		Region:  "europe",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -257,7 +236,6 @@ var DELToYVRStopovers = []StopoverCity{
 	{
 		City:    "Tokyo",
 		Airport: "NRT",
-		KiwiID:  "Airport:NRT",
 		Region:  "east_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -266,7 +244,6 @@ var DELToYVRStopovers = []StopoverCity{
 	{
 		City:    "Seoul",
 		Airport: "ICN",
-		KiwiID:  "Airport:ICN",
 		Region:  "east_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -275,7 +252,6 @@ var DELToYVRStopovers = []StopoverCity{
 	{
 		City:    "Hong Kong",
 		Airport: "HKG",
-		KiwiID:  "Airport:HKG",
 		Region:  "east_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -284,7 +260,6 @@ var DELToYVRStopovers = []StopoverCity{
 	{
 		City:    "Bangkok",
 		Airport: "BKK",
-		KiwiID:  "Airport:BKK",
 		Region:  "southeast_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -293,7 +268,6 @@ var DELToYVRStopovers = []StopoverCity{
 	{
 		City:    "Singapore",
 		Airport: "SIN",
-		KiwiID:  "Airport:SIN",
 		Region:  "southeast_asia",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -302,7 +276,6 @@ var DELToYVRStopovers = []StopoverCity{
 	{
 		City:    "Istanbul",
 		Airport: "IST",
-		KiwiID:  "Airport:IST",
 		Region:  "europe",
 		MinStay: types.DefaultMinStopover,
 		MaxStay: types.DefaultMaxStopover,
@@ -325,28 +298,28 @@ var stopoversMap = map[string][]StopoverCity{
 // GlobalFallbackHubs are well-connected hub airports used as stopover
 // candidates when no route-specific stopovers are configured.
 var GlobalFallbackHubs = []StopoverCity{
-	{City: "Istanbul", Airport: "IST", KiwiID: "Airport:IST", Region: "europe",
+	{City: "Istanbul", Airport: "IST", Region: "europe",
 		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
 		Notes: "Turkish Airlines mega-hub with global connectivity."},
-	{City: "Singapore", Airport: "SIN", KiwiID: "Airport:SIN", Region: "southeast_asia",
+	{City: "Singapore", Airport: "SIN", Region: "southeast_asia",
 		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
 		Notes: "Singapore Airlines hub, major Asia-Pacific crossroads."},
-	{City: "Hong Kong", Airport: "HKG", KiwiID: "Airport:HKG", Region: "east_asia",
+	{City: "Hong Kong", Airport: "HKG", Region: "east_asia",
 		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
 		Notes: "Cathay Pacific hub with extensive long-haul network."},
-	{City: "Tokyo", Airport: "NRT", KiwiID: "Airport:NRT", Region: "east_asia",
+	{City: "Tokyo", Airport: "NRT", Region: "east_asia",
 		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
 		Notes: "ANA/JAL hub, key Pacific gateway."},
-	{City: "London", Airport: "LHR", KiwiID: "Airport:LHR", Region: "europe",
+	{City: "London", Airport: "LHR", Region: "europe",
 		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
 		Notes: "BA hub, largest European long-haul airport."},
-	{City: "Paris", Airport: "CDG", KiwiID: "Airport:CDG", Region: "europe",
+	{City: "Paris", Airport: "CDG", Region: "europe",
 		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
 		Notes: "Air France hub with global reach."},
-	{City: "Seoul", Airport: "ICN", KiwiID: "Airport:ICN", Region: "east_asia",
+	{City: "Seoul", Airport: "ICN", Region: "east_asia",
 		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
 		Notes: "Korean Air hub, strong Americas and Asia connectivity."},
-	{City: "Bangkok", Airport: "BKK", KiwiID: "Airport:BKK", Region: "southeast_asia",
+	{City: "Bangkok", Airport: "BKK", Region: "southeast_asia",
 		MinStay: types.DefaultMinStopover, MaxStay: types.DefaultMaxStopover,
 		Notes: "Thai Airways hub, affordable Southeast Asia gateway."},
 }

@@ -35,11 +35,9 @@ func TestDiagnostic_RawData(t *testing.T) {
 		name   string
 		origin string
 		dest   string
-		oKiwi  string
-		dKiwi  string
 	}{
-		{"DEL→HKG", "DEL", "HKG", "Airport:DEL", "Airport:HKG"},
-		{"DEL→FRA", "DEL", "FRA", "Airport:DEL", "Airport:FRA"},
+		{"DEL→HKG", "DEL", "HKG"},
+		{"DEL→FRA", "DEL", "FRA"},
 	}
 
 	for _, r := range routes {
@@ -48,13 +46,10 @@ func TestDiagnostic_RawData(t *testing.T) {
 			time.Sleep(2 * time.Second)
 
 			req := types.SearchRequest{
-				Origin:            r.origin,
-				Destination:       r.dest,
-				Passengers:        1,
-				CabinClass:        types.CabinEconomy,
-				OriginKiwiID:      r.oKiwi,
-				DestinationKiwiID: r.dKiwi,
-				SortBy:            config.KiwiSortByQuality,
+				Origin:      r.origin,
+				Destination: r.dest,
+				Passengers:  1,
+				CabinClass:  types.CabinEconomy,
 			}
 
 			flights, err := p.Search(ctx, req)

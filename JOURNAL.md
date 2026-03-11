@@ -664,3 +664,27 @@ Zero SerpAPI or LLM API calls used. Build, tests, vet, lint all clean.
 ## Session 50 -- 22:35 -- Result caching, stopover suggestions, MEL/CDG corridors, carbon diff, filter reset
 
 Completed all 5 planned tasks across 6 commits with zero reverts and zero API calls. The headline feature is in-chat result caching: chatLoop stores lastResults and intercepts comparison/detail requests (e.g. "compare 1 and 3", "details on option 2") before the LLM call, returning instant structured responses from cached data. Added proactive stopover suggestions after single-leg search results -- when StopoversForRoute has entries, a tip names up to 3 cities and suggests multi-city routing. Expanded the stopover network with India-Melbourne (Southeast Asian corridor) and India-Paris (Gulf/Turkish corridor), bringing the total to 21 route-specific corridors (42 bidirectional). Enhanced carbon display to show percentage diff when available (e.g. "150kg (+5%)"). Fixed a sticky filter bug where zero-value fields (DirectOnly, MaxPrice) could not be reset mid-session by adding clear_fields support to tripParams and mergeParams. Tasks 3 and 4 ran in parallel worktrees; tasks 1, 2, 5 ran sequentially on main.
+
+## Session 51, Task 1 -- Refactor mergeParams to use reflection
+Replaced 12 clear_fields if-blocks and 15 zero-value merge if-blocks with reflection loops over struct fields using json tags. Function reduced from ~113 lines to ~30 lines. New fields added to tripParams are automatically handled. All 15 existing mergeParams tests pass unchanged. jsonFieldName helper extracts field name from json struct tags.
+
+## Session 51, Task 2 -- Extract chatSearch from chatLoop
+Extracted the search execution pipeline (build request, nearby airport hint, pick strategy, execute search) from inline chatLoop code into a standalone chatSearch(ctx, params, picker, out) function. Reduces chatLoop by ~15 lines and consolidates two separate error handling blocks (picker error, search error) into one. Added unit test for chatSearch.
+
+## Session 51, Task 3 -- Help command detection in chat
+Added looksLikeHelp() keyword detection and chatHelpText() structured summary. Intercepts "help", "?", "what can you do", "how does this work" in chatLoop before the LLM call, returning an instant capabilities list. Saves an LLM round-trip and provides consistent answers about available parameters, comparison/detail commands, filters, and refinement options. 2 new tests (unit + integration).
+
+## Session 51, Tasks 4+5 -- India-Singapore and India-Dubai stopover corridors
+Added DEL/BOM -> SIN (BKK, KUL, CCU/CMB, HKG) and DEL/BOM -> DXB (DOH, BAH, MCT, KWI) stopover routes. Ran in parallel worktree, copied to main. Brings total to 25 route-specific corridors (50 bidirectional). 6 new tests including reverse lookup verification.
+
+## Session 51 -- Summary
+
+All 5 planned tasks completed across 4 commits with zero reverts and zero API calls.
+
+Key changes:
+1. mergeParams reflection refactor: 113 -> 30 lines, auto-supports new fields
+2. chatSearch extraction: search pipeline is now a standalone testable function
+3. Help command: instant capabilities summary without LLM call
+4. SIN/DXB stopovers: 4 new corridors (25 total, 50 bidirectional)
+
+Zero SerpAPI or LLM API calls used. Build, tests, vet all clean.

@@ -233,3 +233,6 @@ Threaded priceInsighter interface through chatLoop so chat mode displays price l
 
 ### Session 26, Task 4 -- Fix multi-leg CO2 display
 Replaced single "CO2" column with "Leg 1 CO2" and "Leg 2 CO2" in the multi-leg table layout. Previously only leg 0's carbon data was shown. Minimal 3-line change in search.go plus one new test.
+
+### Session 26, Task 5 -- Lint, gofmt sweep, and build gate
+All gates clean: gofmt -l empty, go vet clean, golangci-lint 0 issues, go test all 15 packages pass.

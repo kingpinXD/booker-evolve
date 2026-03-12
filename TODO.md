@@ -1,41 +1,44 @@
 # TODO
 
-## Task 155: Refactor parsePartialParams to use reflection
+## Task 160: Extract chat helpers into cmd/chathelpers.go
 **Status:** done
-**Plan:** Replace 10-line OR chain with reflection-based anyFieldSet helper. Iterate struct fields via reflect, check IsZero(). Auto-supports new fields.
-- [x] Write anyFieldSet helper using reflection
-- [x] Replace OR chain in parsePartialParams with anyFieldSet call
-- [x] Verify existing tests pass
+**Plan:** Move ~20 helper functions from chat.go to new chathelpers.go. Pure file split, no logic changes.
+- [x] Identify functions to extract (helpers, param functions, utilities)
+- [x] Create cmd/chathelpers.go with extracted functions
+- [x] Remove extracted functions from cmd/chat.go
+- [x] Verify go build && go test ./cmd/...
+
+## Task 161: filterSuggestion reflection refactor
+**Status:** in-progress
+**Plan:** Replace per-field if-blocks with reflection loop. Define filterLabels map from json tag to human-readable name. Iterate tripParams fields, check non-zero + in label map.
+- [ ] Define filterLabels map
+- [ ] Rewrite filterSuggestion using reflection
+- [ ] Verify existing tests pass
+- [ ] Run full verification
+
+## Task 162: Multi-leg info in formatComparison
+**Status:** pending
+**Plan:** Show per-leg details for multi-city itineraries. Extract shared leg-extraction logic into legSummary helper used by both formatComparison and formatOptionDetail.
+- [ ] Extract legSummary helper function
+- [ ] Update formatComparison to show all legs
+- [ ] Update formatOptionDetail to use legSummary
+- [ ] Add test for 2-leg comparison
+- [ ] Run full verification
+
+## Task 163: India-Los Angeles stopover corridors
+**Status:** done (parallel worktree)
+**Plan:** Add DELToLAXStopovers and BOMToLAXStopovers via East Asia Pacific corridor (BKK, SIN, KUL, HKG, NRT, TPE). Register in stopoversMap.
+- [x] Add DELToLAXStopovers variable
+- [x] Add BOMToLAXStopovers variable
+- [x] Register both in stopoversMap
+- [x] Add route-specific tests + reverse lookup tests
 - [x] Run full verification
 
-## Task 156: Add price insights to chat conversation history
-**Status:** done
-**Plan:** Add optional PriceInsights parameter to resultSummaryForChat. When PriceLevel is non-empty, append typical range and level to the summary string. Update chatLoop call site to pass insights.
-- [x] Add priceInsight param to resultSummaryForChat
-- [x] Write test for summary with price insights
-- [x] Update chatLoop call site
-- [x] Run full verification
-
-## Task 157: Add India-Seoul stopover corridor
-**Status:** done
-**Plan:** Add DELToICNStopovers and BOMToICNStopovers variables with East/Southeast Asian cities (BKK, SIN, HKG, TPE, KUL). Register in stopoversMap. Verify TestStopoverDataConsistency.
-- [x] Add DELToICNStopovers variable
-- [x] Add BOMToICNStopovers variable
+## Task 164: India-Chicago stopover corridors
+**Status:** done (parallel worktree)
+**Plan:** Add DELToORDStopovers and BOMToORDStopovers via East Asia Pacific (BKK, SIN, HKG, NRT, ICN) + European (IST) corridor. Register in stopoversMap.
+- [x] Add DELToORDStopovers variable
+- [x] Add BOMToORDStopovers variable
 - [x] Register both in stopoversMap
-- [x] Run tests
-
-## Task 158: Add India-Hong Kong stopover corridor
-**Status:** done
-**Plan:** Add DELToHKGStopovers and BOMToHKGStopovers variables with Southeast Asian cities (BKK, SIN, KUL, CCU/CMB, TPE). Register in stopoversMap. Verify TestStopoverDataConsistency.
-- [x] Add DELToHKGStopovers variable
-- [x] Add BOMToHKGStopovers variable
-- [x] Register both in stopoversMap
-- [x] Run tests
-
-## Task 159: Extract displayChatResults helper from chatLoop
-**Status:** done
-**Plan:** Extract lines 866-882 of chatLoop (format switch, printTable/printJSON, price insights display) into displayChatResults(out, results, insights, cur). Reduces chatLoop and improves testability.
-- [x] Extract displayChatResults function
-- [x] Update chatLoop to call helper
-- [x] Add unit test for displayChatResults
+- [x] Add route-specific tests + reverse lookup tests
 - [x] Run full verification

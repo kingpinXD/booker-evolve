@@ -2,6 +2,7 @@ package multicity
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -1227,6 +1228,184 @@ func TestBuildRankingPrompt_WithUserContext(t *testing.T) {
 	}
 	if !searchString(prompt, "I hate long layovers and prefer window seats") {
 		t.Errorf("prompt should contain user context text, got:\n%s", prompt)
+	}
+}
+
+func TestRankerCache_GrowsToMaxWithoutEviction(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+	ctx := context.Background()
+
+	// Insert exactly maxCacheSize entries.
+	for i := 0; i < maxCacheSize; i++ {
+		origin := fmt.Sprintf("A%02d", i)
+		dest := fmt.Sprintf("B%02d", i)
+		if _, err := ranker.Rank(ctx, makeTestItineraries(float64(100+i), origin, dest)); err != nil {
+			t.Fatalf("Rank %d: %v", i, err)
+		}
+	}
+
+	if mock.calls != maxCacheSize {
+		t.Errorf("expected %d LLM calls, got %d", maxCacheSize, mock.calls)
+	}
+
+	// All entries should still be in the cache -- verify by re-ranking (should hit cache).
+	for i := 0; i < maxCacheSize; i++ {
+		origin := fmt.Sprintf("A%02d", i)
+		dest := fmt.Sprintf("B%02d", i)
+		if _, err := ranker.Rank(ctx, makeTestItineraries(float64(100+i), origin, dest)); err != nil {
+			t.Fatalf("re-Rank %d: %v", i, err)
+		}
+	}
+
+	// No additional LLM calls should have been made.
+	if mock.calls != maxCacheSize {
+		t.Errorf("expected %d LLM calls after re-rank (all hits), got %d", maxCacheSize, mock.calls)
+	}
+
+	hits, misses := ranker.CacheStats()
+	if misses != maxCacheSize {
+		t.Errorf("misses = %d, want %d", misses, maxCacheSize)
+	}
+	if hits != maxCacheSize {
+		t.Errorf("hits = %d, want %d", hits, maxCacheSize)
+	}
+}
+
+func TestRankerCache_EvictsOldestHalf(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+	ctx := context.Background()
+
+	// Fill cache to maxCacheSize.
+	for i := 0; i < maxCacheSize; i++ {
+		origin := fmt.Sprintf("A%02d", i)
+		dest := fmt.Sprintf("B%02d", i)
+		if _, err := ranker.Rank(ctx, makeTestItineraries(float64(100+i), origin, dest)); err != nil {
+			t.Fatalf("Rank %d: %v", i, err)
+		}
+	}
+
+	// Insert one more to trigger eviction.
+	if _, err := ranker.Rank(ctx, makeTestItineraries(999, "NEW", "DST")); err != nil {
+		t.Fatalf("trigger eviction: %v", err)
+	}
+
+	// After eviction: oldest half (indices 0..31) removed, newest half (32..63) + new entry kept.
+	// Cache size should be maxCacheSize/2 + 1 = 33.
+	evictCount := maxCacheSize / 2
+
+	// Oldest entries should be evicted (cache miss = new LLM call).
+	callsBefore := mock.calls
+	if _, err := ranker.Rank(ctx, makeTestItineraries(100, "A00", "B00")); err != nil {
+		t.Fatalf("re-rank evicted entry: %v", err)
+	}
+	if mock.calls != callsBefore+1 {
+		t.Error("expected cache miss for evicted entry A00->B00")
+	}
+
+	// Recent entries should survive eviction (cache hit = no LLM call).
+	callsBefore = mock.calls
+	lastSurvivor := maxCacheSize - 1
+	origin := fmt.Sprintf("A%02d", lastSurvivor)
+	dest := fmt.Sprintf("B%02d", lastSurvivor)
+	if _, err := ranker.Rank(ctx, makeTestItineraries(float64(100+lastSurvivor), origin, dest)); err != nil {
+		t.Fatalf("re-rank surviving entry: %v", err)
+	}
+	if mock.calls != callsBefore {
+		t.Errorf("expected cache hit for surviving entry %s->%s", origin, dest)
+	}
+
+	// The new entry should also survive.
+	callsBefore = mock.calls
+	if _, err := ranker.Rank(ctx, makeTestItineraries(999, "NEW", "DST")); err != nil {
+		t.Fatalf("re-rank new entry: %v", err)
+	}
+	if mock.calls != callsBefore {
+		t.Error("expected cache hit for new entry NEW->DST")
+	}
+
+	// Verify stats: original 64 misses + 1 trigger + 1 re-inserted evicted entry = 66 misses.
+	_, misses := ranker.CacheStats()
+	expectedMisses := maxCacheSize + 1 + 1 // fill + trigger + re-rank evicted
+	if misses != expectedMisses {
+		t.Errorf("misses = %d, want %d", misses, expectedMisses)
+	}
+
+	_ = evictCount // used for documentation
+}
+
+func TestRankerCache_RecentEntriesSurviveEviction(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+	ctx := context.Background()
+
+	// Fill cache to maxCacheSize.
+	for i := 0; i < maxCacheSize; i++ {
+		origin := fmt.Sprintf("A%02d", i)
+		dest := fmt.Sprintf("B%02d", i)
+		if _, err := ranker.Rank(ctx, makeTestItineraries(float64(100+i), origin, dest)); err != nil {
+			t.Fatalf("Rank %d: %v", i, err)
+		}
+	}
+
+	// Insert one more to trigger eviction.
+	if _, err := ranker.Rank(ctx, makeTestItineraries(999, "TRG", "EVT")); err != nil {
+		t.Fatalf("trigger eviction: %v", err)
+	}
+
+	// All entries from the second half (indices maxCacheSize/2 .. maxCacheSize-1) should be cached.
+	callsBefore := mock.calls
+	for i := maxCacheSize / 2; i < maxCacheSize; i++ {
+		origin := fmt.Sprintf("A%02d", i)
+		dest := fmt.Sprintf("B%02d", i)
+		if _, err := ranker.Rank(ctx, makeTestItineraries(float64(100+i), origin, dest)); err != nil {
+			t.Fatalf("re-rank recent %d: %v", i, err)
+		}
+	}
+	if mock.calls != callsBefore {
+		t.Errorf("expected all recent entries to hit cache, but got %d new LLM calls", mock.calls-callsBefore)
+	}
+}
+
+func TestRankerCache_HitsMissesAccurateAfterEviction(t *testing.T) {
+	mock := &countingLLM{response: `[{"index":0,"score":80,"reasoning":"good"}]`}
+	ranker := NewRanker(mock, WeightsBalanced)
+	ctx := context.Background()
+
+	// Fill cache to maxCacheSize (all misses).
+	for i := 0; i < maxCacheSize; i++ {
+		origin := fmt.Sprintf("A%02d", i)
+		dest := fmt.Sprintf("B%02d", i)
+		if _, err := ranker.Rank(ctx, makeTestItineraries(float64(100+i), origin, dest)); err != nil {
+			t.Fatalf("Rank %d: %v", i, err)
+		}
+	}
+
+	hits, misses := ranker.CacheStats()
+	if hits != 0 || misses != maxCacheSize {
+		t.Fatalf("after fill: hits=%d misses=%d, want hits=0 misses=%d", hits, misses, maxCacheSize)
+	}
+
+	// Trigger eviction with one more entry.
+	if _, err := ranker.Rank(ctx, makeTestItineraries(999, "NEW", "DST")); err != nil {
+		t.Fatalf("trigger: %v", err)
+	}
+
+	hits, misses = ranker.CacheStats()
+	if hits != 0 || misses != maxCacheSize+1 {
+		t.Fatalf("after trigger: hits=%d misses=%d, want hits=0 misses=%d", hits, misses, maxCacheSize+1)
+	}
+
+	// Hit a surviving entry.
+	lastIdx := maxCacheSize - 1
+	if _, err := ranker.Rank(ctx, makeTestItineraries(float64(100+lastIdx), fmt.Sprintf("A%02d", lastIdx), fmt.Sprintf("B%02d", lastIdx))); err != nil {
+		t.Fatalf("hit surviving: %v", err)
+	}
+
+	hits, misses = ranker.CacheStats()
+	if hits != 1 || misses != maxCacheSize+1 {
+		t.Errorf("after hit: hits=%d misses=%d, want hits=1 misses=%d", hits, misses, maxCacheSize+1)
 	}
 }
 

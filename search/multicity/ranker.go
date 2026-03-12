@@ -24,6 +24,10 @@ type rankerLLM interface {
 // We pre-sort by price and pick the top N.
 const MaxItinerariesToRank = 15
 
+// maxCacheSize is the maximum number of entries in the ranker's LLM cache.
+// When full, the oldest half is evicted (FIFO).
+const maxCacheSize = 64
+
 // RankingWeights controls how the LLM prioritizes different criteria
 // when scoring itineraries. All weights should sum to 100.
 type RankingWeights struct {
@@ -88,11 +92,12 @@ var (
 // (same routes, prices, durations, and weights) return cached scores
 // without an additional LLM call.
 type Ranker struct {
-	llm     rankerLLM
-	weights RankingWeights
-	cache   map[string][]RankResult
-	hits    int
-	misses  int
+	llm       rankerLLM
+	weights   RankingWeights
+	cache     map[string][]RankResult
+	cacheKeys []string // insertion order for FIFO eviction
+	hits      int
+	misses    int
 
 	// UserContext is the user's natural language preferences (e.g. "I hate
 	// long layovers"). Set before calling Rank to include in the prompt.
@@ -114,6 +119,18 @@ func (r *Ranker) SetWeights(w RankingWeights) {
 // CacheStats returns the number of cache hits and misses since the Ranker was created.
 func (r *Ranker) CacheStats() (hits, misses int) {
 	return r.hits, r.misses
+}
+
+// evictIfNeeded removes the oldest half of cache entries when the cache is full.
+func (r *Ranker) evictIfNeeded() {
+	if len(r.cache) < maxCacheSize {
+		return
+	}
+	evictN := maxCacheSize / 2
+	for _, key := range r.cacheKeys[:evictN] {
+		delete(r.cache, key)
+	}
+	r.cacheKeys = append(r.cacheKeys[:0:0], r.cacheKeys[evictN:]...)
 }
 
 // RankResult is a single scored itinerary from the LLM.
@@ -165,7 +182,9 @@ func (r *Ranker) Rank(ctx context.Context, itineraries []search.Itinerary) ([]se
 		return nil, fmt.Errorf("parsing LLM ranking response: %w", err)
 	}
 
+	r.evictIfNeeded()
 	r.cache[key] = results
+	r.cacheKeys = append(r.cacheKeys, key)
 	applyScores(candidates, results)
 
 	return applySortByScore(candidates), nil

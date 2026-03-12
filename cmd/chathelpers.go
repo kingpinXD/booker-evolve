@@ -431,33 +431,39 @@ func refinementHint() string {
 		"For example, to switch to business class: {\"cabin\":\"business\"}"
 }
 
+// filterLabels maps json tag names to human-readable labels for filter
+// suggestion output. Fields not in this map are not considered filters.
+// Grouped fields (departure_after/departure_before) share a label so
+// the suggestion reads "departure time window" rather than listing both.
+var filterLabels = map[string]string{
+	"direct_only":        "direct_only",
+	"max_price":          "max_price",
+	"departure_after":    "departure time window",
+	"departure_before":   "departure time window",
+	"arrival_after":      "arrival time window",
+	"arrival_before":     "arrival time window",
+	"max_duration_hours": "max_duration_hours",
+	"preferred_alliance": "preferred_alliance",
+	"avoid_airlines":     "avoid_airlines",
+	"preferred_airlines": "preferred_airlines",
+}
+
 // filterSuggestion returns a hint about which active filters might be causing
-// zero results. Returns empty string when no optional filters are active.
+// zero results. Uses reflection to auto-support new filter fields when added
+// to filterLabels. Returns empty string when no optional filters are active.
 func filterSuggestion(p tripParams) string {
+	seen := make(map[string]bool)
 	var filters []string
-	if p.DirectOnly {
-		filters = append(filters, "direct_only")
-	}
-	if p.MaxPrice > 0 {
-		filters = append(filters, "max_price")
-	}
-	if p.DepartureAfter != "" || p.DepartureBefore != "" {
-		filters = append(filters, "departure time window")
-	}
-	if p.ArrivalAfter != "" || p.ArrivalBefore != "" {
-		filters = append(filters, "arrival time window")
-	}
-	if p.MaxDurationHours > 0 {
-		filters = append(filters, "max_duration_hours")
-	}
-	if p.PreferredAlliance != "" {
-		filters = append(filters, "preferred_alliance")
-	}
-	if p.AvoidAirlines != "" {
-		filters = append(filters, "avoid_airlines")
-	}
-	if p.PreferredAirlines != "" {
-		filters = append(filters, "preferred_airlines")
+	v := reflect.ValueOf(p)
+	t := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		name := jsonFieldName(t.Field(i))
+		label, isFilter := filterLabels[name]
+		if !isFilter || v.Field(i).IsZero() || seen[label] {
+			continue
+		}
+		seen[label] = true
+		filters = append(filters, label)
 	}
 	if len(filters) == 0 {
 		return ""

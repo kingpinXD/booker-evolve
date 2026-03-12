@@ -374,6 +374,95 @@ func SortResults(itins []Itinerary, sortBy string) {
 	}
 }
 
+// DiversifyResults selects up to maxResults itineraries that maximize variety.
+// It picks: 1 cheapest, 1 fastest, 1 best-scored (if any scored), then fills
+// remaining slots by preferring airlines not yet represented. When maxResults
+// is 0 or >= len(itins), all itineraries are returned.
+func DiversifyResults(itins []Itinerary, maxResults int) []Itinerary {
+	if maxResults <= 0 || len(itins) <= maxResults {
+		return itins
+	}
+
+	selected := make(map[int]bool) // index in itins
+
+	// 1. Cheapest by price.
+	cheapIdx := 0
+	for i, itin := range itins {
+		if itin.TotalPrice.Amount < itins[cheapIdx].TotalPrice.Amount {
+			cheapIdx = i
+		}
+	}
+	selected[cheapIdx] = true
+
+	// 2. Fastest by total travel time.
+	fastIdx := 0
+	for i, itin := range itins {
+		if itin.TotalTravel < itins[fastIdx].TotalTravel {
+			fastIdx = i
+		}
+	}
+	selected[fastIdx] = true
+
+	// 3. Best scored (only if any have non-zero score).
+	bestIdx := -1
+	for i, itin := range itins {
+		if itin.Score > 0 && (bestIdx < 0 || itin.Score > itins[bestIdx].Score) {
+			bestIdx = i
+		}
+	}
+	if bestIdx >= 0 {
+		selected[bestIdx] = true
+	}
+
+	// 4. Fill remaining slots by maximizing airline diversity.
+	// Collect airlines already represented.
+	seenAirlines := make(map[string]bool)
+	for idx := range selected {
+		seenAirlines[itinAirline(itins[idx])] = true
+	}
+
+	for i := range itins {
+		if len(selected) >= maxResults {
+			break
+		}
+		if selected[i] {
+			continue
+		}
+		airline := itinAirline(itins[i])
+		if !seenAirlines[airline] {
+			selected[i] = true
+			seenAirlines[airline] = true
+		}
+	}
+
+	// If still under max, fill with remaining in original order.
+	for i := range itins {
+		if len(selected) >= maxResults {
+			break
+		}
+		if !selected[i] {
+			selected[i] = true
+		}
+	}
+
+	// Build result preserving original order.
+	result := make([]Itinerary, 0, maxResults)
+	for i, itin := range itins {
+		if selected[i] {
+			result = append(result, itin)
+		}
+	}
+	return result
+}
+
+// itinAirline extracts the primary airline code from an itinerary's first leg.
+func itinAirline(itin Itinerary) string {
+	if len(itin.Legs) > 0 && len(itin.Legs[0].Flight.Outbound) > 0 {
+		return itin.Legs[0].Flight.Outbound[0].Airline
+	}
+	return ""
+}
+
 // firstDeparture returns the departure time of the first segment of the first leg.
 func firstDeparture(itin Itinerary) time.Time {
 	if len(itin.Legs) > 0 && len(itin.Legs[0].Flight.Outbound) > 0 {

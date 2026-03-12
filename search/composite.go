@@ -77,9 +77,7 @@ func (c *CompositeStrategy) Search(ctx context.Context, req Request) ([]Itinerar
 		}
 	}
 
-	if req.MaxResults > 0 && len(merged) > req.MaxResults {
-		merged = merged[:req.MaxResults]
-	}
+	merged = DiversifyResults(merged, req.MaxResults)
 
 	return merged, nil
 }

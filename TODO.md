@@ -1,44 +1,48 @@
 # TODO
 
-## Task 165: Fix looksLikeHelp false positive
+## Task 170: Result diversification for search output
 **Status:** done
-**Plan:** Remove "how do"/"how does" prefixes from looksLikeHelp. Keep only exact/near-exact triggers.
-- [x] Write test: "how do I do this" should NOT trigger help
-- [x] Write test: "how do I set leg2_date" should NOT trigger help
-- [x] Update looksLikeHelp to remove "how do"/"how does" prefixes
-- [x] Verify existing help tests still pass
-- [x] Run go build && go test ./cmd/... && go vet ./...
+**Plan:** Add DiversifyResults in search/filter.go that selects: 1 cheapest, 1 fastest, 1 best-scored (if scored), then fills remaining slots maximizing airline diversity. Wire into direct.go and composite.go before MaxResults cap. Tests in filter_test.go.
+- [x] Write tests for DiversifyResults with near-identical itineraries
+- [x] Implement DiversifyResults in search/filter.go
+- [x] Wire into direct.go Search after ranking, before MaxResults cap
+- [x] Wire into composite.go Search after ranking, before MaxResults cap
+- [x] Run go build && go test ./... && go vet ./...
 
-## Task 166: Conversational stopover suggestion with LLM history
-**Status:** done
-**Plan:** Make stopoverSuggestion conversational, add to LLM history, update system prompt for multi-city guidance.
-- [x] Write test: stopoverSuggestion should not contain "leg2_date"
-- [x] Write test: LLM history should contain stopover tip after results
-- [x] Update stopoverSuggestion message to be conversational
-- [x] Add stopover tip to LLM history in chatLoop
-- [x] Update chatSystemPrompt with multi-city conversational guidance
-- [x] Run go build && go test ./cmd/... && go vet ./...
+## Task 171: Fare trend summary for flex-date searches
+**Status:** pending
+**Plan:** to be filled during implementation
+- [ ] Define FareTrend struct in search/types.go
+- [ ] Implement ComputeFareTrend from itineraries
+- [ ] Wire into direct.go to compute trend when FlexDays > 0
+- [ ] Add formatFareTrend display helper in cmd/display.go
+- [ ] Include fare trend in chat result summary (chathelpers.go)
+- [ ] Run go build && go test ./... && go vet ./...
 
-## Task 167: Per-search timeout in chatSearch
-**Status:** done
-**Plan:** Add 2-minute per-search context timeout in chatSearch. Return friendly message on timeout.
-- [x] Write test: chatSearch with cancelled context returns friendly error
-- [x] Add context.WithTimeout in chatSearch
-- [x] Wrap context.DeadlineExceeded with user-friendly message
-- [x] Run go build && go test ./cmd/... && go vet ./...
+## Task 172: Ranker cache max size with eviction
+**Status:** pending
+**Plan:** to be filled during implementation
+- [ ] Write tests for cache eviction at maxCacheSize
+- [ ] Add maxCacheSize const and keys slice to Ranker
+- [ ] Implement eviction in Rank method when inserting new entry
+- [ ] Verify CacheStats still accurate after eviction
+- [ ] Run go build && go test ./... && go vet ./...
 
-## Task 168: Search progress feedback for multicity
-**Status:** done
-**Plan:** Show stopover cities being searched when multicity strategy is used.
-- [x] Write test: multicity search output contains stopover city names
-- [x] Detect multicity strategy in chatSearch by name
-- [x] Call StopoversForRoute and display city list
-- [x] Run go build && go test ./cmd/... && go vet ./...
+## Task 173: Context-aware ranking weight adjustment from conversation
+**Status:** pending
+**Plan:** to be filled during implementation
+- [ ] Write tests for contextWeights with various user phrases
+- [ ] Implement contextWeights in cmd/chathelpers.go
+- [ ] Wire into chatLoop to apply weight deltas before each search
+- [ ] Test integration with chatLoop mock
+- [ ] Run go build && go test ./... && go vet ./...
 
-## Task 169: Tests for new chat behavior
-**Status:** done
-**Plan:** Integration-style chatLoop tests for the new conversational flow.
-- [x] Test: "how do I do this" after stopover tip goes to LLM
-- [x] Test: LLM history contains stopover suggestion
-- [x] Test: per-search timeout produces friendly error in chatLoop
-- [x] Run full go build && go test ./... && go vet ./...
+## Task 174: Europe-to-Asia stopover corridors
+**Status:** pending
+**Plan:** to be filled during implementation
+- [ ] Add LHR→BKK stopover corridor
+- [ ] Add LHR→NRT stopover corridor
+- [ ] Add CDG→BKK stopover corridor
+- [ ] Add CDG→NRT stopover corridor
+- [ ] Add specific lookup tests for new corridors
+- [ ] Run go build && go test ./... && go vet ./...

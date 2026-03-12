@@ -751,3 +751,6 @@ Added 3 integration tests: (a) "how do I do this" after stopover tip goes to LLM
 ## Session 55 -- 07:07 -- Chat UX improvements: help fix, conversational stopovers, timeout, progress
 
 All 5 tasks completed in a single commit with zero reverts and zero API calls. Fixed looksLikeHelp false positive that was intercepting contextual "how do" questions. Made stopover suggestions conversational and added them to LLM history for contextual follow-up. Added per-search 2-minute timeout with friendly error messages. Added multicity search progress showing stopover cities being searched. 3 new integration tests validate the end-to-end chat flow. Build, tests, vet, lint all clean.
+
+### Session 56, Task 1 -- Result diversification for search output
+Added DiversifyResults in search/filter.go that selects cheapest, fastest, best-scored, then fills remaining slots by maximizing airline diversity. Wired into direct.go and composite.go replacing the simple truncation. 5 tests cover near-identical results, scored results, fewer-than-N, empty, and zero-max edge cases.

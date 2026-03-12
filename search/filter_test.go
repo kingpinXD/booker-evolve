@@ -756,6 +756,106 @@ func TestFlightPassesPreferredAirlines(t *testing.T) {
 	}
 }
 
+// --- DiversifyResults ---
+
+func makeDiverseItinerary(price float64, travel time.Duration, airline string, score float64) Itinerary {
+	return Itinerary{
+		TotalPrice:  types.Money{Amount: price, Currency: "USD"},
+		TotalTravel: travel,
+		Score:       score,
+		Legs: []Leg{{
+			Flight: types.Flight{
+				Price:    types.Money{Amount: price, Currency: "USD"},
+				Outbound: []types.Segment{{Airline: airline}},
+			},
+		}},
+	}
+}
+
+func TestDiversifyResults_NearIdentical(t *testing.T) {
+	// 6 nearly identical Air Canada flights — diversification should
+	// still pick cheapest and fastest, then fill with diversity.
+	itins := []Itinerary{
+		makeDiverseItinerary(500, 10*time.Hour, "AC", 0),
+		makeDiverseItinerary(510, 10*time.Hour, "AC", 0),
+		makeDiverseItinerary(490, 11*time.Hour, "AC", 0),
+		makeDiverseItinerary(505, 9*time.Hour, "AC", 0),
+		makeDiverseItinerary(520, 10*time.Hour, "BA", 0),
+		makeDiverseItinerary(530, 10*time.Hour, "LH", 0),
+	}
+	result := DiversifyResults(itins, 4)
+	if len(result) != 4 {
+		t.Fatalf("DiversifyResults: got %d, want 4", len(result))
+	}
+	// Should include: cheapest ($490), fastest (9h), BA, LH for diversity.
+	airlines := make(map[string]bool)
+	for _, r := range result {
+		if len(r.Legs) > 0 && len(r.Legs[0].Flight.Outbound) > 0 {
+			airlines[r.Legs[0].Flight.Outbound[0].Airline] = true
+		}
+	}
+	if !airlines["BA"] || !airlines["LH"] {
+		t.Errorf("DiversifyResults: expected BA and LH for diversity, got airlines: %v", airlines)
+	}
+}
+
+func TestDiversifyResults_WithScores(t *testing.T) {
+	itins := []Itinerary{
+		makeDiverseItinerary(500, 12*time.Hour, "AC", 70),
+		makeDiverseItinerary(800, 8*time.Hour, "BA", 95),
+		makeDiverseItinerary(400, 14*time.Hour, "LH", 50),
+		makeDiverseItinerary(600, 10*time.Hour, "UA", 85),
+	}
+	result := DiversifyResults(itins, 3)
+	if len(result) != 3 {
+		t.Fatalf("DiversifyResults: got %d, want 3", len(result))
+	}
+	// Should include: cheapest ($400 LH), fastest (8h BA), best-scored (95 BA).
+	// Since BA is both fastest and best-scored, slot is reused; fill 3rd from diversity.
+	var prices []float64
+	for _, r := range result {
+		prices = append(prices, r.TotalPrice.Amount)
+	}
+	// Cheapest ($400) must be included.
+	found400 := false
+	for _, p := range prices {
+		if p == 400 {
+			found400 = true
+		}
+	}
+	if !found400 {
+		t.Errorf("DiversifyResults: expected cheapest ($400) in results, got prices: %v", prices)
+	}
+}
+
+func TestDiversifyResults_FewerThanN(t *testing.T) {
+	itins := []Itinerary{
+		makeDiverseItinerary(500, 10*time.Hour, "AC", 0),
+		makeDiverseItinerary(600, 12*time.Hour, "BA", 0),
+	}
+	result := DiversifyResults(itins, 5)
+	if len(result) != 2 {
+		t.Fatalf("DiversifyResults(fewer than N): got %d, want 2", len(result))
+	}
+}
+
+func TestDiversifyResults_Empty(t *testing.T) {
+	result := DiversifyResults(nil, 5)
+	if len(result) != 0 {
+		t.Fatalf("DiversifyResults(nil): got %d, want 0", len(result))
+	}
+}
+
+func TestDiversifyResults_ZeroMaxReturnsAll(t *testing.T) {
+	itins := []Itinerary{
+		makeDiverseItinerary(500, 10*time.Hour, "AC", 0),
+	}
+	result := DiversifyResults(itins, 0)
+	if len(result) != 1 {
+		t.Fatalf("DiversifyResults(max=0): got %d, want 1", len(result))
+	}
+}
+
 // --- firstDeparture edge cases ---
 
 func TestFirstDeparture_ZeroLegs(t *testing.T) {

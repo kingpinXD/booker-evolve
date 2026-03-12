@@ -86,10 +86,8 @@ func (s *Searcher) Search(ctx context.Context, req search.Request) ([]search.Iti
 		// On ranker failure, fall back to price-sorted results.
 	}
 
-	// Cap results.
-	if req.MaxResults > 0 && len(itineraries) > req.MaxResults {
-		itineraries = itineraries[:req.MaxResults]
-	}
+	// Diversify before capping to ensure variety in final output.
+	itineraries = search.DiversifyResults(itineraries, req.MaxResults)
 
 	return itineraries, nil
 }

@@ -477,8 +477,20 @@ if [[ "$VERIFIED" == "true" ]]; then
   git tag "$TAG"
 
   if [[ "$NO_PUSH" != "1" ]]; then
-    git push origin main --tags
-    log "Pushed to origin with tag: $TAG"
+    PUSH_OK=false
+    for i in 1 2 3; do
+      if git push origin main --tags 2>&1; then
+        PUSH_OK=true
+        break
+      fi
+      log "Push attempt $i/3 failed, retrying in 5s..."
+      sleep 5
+    done
+    if [[ "$PUSH_OK" == "true" ]]; then
+      log "Pushed to origin with tag: $TAG"
+    else
+      log "WARNING: Push failed after 3 attempts"
+    fi
   else
     log "Local mode: skipping push. Tag: $TAG"
   fi
@@ -551,7 +563,11 @@ COMMIT_EOF
   )" 2>/dev/null || true
 
   if [[ "$NO_PUSH" != "1" ]]; then
-    git push origin main 2>/dev/null || log "WARNING: push failed"
+    for i in 1 2 3; do
+      git push origin main 2>/dev/null && break
+      log "Push attempt $i/3 failed, retrying in 5s..."
+      sleep 5
+    done
     log "Pushed BLOCKED.md to origin. Agent will wait for human intervention."
   else
     log "Local mode: BLOCKED.md created. Agent will wait for human intervention."

@@ -1187,6 +1187,196 @@ func TestStopoversForRoute_ReverseORDToDEL(t *testing.T) {
 	}
 }
 
+func TestStopoversForRoute_LHRToBKK(t *testing.T) {
+	got := StopoversForRoute("LHR", "BKK")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for LHR->BKK, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &LHRToBKKStopovers[0] {
+		t.Error("LHR->BKK should return the route-specific slice, not a copy")
+	}
+
+	// Verify expected cities: Istanbul + Indian subcontinent + Southeast Asia.
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"IST", "DEL", "BOM", "CMB", "KUL", "SIN"} {
+		if !airports[want] {
+			t.Errorf("LHR->BKK stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["LHR"] {
+		t.Error("origin LHR should not be in stopover list")
+	}
+	if airports["BKK"] {
+		t.Error("destination BKK should not be in stopover list")
+	}
+
+	// No blocked hubs should appear.
+	for _, s := range got {
+		if _, blocked := blockedHubsForTest[s.Airport]; blocked {
+			t.Errorf("LHR->BKK contains blocked hub %s", s.Airport)
+		}
+	}
+}
+
+func TestStopoversForRoute_LHRToNRT(t *testing.T) {
+	got := StopoversForRoute("LHR", "NRT")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for LHR->NRT, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &LHRToNRTStopovers[0] {
+		t.Error("LHR->NRT should return the route-specific slice, not a copy")
+	}
+
+	// Verify expected cities.
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"IST", "DEL", "BKK", "SIN", "KUL", "HKG", "ICN"} {
+		if !airports[want] {
+			t.Errorf("LHR->NRT stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["LHR"] {
+		t.Error("origin LHR should not be in stopover list")
+	}
+	if airports["NRT"] {
+		t.Error("destination NRT should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_CDGToBKK(t *testing.T) {
+	got := StopoversForRoute("CDG", "BKK")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for CDG->BKK, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &CDGToBKKStopovers[0] {
+		t.Error("CDG->BKK should return the route-specific slice, not a copy")
+	}
+
+	// Verify expected cities: Istanbul + Indian subcontinent + Southeast Asia.
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"IST", "DEL", "BOM", "CMB", "KUL", "SIN"} {
+		if !airports[want] {
+			t.Errorf("CDG->BKK stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["CDG"] {
+		t.Error("origin CDG should not be in stopover list")
+	}
+	if airports["BKK"] {
+		t.Error("destination BKK should not be in stopover list")
+	}
+
+	// No blocked hubs should appear.
+	for _, s := range got {
+		if _, blocked := blockedHubsForTest[s.Airport]; blocked {
+			t.Errorf("CDG->BKK contains blocked hub %s", s.Airport)
+		}
+	}
+}
+
+func TestStopoversForRoute_CDGToNRT(t *testing.T) {
+	got := StopoversForRoute("CDG", "NRT")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for CDG->NRT, got none")
+	}
+
+	// Should return route-specific list, not fallback.
+	if &got[0] != &CDGToNRTStopovers[0] {
+		t.Error("CDG->NRT should return the route-specific slice, not a copy")
+	}
+
+	// Verify expected cities.
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	for _, want := range []string{"IST", "DEL", "BKK", "SIN", "KUL", "HKG", "ICN"} {
+		if !airports[want] {
+			t.Errorf("CDG->NRT stopovers missing expected airport %s", want)
+		}
+	}
+
+	if airports["CDG"] {
+		t.Error("origin CDG should not be in stopover list")
+	}
+	if airports["NRT"] {
+		t.Error("destination NRT should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_ReverseBKKToLHR(t *testing.T) {
+	got := StopoversForRoute("BKK", "LHR")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for reverse route BKK->LHR, got none")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	// CMB is in LHR->BKK route-specific list but NOT in GlobalFallbackHubs.
+	// Its presence proves reverse lookup uses route-specific data.
+	if !airports["CMB"] {
+		t.Error("reverse BKK->LHR missing route-specific airport CMB (would not be in fallback)")
+	}
+
+	if airports["BKK"] {
+		t.Error("origin BKK should not be in stopover list")
+	}
+	if airports["LHR"] {
+		t.Error("destination LHR should not be in stopover list")
+	}
+}
+
+func TestStopoversForRoute_ReverseNRTToLHR(t *testing.T) {
+	got := StopoversForRoute("NRT", "LHR")
+	if len(got) == 0 {
+		t.Fatal("expected stopovers for reverse route NRT->LHR, got none")
+	}
+
+	airports := make(map[string]bool)
+	for _, s := range got {
+		airports[s.Airport] = true
+	}
+	// DEL is in LHR->NRT route-specific list but NOT in GlobalFallbackHubs.
+	// Its presence proves reverse lookup uses route-specific data.
+	if !airports["DEL"] {
+		t.Error("reverse NRT->LHR missing route-specific airport DEL (would not be in fallback)")
+	}
+
+	if airports["NRT"] {
+		t.Error("origin NRT should not be in stopover list")
+	}
+	if airports["LHR"] {
+		t.Error("destination LHR should not be in stopover list")
+	}
+}
+
+// blockedHubsForTest mirrors the BlockedHubs from search/filter.go for validation.
+var blockedHubsForTest = map[string]bool{
+	"DXB": true, "AUH": true, "DOH": true, "BAH": true,
+	"KWI": true, "JED": true, "RUH": true, "DMM": true,
+	"IKA": true, "THR": true, "BGW": true, "EBL": true,
+	"TLV": true, "AMM": true, "SHJ": true, "DWC": true,
+}
+
 // TestStopoverDataConsistency validates all stopover data for correctness.
 func TestStopoverDataConsistency(t *testing.T) {
 	iataRe := regexp.MustCompile(`^[A-Z]{3}$`)

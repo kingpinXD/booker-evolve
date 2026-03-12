@@ -1662,6 +1662,267 @@ var BOMToORDStopovers = []StopoverCity{
 	},
 }
 
+// LHRToBKKStopovers are the candidate stopover cities for London → Bangkok.
+//
+// Route geometry: LHR is at ~51°N, 0°W. BKK is at ~13°N, 100°E.
+// Gulf hubs (DOH, DXB, AUH) are blocked. Route via Istanbul, Indian subcontinent,
+// or Southeast Asian cities that are geographically on the way.
+var LHRToBKKStopovers = []StopoverCity{
+	// === EUROPE ===
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. LHR-IST very frequent on BA/Turkish. IST-BKK direct on Turkish.",
+	},
+
+	// === INDIAN SUBCONTINENT ===
+	{
+		City:    "Delhi",
+		Airport: "DEL",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Air India hub. LHR-DEL on BA/Air India. DEL-BKK frequent on Thai/IndiGo. Taj Mahal day trip.",
+	},
+	{
+		City:    "Mumbai",
+		Airport: "BOM",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Air India hub. LHR-BOM on BA/Air India. BOM-BKK frequent on Thai/IndiGo.",
+	},
+	{
+		City:    "Colombo",
+		Airport: "CMB",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SriLankan Airlines hub. LHR-CMB on SriLankan. CMB-BKK direct. Beaches, temples.",
+	},
+
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines hub. LHR-KUL on MAS. KUL-BKK short hop on AirAsia/MAS.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. LHR-SIN on SQ/BA. SIN-BKK short hop on SQ/Thai. Clean, safe city.",
+	},
+}
+
+// LHRToNRTStopovers are the candidate stopover cities for London → Tokyo Narita.
+//
+// Route geometry: LHR is at ~51°N, 0°W. NRT is at ~35°N, 140°E.
+// Gulf hubs blocked. Route via Istanbul, Indian subcontinent, or East/Southeast Asia.
+var LHRToNRTStopovers = []StopoverCity{
+	// === EUROPE ===
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. LHR-IST very frequent. IST-NRT direct on Turkish.",
+	},
+
+	// === INDIAN SUBCONTINENT ===
+	{
+		City:    "Delhi",
+		Airport: "DEL",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Air India hub. LHR-DEL on BA/Air India. DEL-NRT on JAL/ANA. Taj Mahal day trip.",
+	},
+
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. LHR-BKK on Thai/BA. BKK-NRT direct on Thai/ANA. Temples, street food.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. LHR-SIN on SQ/BA. SIN-NRT direct on SQ/ANA/JAL.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines hub. LHR-KUL on MAS. KUL-NRT direct on MAS/AirAsia X.",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. LHR-HKG on Cathay/BA. HKG-NRT direct on Cathay/ANA/JAL.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. LHR-ICN on Korean Air/BA. ICN-NRT very frequent.",
+	},
+}
+
+// CDGToBKKStopovers are the candidate stopover cities for Paris → Bangkok.
+//
+// Route geometry: CDG is at ~49°N, 2°E. BKK is at ~13°N, 100°E.
+// Gulf hubs blocked. Route via Istanbul, Indian subcontinent, or Southeast Asia.
+var CDGToBKKStopovers = []StopoverCity{
+	// === EUROPE ===
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. CDG-IST very frequent on AF/Turkish. IST-BKK direct on Turkish.",
+	},
+
+	// === INDIAN SUBCONTINENT ===
+	{
+		City:    "Delhi",
+		Airport: "DEL",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Air India hub. CDG-DEL on Air France/Air India. DEL-BKK frequent on Thai/IndiGo.",
+	},
+	{
+		City:    "Mumbai",
+		Airport: "BOM",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Air India hub. CDG-BOM on Air France/Air India. BOM-BKK frequent on Thai/IndiGo.",
+	},
+	{
+		City:    "Colombo",
+		Airport: "CMB",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SriLankan Airlines hub. CDG-CMB on SriLankan. CMB-BKK direct. Beaches, temples.",
+	},
+
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines hub. CDG-KUL on MAS. KUL-BKK short hop on AirAsia/MAS.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. CDG-SIN on SQ/AF. SIN-BKK short hop on SQ/Thai.",
+	},
+}
+
+// CDGToNRTStopovers are the candidate stopover cities for Paris → Tokyo Narita.
+//
+// Route geometry: CDG is at ~49°N, 2°E. NRT is at ~35°N, 140°E.
+// Gulf hubs blocked. Route via Istanbul, Indian subcontinent, or East/Southeast Asia.
+var CDGToNRTStopovers = []StopoverCity{
+	// === EUROPE ===
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. CDG-IST very frequent. IST-NRT direct on Turkish.",
+	},
+
+	// === INDIAN SUBCONTINENT ===
+	{
+		City:    "Delhi",
+		Airport: "DEL",
+		Region:  "south_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Air India hub. CDG-DEL on Air France/Air India. DEL-NRT on JAL/ANA.",
+	},
+
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. CDG-BKK on Thai/AF. BKK-NRT direct on Thai/ANA. Temples, street food.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. CDG-SIN on SQ/AF. SIN-NRT direct on SQ/ANA/JAL.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines hub. CDG-KUL on MAS. KUL-NRT direct on MAS/AirAsia X.",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. CDG-HKG on Cathay/AF. HKG-NRT direct on Cathay/ANA/JAL.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. CDG-ICN on Korean Air/AF. ICN-NRT very frequent.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -1698,6 +1959,12 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "LAX"): BOMToLAXStopovers,
 	routeKey("DEL", "ORD"): DELToORDStopovers,
 	routeKey("BOM", "ORD"): BOMToORDStopovers,
+
+	// Europe → Asia
+	routeKey("LHR", "BKK"): LHRToBKKStopovers,
+	routeKey("LHR", "NRT"): LHRToNRTStopovers,
+	routeKey("CDG", "BKK"): CDGToBKKStopovers,
+	routeKey("CDG", "NRT"): CDGToNRTStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

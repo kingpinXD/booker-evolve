@@ -1923,6 +1923,99 @@ var CDGToNRTStopovers = []StopoverCity{
 	},
 }
 
+// JFKToLHRStopovers are the candidate stopover cities for New York JFK → London Heathrow.
+//
+// Route geometry: JFK is at ~40°N, 73°W. LHR is at ~51°N, 0°W.
+// North Atlantic great-circle route passes near Iceland and Ireland.
+var JFKToLHRStopovers = []StopoverCity{
+	{
+		City:    "Reykjavik",
+		Airport: "KEF",
+		Region:  "north_atlantic",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "On the great-circle route between JFK and LHR. Icelandair hub with frequent transatlantic service both ways.",
+	},
+	{
+		City:    "Dublin",
+		Airport: "DUB",
+		Region:  "north_atlantic",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Natural North Atlantic waypoint with US preclearance — clear US customs before departure. Aer Lingus hub.",
+	},
+	{
+		City:    "Halifax",
+		Airport: "YHZ",
+		Region:  "north_atlantic",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Easternmost major Canadian airport. Short hop from JFK, cuts the Atlantic crossing. Maritime city with seafood culture.",
+	},
+}
+
+// JFKToCDGStopovers are the candidate stopover cities for New York JFK → Paris CDG.
+//
+// Route geometry: JFK is at ~40°N, 73°W. CDG is at ~49°N, 2°E.
+// North Atlantic route with Iceland and Ireland as natural waypoints.
+var JFKToCDGStopovers = []StopoverCity{
+	{
+		City:    "Reykjavik",
+		Airport: "KEF",
+		Region:  "north_atlantic",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Great-circle waypoint. Icelandair offers JFK-KEF and KEF-CDG. Golden Circle tourism.",
+	},
+	{
+		City:    "Dublin",
+		Airport: "DUB",
+		Region:  "north_atlantic",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "US preclearance simplifies return. Strong JFK-DUB frequency on Aer Lingus and Delta. DUB-CDG on Aer Lingus/Ryanair.",
+	},
+	{
+		City:    "London",
+		Airport: "LHR",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Massive transatlantic hub. JFK-LHR among the world's busiest routes. Short LHR-CDG hop on BA/AF.",
+	},
+}
+
+// LAXToLHRStopovers are the candidate stopover cities for Los Angeles → London Heathrow.
+//
+// Route geometry: LAX is at ~33°N, 118°W. LHR is at ~51°N, 0°W.
+// Longer transatlantic crossing; Canadian cities and Iceland break the journey.
+var LAXToLHRStopovers = []StopoverCity{
+	{
+		City:    "Vancouver",
+		Airport: "YVR",
+		Region:  "north_america",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Short LAX-YVR hop. YVR-LHR direct on BA/Air Canada. Beautiful Pacific coast city.",
+	},
+	{
+		City:    "Toronto",
+		Airport: "YYZ",
+		Region:  "north_america",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Air Canada hub with frequent YYZ-LHR service. LAX-YYZ well served. Multicultural city.",
+	},
+	{
+		City:    "Reykjavik",
+		Airport: "KEF",
+		Region:  "north_atlantic",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Splits the Atlantic crossing. Icelandair serves LAX-KEF and KEF-LHR. Unique landscape stopover.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -1965,6 +2058,11 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("LHR", "NRT"): LHRToNRTStopovers,
 	routeKey("CDG", "BKK"): CDGToBKKStopovers,
 	routeKey("CDG", "NRT"): CDGToNRTStopovers,
+
+	// North America → Europe
+	routeKey("JFK", "LHR"): JFKToLHRStopovers,
+	routeKey("JFK", "CDG"): JFKToCDGStopovers,
+	routeKey("LAX", "LHR"): LAXToLHRStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

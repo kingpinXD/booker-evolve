@@ -760,3 +760,13 @@ Added FareTrend struct and ComputeFareTrend in search/search.go as a pure functi
 
 ### Session 56, Task 4 -- Context-aware ranking weight adjustment
 Added contextWeights function that scans user messages for preference signals (layovers, carbon, schedule, flight duration) and returns additive RankingWeights deltas (+10 per detected signal). Combined with base profile weights via addWeights helper in chatLoop. Always runs — gracefully returns zero delta when no signals detected. Updated existing profile switch test to account for combined weights. 7 new tests.
+
+### Session 56, Task 3 -- Ranker cache max size with eviction
+Added maxCacheSize=64 constant, cacheKeys []string field for FIFO tracking, and evictIfNeeded method that discards oldest half when limit reached. Implemented in parallel worktree, cherry-picked to main. 4 new tests validate growth, eviction, survival, and counter accuracy.
+
+### Session 56, Task 5 -- Europe-to-Asia stopover corridors
+Added 4 corridor pairs: LHR→BKK (6 cities), LHR→NRT (7 cities), CDG→BKK (6 cities), CDG→NRT (7 cities). All hubs verified non-blocked. Used IST as European waypoint, Indian subcontinent cities for BKK corridors, East Asian hubs for NRT corridors. Implemented in parallel worktree, cherry-picked to main. 6 new tests + existing data consistency test validates automatically.
+
+## Session 56 -- 07:55 -- Five features: diversify, fare trends, cache eviction, context weights, EU-Asia stopovers
+
+All 5 tasks completed with zero reverts and zero API calls. Tasks 3 and 5 ran in parallel worktrees; Tasks 1, 2, 4 ran sequentially on main. Key features: DiversifyResults ensures variety in capped results; FareTrend shows cheapest/priciest dates in flex-date searches; ranker cache capped at 64 entries with FIFO eviction; contextWeights detects preference signals and adjusts ranking weights dynamically; 4 new Europe→Asia stopover corridors expand geographic coverage. ~30 new tests total. Build, tests, vet, lint all clean.

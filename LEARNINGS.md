@@ -190,3 +190,11 @@ When a chat system generates tips (like stopover suggestions) and displays them 
 
 ## Lesson: Per-operation timeouts prevent cascading hangs in interactive loops
 A chat loop with a single session-level timeout (e.g. 5 minutes) lets individual operations hang for the entire budget. Adding a per-search timeout (2 minutes) with context.WithTimeout ensures one slow multicity search doesn't freeze the entire session. The key is wrapping context errors (DeadlineExceeded, Canceled) with user-friendly messages at the call site, so the user sees "search timed out" instead of raw Go errors.
+
+## Lesson: Pure functions on result slices are simpler than stateful getters for computed metrics
+
+FareTrend could have been stored on the Searcher (like PriceInsights on the provider), requiring a getter interface and threading through interfaces. Instead, ComputeFareTrend as a pure function on []Itinerary is called at the display layer — no interface changes, no state management, trivially testable. Prefer this approach when the computation is cheap and only needs the result data.
+
+## Lesson: Additive weight deltas compose cleanly with base profiles
+
+contextWeights returns deltas that are added to base profile weights rather than replacing them. This means signals accumulate across the conversation without overriding explicit profile choices. The zero-value fallback (no signals = no change) preserves backward compatibility. This additive pattern works well for any "modifier on top of a base" scenario.

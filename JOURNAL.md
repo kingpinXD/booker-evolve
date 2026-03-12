@@ -776,3 +776,6 @@ Removed "Book" column header and legBookingURL row data from both single-leg and
 
 ### Session 57, Task 2 -- Bullet-point display for chat results
 Added printBulletResults rendering numbered bullets per itinerary with airline, route, duration, stops, price, and optional score. Multi-leg shows per-leg sub-bullets. Changed displayChatResults default from table to bullet format; table and json remain as explicit overrides. Also moved price insights display outside the format switch so it applies to all formats.
+
+### Session 57, Task 3 -- Truncate Reason column in table
+Added truncateText helper (50-char cap with "..." suffix) applied to the Reason field in both single-leg and multi-leg table rows. Only affects table display; JSON and bullet formats show full reasoning.

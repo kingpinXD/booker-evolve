@@ -19,12 +19,12 @@
 - [x] Run go build && go test ./... && go vet ./...
 
 ## Task 177: Truncate Reason column in table
-**Status:** pending
+**Status:** done
 **Plan:** Add truncateText helper, apply to Reason field in printTable row construction. Cap at 50 chars with "..." suffix.
-- [ ] Write test for truncateText at boundary cases (49, 50, 51 chars)
-- [ ] Implement truncateText helper in display.go
-- [ ] Apply truncateText to Reason in both single-leg and multi-leg rows
-- [ ] Run go build && go test ./... && go vet ./...
+- [x] Write test for truncateText at boundary cases (49, 50, 51 chars)
+- [x] Implement truncateText helper in display.go
+- [x] Apply truncateText to Reason in both single-leg and multi-leg rows
+- [x] Run go build && go test ./... && go vet ./...
 
 ## Task 178: Shorten multi-leg table headers
 **Status:** pending

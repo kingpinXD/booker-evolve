@@ -32,6 +32,16 @@ func hasScores(itineraries []search.Itinerary) bool {
 	return false
 }
 
+// truncateText truncates s to maxLen characters, appending "..." if truncated.
+func truncateText(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen-3] + "..."
+}
+
+const reasonMaxLen = 50
+
 func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 	t := table.NewWriter()
 	t.SetOutputMirror(w)
@@ -96,7 +106,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				legCarbon(itin, 0),
 				legCarbon(itin, 1))
 			if scored {
-				row = append(row, itin.Reasoning)
+				row = append(row, truncateText(itin.Reasoning, reasonMaxLen))
 			}
 		} else {
 			row = table.Row{i + 1}
@@ -114,7 +124,7 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 				dur,
 				legCarbon(itin, 0))
 			if scored {
-				row = append(row, itin.Reasoning)
+				row = append(row, truncateText(itin.Reasoning, reasonMaxLen))
 			}
 		}
 		t.AppendRow(row)

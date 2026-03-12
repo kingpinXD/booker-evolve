@@ -380,6 +380,50 @@ func TestBuildJSONItineraries_SegmentsOmittedWhenEmpty(t *testing.T) {
 	}
 }
 
+// --- truncateText ---
+
+func TestTruncateText(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		maxLen int
+		want   string
+	}{
+		{"under limit", "short text", 50, "short text"},
+		{"at limit", strings.Repeat("a", 50), 50, strings.Repeat("a", 50)},
+		{"over limit", strings.Repeat("a", 51), 50, strings.Repeat("a", 47) + "..."},
+		{"empty", "", 50, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateText(tt.input, tt.maxLen)
+			if got != tt.want {
+				t.Errorf("truncateText(%d chars, %d) = %q (len %d), want %q (len %d)",
+					len(tt.input), tt.maxLen, got, len(got), tt.want, len(tt.want))
+			}
+		})
+	}
+}
+
+func TestPrintTable_ReasonTruncated(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 85
+	itin.Reasoning = strings.Repeat("x", 80) // 80 chars should be truncated
+
+	var buf bytes.Buffer
+	printTable(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	// The full 80-char string should not appear.
+	if strings.Contains(out, strings.Repeat("x", 80)) {
+		t.Error("expected Reason to be truncated in table output")
+	}
+	// But a truncated version with "..." should.
+	if !strings.Contains(out, "...") {
+		t.Error("expected '...' in truncated Reason")
+	}
+}
+
 // --- printBulletResults ---
 
 func TestPrintBulletResults_SingleLeg(t *testing.T) {

@@ -9,12 +9,12 @@
 - [x] Verify go build && go test ./cmd/...
 
 ## Task 161: filterSuggestion reflection refactor
-**Status:** in-progress
+**Status:** done
 **Plan:** Replace per-field if-blocks with reflection loop. Define filterLabels map from json tag to human-readable name. Iterate tripParams fields, check non-zero + in label map.
-- [ ] Define filterLabels map
-- [ ] Rewrite filterSuggestion using reflection
-- [ ] Verify existing tests pass
-- [ ] Run full verification
+- [x] Define filterLabels map
+- [x] Rewrite filterSuggestion using reflection
+- [x] Verify existing tests pass
+- [x] Run full verification
 
 ## Task 162: Multi-leg info in formatComparison
 **Status:** pending

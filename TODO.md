@@ -27,12 +27,12 @@
 - [x] Run go build && go test ./... && go vet ./...
 
 ## Task 178: Shorten multi-leg table headers
-**Status:** pending
+**Status:** done
 **Plan:** Replace verbose "Leg 1 X" / "Leg 2 X" headers with "L1 X" / "L2 X" variants. Single-leg headers unchanged.
-- [ ] Write test asserting multi-leg table has "L1" / "L2" prefixed headers
-- [ ] Update multi-leg header row in printTable
-- [ ] Update any tests that check for old header text
-- [ ] Run go build && go test ./... && go vet ./...
+- [x] Write test asserting multi-leg table has "L1" / "L2" prefixed headers
+- [x] Update multi-leg header row in printTable
+- [x] Update any tests that check for old header text
+- [x] Run go build && go test ./... && go vet ./...
 
 ## Task 179: North America to Europe stopover corridors
 **Status:** pending

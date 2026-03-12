@@ -58,10 +58,10 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 			header = append(header, "Score")
 		}
 		header = append(header, "Price", "Route",
-			"Leg 1 Airlines", "Leg 2 Airlines", "Leg 1 Cabin", "Leg 2 Cabin",
-			"Leg 1 Departure", "Leg 1 Arrival",
-			"Leg 2 Departure", "Leg 2 Arrival",
-			"Stopover", "Stops", "Duration", "Leg 1 CO2", "Leg 2 CO2")
+			"L1 Airlines", "L2 Airlines", "L1 Cabin", "L2 Cabin",
+			"L1 Depart", "L1 Arrive",
+			"L2 Depart", "L2 Arrive",
+			"Stopover", "Stops", "Duration", "L1 CO2", "L2 CO2")
 		if scored {
 			header = append(header, "Reason")
 		}

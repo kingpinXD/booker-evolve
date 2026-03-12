@@ -453,7 +453,7 @@ func TestPrintTable_SingleLeg(t *testing.T) {
 		}
 	}
 	// Multi-leg headers should NOT be present.
-	for _, absent := range []string{"LEG 1 AIRLINES", "LEG 2 AIRLINES", "STOPOVER"} {
+	for _, absent := range []string{"L1 AIRLINES", "L2 AIRLINES", "STOPOVER"} {
 		if bytes.Contains([]byte(out), []byte(absent)) {
 			t.Errorf("single-leg table should not contain %q", absent)
 		}
@@ -479,7 +479,7 @@ func TestPrintTable_MultiLeg(t *testing.T) {
 	out := capturePrintTable(itins, "CAD")
 
 	// Multi-leg headers should be present (go-pretty uppercases them).
-	for _, want := range []string{"LEG 1 AIRLINES", "LEG 2 AIRLINES", "LEG 1 ARRIVAL", "LEG 2 ARRIVAL", "STOPOVER"} {
+	for _, want := range []string{"L1 AIRLINES", "L2 AIRLINES", "L1 ARRIVE", "L2 ARRIVE", "STOPOVER"} {
 		if !bytes.Contains([]byte(out), []byte(want)) {
 			t.Errorf("multi-leg table output missing header %q", want)
 		}
@@ -1374,11 +1374,11 @@ func TestPrintTable_MultiLeg_CO2BothLegs(t *testing.T) {
 	out := capturePrintTable(itins, "CAD")
 
 	// Multi-leg should have separate CO2 columns for each leg.
-	if !strings.Contains(out, "LEG 1 CO2") {
-		t.Errorf("multi-leg table missing LEG 1 CO2 header, got:\n%s", out)
+	if !strings.Contains(out, "L1 CO2") {
+		t.Errorf("multi-leg table missing L1 CO2 header, got:\n%s", out)
 	}
-	if !strings.Contains(out, "LEG 2 CO2") {
-		t.Errorf("multi-leg table missing LEG 2 CO2 header, got:\n%s", out)
+	if !strings.Contains(out, "L2 CO2") {
+		t.Errorf("multi-leg table missing L2 CO2 header, got:\n%s", out)
 	}
 	if !strings.Contains(out, "450kg") {
 		t.Errorf("multi-leg table missing leg 1 carbon value 450kg, got:\n%s", out)
@@ -1467,11 +1467,11 @@ func TestPrintTable_MultiLeg_CabinBothLegs(t *testing.T) {
 	out := capturePrintTable(itins, "CAD")
 
 	// Multi-leg should have separate cabin columns for each leg.
-	if !strings.Contains(out, "LEG 1 CABIN") {
-		t.Errorf("multi-leg table missing LEG 1 CABIN header, got:\n%s", out)
+	if !strings.Contains(out, "L1 CABIN") {
+		t.Errorf("multi-leg table missing L1 CABIN header, got:\n%s", out)
 	}
-	if !strings.Contains(out, "LEG 2 CABIN") {
-		t.Errorf("multi-leg table missing LEG 2 CABIN header, got:\n%s", out)
+	if !strings.Contains(out, "L2 CABIN") {
+		t.Errorf("multi-leg table missing L2 CABIN header, got:\n%s", out)
 	}
 	if !strings.Contains(out, "business") {
 		t.Errorf("multi-leg table missing leg 1 cabin value business, got:\n%s", out)

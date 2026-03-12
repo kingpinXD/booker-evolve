@@ -779,3 +779,6 @@ Added printBulletResults rendering numbered bullets per itinerary with airline, 
 
 ### Session 57, Task 3 -- Truncate Reason column in table
 Added truncateText helper (50-char cap with "..." suffix) applied to the Reason field in both single-leg and multi-leg table rows. Only affects table display; JSON and bullet formats show full reasoning.
+
+### Session 57, Task 4 -- Shorten multi-leg table headers
+Changed multi-leg table headers from "Leg 1 Airlines" etc. to "L1 Airlines", "L1 Depart", "L1 Arrive", "L1 CO2" etc. Saves ~40 chars of horizontal width per row. Updated 6 existing test assertions to match new headers.

@@ -11,21 +11,29 @@
 
 ### General Principles
 - Follow Go best practices and idiomatic patterns
-- Write concise, readable, and maintainable code
-- All exported types/functions must have comments
 - Package comments required at top of files
 - Follow TEST DRIVEN DEVELOPMENT when adding new features clarify the expected outcome always if you are not clear.
 - Always use TODO's when working on adding new code 
 
-**Important**: Only write code explicitly asked for during the prompt. Do not take initiatives to modify or create code not requested during sessions.
+### Coding Standards
+- Write concise, readable, and maintainable code
+- Naming: Variable/function names to clarify intent
+- Functions should not be doing too many things
+- All exported types/functions must have comments
+- Prefer switch cases over nested if else statements
+- Prefer early returns
+
+
+### KISS: Keep It Simple Stupid
+- Do not add unnecessary abstractions or indirection — could this be simpler?
+- Do not add over-engineered solutions for simple problems
+- Do not add clever one-liners that sacrifice readability
+- Do not add premature optimization or generalization
+- Do not add dead code, unused variables, redundant checks
 
 ### Modifying Existing Code
 - **Always modify existing functions** instead of creating new duplicate functions with slightly different signatures
 - When adding a new parameter to a function, update the existing function signature rather than creating a `FunctionWithNewParam` variant
-- If a function needs an optional parameter, add it with a sensible default or use empty/zero values to indicate "not provided"
-- Avoid code duplication - if two functions share 90% of their logic, consolidate them into one.
-- Prefer switch cases over nested if else statements
-- Prefer early returns
 
 
 **Important** when adding any code run an analysis to see if the number of lines of code added can be reduced in any way,
@@ -64,9 +72,13 @@ This project includes a self-evolving agent system. The agent (booker-agent) run
 - Prefer working with existing cached data in `.cache/flights/` during development.
 
 ### Development Direction
-- **Prefer new features over retroactive coverage.** Adding tests for existing stable code is low priority. Focus on building new capabilities (more routes, better ranking, flexible dates, multi-city improvements) and writing tests for that new code.
-- **Refactoring is welcome.** The codebase can be reorganized to be more idiomatic Go — better package boundaries, cleaner interfaces, simpler function signatures. If something feels awkward or over-engineered, improve it.
+- **Prefer new features to retroactive coverage.** Adding tests for existing stable code is a low priority. Focus on building new capabilities (more routes, better ranking, flexible dates, multi-city improvements) and writing tests for that new code.
+- **Refactoring is welcome.** The codebase can be reorganized to be more idiomatic Go — better package boundaries, cleaner interfaces, simpler function signatures. If something feels awkward or overengineered, improve it.
 - Coverage for existing code is fine as a fallback when there are no features or refactors to work on.
+
+### GitHub Issues
+- **Completely ignore closed issues.** Do not read, comment on, or reference closed issues. Only work on open issues.
+- Do not add comments to closed issues under any circumstances.
 
 ### Safety Rules
 - Every code change must pass: `go build && go test ./... && go vet ./...`

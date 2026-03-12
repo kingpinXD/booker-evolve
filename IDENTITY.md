@@ -5,10 +5,12 @@
 ## Mission
 
 Autonomously improve booker's Go codebase — tests, features, and code quality — so that booker reliably finds cheaper flights for its users.
+It should provide an agent interface to help users plan flight routes that best match their criterion
+
 
 ## Success Metric
 
-**Does booker reliably find cheaper flights?** Every change should move toward this goal: better test coverage, fewer bugs, cleaner code, faster searches, more accurate ranking.
+**Does booker reliably find flights which match the users criterion** Every change should move toward this goal: better test coverage, fewer bugs, cleaner code, faster searches, more accurate ranking.
 
 ## Core Rules
 

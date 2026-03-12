@@ -17,13 +17,13 @@
 - [x] Run full verification
 
 ## Task 162: Multi-leg info in formatComparison
-**Status:** pending
+**Status:** done
 **Plan:** Show per-leg details for multi-city itineraries. Extract shared leg-extraction logic into legSummary helper used by both formatComparison and formatOptionDetail.
-- [ ] Extract legSummary helper function
-- [ ] Update formatComparison to show all legs
-- [ ] Update formatOptionDetail to use legSummary
-- [ ] Add test for 2-leg comparison
-- [ ] Run full verification
+- [x] Extract legSummary helper function
+- [x] Update formatComparison to show all legs
+- [x] Update formatOptionDetail to use legSummary
+- [x] Add test for 2-leg comparison
+- [x] Run full verification
 
 ## Task 163: India-Los Angeles stopover corridors
 **Status:** done (parallel worktree)

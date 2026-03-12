@@ -2259,6 +2259,52 @@ func TestFormatComparison(t *testing.T) {
 	}
 }
 
+func TestFormatComparison_MultiLeg(t *testing.T) {
+	results := []search.Itinerary{
+		{
+			Legs: []search.Leg{
+				{Flight: types.Flight{
+					Price:         types.Money{Amount: 300, Currency: "USD"},
+					TotalDuration: 6 * time.Hour,
+					Outbound:      []types.Segment{{Airline: "TG", AirlineName: "Thai Airways", Origin: "DEL", Destination: "BKK"}},
+				}},
+				{Flight: types.Flight{
+					Price:         types.Money{Amount: 400, Currency: "USD"},
+					TotalDuration: 16 * time.Hour,
+					Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", Origin: "BKK", Destination: "YYZ"}},
+				}},
+			},
+			TotalPrice:  types.Money{Amount: 700, Currency: "USD"},
+			TotalTravel: 22 * time.Hour,
+		},
+	}
+
+	comp := formatComparison(results, []int{1})
+
+	// Multi-leg should show price/duration header + per-leg details.
+	if !strings.Contains(comp, "700") {
+		t.Errorf("multi-leg comparison should contain total price, got: %s", comp)
+	}
+	if !strings.Contains(comp, "Leg 1") {
+		t.Errorf("multi-leg comparison should show Leg 1, got: %s", comp)
+	}
+	if !strings.Contains(comp, "Leg 2") {
+		t.Errorf("multi-leg comparison should show Leg 2, got: %s", comp)
+	}
+	if !strings.Contains(comp, "Thai Airways") {
+		t.Errorf("multi-leg comparison should contain leg 1 airline, got: %s", comp)
+	}
+	if !strings.Contains(comp, "Air Canada") {
+		t.Errorf("multi-leg comparison should contain leg 2 airline, got: %s", comp)
+	}
+	if !strings.Contains(comp, "DEL -> BKK") {
+		t.Errorf("multi-leg comparison should contain leg 1 route, got: %s", comp)
+	}
+	if !strings.Contains(comp, "BKK -> YYZ") {
+		t.Errorf("multi-leg comparison should contain leg 2 route, got: %s", comp)
+	}
+}
+
 func TestChatLoop_ComparisonInterceptsBeforeLLM(t *testing.T) {
 	// First response triggers a search. Second input is a comparison request,
 	// which should be intercepted without calling the LLM.

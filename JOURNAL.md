@@ -798,3 +798,9 @@ Added formatSearchParams() to chathelpers.go. Shows all active search parameters
 
 ### Session 58, Task 5 -- Context-aware refinement prompt
 Added refinementSuggestion() to chathelpers.go. Replaced static "Want to refine?" with context-aware suggestions: direct-only limiting results, high prices with flex-date advice, cheapest date pointer for flex searches, max_price cap warning. Falls back to generic prompt when no context-specific advice applies. 4 unit tests.
+
+### Session 58, Task 1 -- Refactor stopovers.go with newStopover helper
+Reduced stopovers.go from 2122 to 734 lines (-1388 lines, 65% reduction). Added newStopover(city, airport, region, notes) helper that applies default MinStay/MaxStay. Replaced 200 entries with single-line calls. 1 non-default entry (Kolkata 72h MaxStay in DELToHKGStopovers) preserved as literal. Used Go script for mechanical replacement. TestStopoverDataConsistency validates all entries unchanged.
+
+## Session 58 -- Summary
+All 5 tasks completed. Tasks 2, 4, 5 ran sequentially on main (shared chathelpers.go/chat.go). Task 3 ran in parallel worktree (display.go). Task 1 initially attempted in worktree but hit token limits; completed on main with a Go transformation script. Key changes: stopovers.go cut by 65%, auto-retry on zero results with filter relaxation, search parameter echo, enriched bullet output, context-aware refinement prompts. Zero API calls, zero reverts. Build, tests, vet, lint all clean.

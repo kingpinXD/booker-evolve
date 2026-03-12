@@ -1,12 +1,13 @@
 # TODO
 
 ## Task 180: Refactor stopovers.go with newStopover helper
-**Status:** pending
-**Plan:** Add newStopover helper that applies default MinStay/MaxStay, replace all 209 entries with single-line calls.
-- [ ] Add newStopover(city, airport, region, notes) helper function
-- [ ] Replace all StopoverCity literal entries with newStopover calls
-- [ ] Verify file compiles and all tests pass (TestStopoverDataConsistency)
-- [ ] Run go build ./... && go test ./... && go vet ./...
+**Status:** done
+**Plan:** Add newStopover helper that applies default MinStay/MaxStay, replace 200 default entries with single-line calls. 1 non-default entry (Kolkata 72h MaxStay) preserved as literal.
+- [x] Add newStopover(city, airport, region, notes) helper function
+- [x] Replace 200 default StopoverCity entries with newStopover calls
+- [x] Preserve 1 non-default entry (Kolkata in DELToHKGStopovers)
+- [x] Verify file compiles and TestStopoverDataConsistency passes
+- [x] Run go build ./... && go test ./... && go vet ./...
 
 ## Task 181: Auto-retry with relaxed filters on zero results
 **Status:** done

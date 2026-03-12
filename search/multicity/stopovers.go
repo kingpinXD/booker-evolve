@@ -65,6 +65,18 @@ type StopoverCity struct {
 	Notes string
 }
 
+// newStopover creates a StopoverCity with default MinStay/MaxStay.
+func newStopover(city, airport, region, notes string) StopoverCity {
+	return StopoverCity{
+		City:    city,
+		Airport: airport,
+		Region:  region,
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   notes,
+	}
+}
+
 // DELToYYZStopovers are the candidate stopover cities for Delhi → Toronto
 // that avoid Middle East airspace entirely.
 //
@@ -78,91 +90,21 @@ var DELToYYZStopovers = []StopoverCity{
 	// === EAST/SOUTHEAST ASIA — Primary corridor ===
 	// These route eastbound from Delhi, then across the Pacific to Toronto.
 
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Major Cathay Pacific hub. Excellent DEL-HKG and HKG-YYZ frequency. Great food, easy transit city.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Singapore Airlines hub. Strong DEL-SIN connectivity. SIN-YYZ may require connection. Clean, safe, great food.",
-	},
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. Very cheap. DEL-BKK frequent, BKK-YYZ usually via Tokyo or Hong Kong.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-YYZ direct on Air Canada. Slightly north of great-circle but excellent connectivity.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. ICN-YYZ direct on Korean Air and Air Canada. DEL-ICN on Korean Air/Air India.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines / AirAsia hub. Cheap DEL-KUL. KUL-YYZ needs connection but affordable.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Major Cathay Pacific hub. Excellent DEL-HKG and HKG-YYZ frequency. Great food, easy transit city."),
+	newStopover("Singapore", "SIN", "southeast_asia", "Singapore Airlines hub. Strong DEL-SIN connectivity. SIN-YYZ may require connection. Clean, safe, great food."),
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. Very cheap. DEL-BKK frequent, BKK-YYZ usually via Tokyo or Hong Kong."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-YYZ direct on Air Canada. Slightly north of great-circle but excellent connectivity."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. ICN-YYZ direct on Korean Air and Air Canada. DEL-ICN on Korean Air/Air India."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines / AirAsia hub. Cheap DEL-KUL. KUL-YYZ needs connection but affordable."),
 
 	// === EUROPE — Secondary corridor ===
 	// These route westbound via Turkey or northern Europe, avoiding
 	// Middle East airspace by going north of Iran.
 
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. IST is OPEN (north of conflict zone). IST-YYZ direct. DEL-IST on Turkish. Strong option.",
-	},
-	{
-		City:    "London",
-		Airport: "LHR",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "BA hub. DEL-LHR on Air India/BA. LHR-YYZ very frequent. Visa may be needed.",
-	},
-	{
-		City:    "Frankfurt",
-		Airport: "FRA",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Lufthansa hub. DEL-FRA on Lufthansa/Air India. FRA-YYZ direct. Schengen visa needed.",
-	},
-	{
-		City:    "Paris",
-		Airport: "CDG",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Air France hub. DEL-CDG on Air France/Air India. CDG-YYZ direct. Schengen visa needed.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. IST is OPEN (north of conflict zone). IST-YYZ direct. DEL-IST on Turkish. Strong option."),
+	newStopover("London", "LHR", "europe", "BA hub. DEL-LHR on Air India/BA. LHR-YYZ very frequent. Visa may be needed."),
+	newStopover("Frankfurt", "FRA", "europe", "Lufthansa hub. DEL-FRA on Lufthansa/Air India. FRA-YYZ direct. Schengen visa needed."),
+	newStopover("Paris", "CDG", "europe", "Air France hub. DEL-CDG on Air France/Air India. CDG-YYZ direct. Schengen visa needed."),
 }
 
 // BOMToYYZStopovers are the candidate stopover cities for Mumbai → Toronto.
@@ -170,62 +112,13 @@ var DELToYYZStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. YYZ is at ~43°N, 79°W.
 // Similar corridor to DEL→YYZ but BOM has different hub connectivity.
 var BOMToYYZStopovers = []StopoverCity{
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-YYZ via connection.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Singapore Airlines hub. Strong BOM-SIN frequency. Clean, safe city.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-YYZ on Cathay.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "AirAsia/MAS hub. Very cheap BOM-KUL. KUL-YYZ needs connection.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-YYZ direct on Air Canada.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-YYZ direct.",
-	},
-	{
-		City:    "London",
-		Airport: "LHR",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "BA hub. BOM-LHR on BA/Air India/Virgin. LHR-YYZ very frequent.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-YYZ via connection."),
+	newStopover("Singapore", "SIN", "southeast_asia", "Singapore Airlines hub. Strong BOM-SIN frequency. Clean, safe city."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-YYZ on Cathay."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "AirAsia/MAS hub. Very cheap BOM-KUL. KUL-YYZ needs connection."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-YYZ direct on Air Canada."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-YYZ direct."),
+	newStopover("London", "LHR", "europe", "BA hub. BOM-LHR on BA/Air India/Virgin. LHR-YYZ very frequent."),
 }
 
 // DELToYVRStopovers are the candidate stopover cities for Delhi → Vancouver.
@@ -233,54 +126,12 @@ var BOMToYYZStopovers = []StopoverCity{
 // Route geometry: DEL is at ~28°N, 77°E. YVR is at ~49°N, 123°W.
 // Pacific routing via East Asia is the primary corridor.
 var DELToYVRStopovers = []StopoverCity{
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-YVR direct on Air Canada/ANA. Natural Pacific waypoint.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. ICN-YVR direct on Korean Air. DEL-ICN on Korean Air.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-YVR on Cathay. DEL-HKG frequent.",
-	},
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BKK-YVR via connection (NRT/ICN). DEL-BKK frequent and cheap.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-YVR via connection. Strong DEL-SIN frequency.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. IST-YVR via connection. DEL-IST on Turkish.",
-	},
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-YVR direct on Air Canada/ANA. Natural Pacific waypoint."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. ICN-YVR direct on Korean Air. DEL-ICN on Korean Air."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-YVR on Cathay. DEL-HKG frequent."),
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BKK-YVR via connection (NRT/ICN). DEL-BKK frequent and cheap."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-YVR via connection. Strong DEL-SIN frequency."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. IST-YVR via connection. DEL-IST on Turkish."),
 }
 
 // DELToJFKStopovers are the candidate stopover cities for Delhi → New York JFK.
@@ -290,72 +141,16 @@ var DELToYVRStopovers = []StopoverCity{
 // Eastbound via Asia-Pacific and westbound via Europe are both viable.
 var DELToJFKStopovers = []StopoverCity{
 	// === EAST/SOUTHEAST ASIA — Primary corridor ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. Excellent DEL-HKG frequency. HKG-JFK direct on Cathay.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. Strong DEL-SIN connectivity. SIN-JFK direct on Singapore Airlines.",
-	},
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. Cheap DEL-BKK. BKK-JFK via connection through NRT or ICN.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-JFK direct on multiple carriers. Strong Pacific gateway.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. ICN-JFK direct on Korean Air. DEL-ICN on Korean Air/Air India.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. Excellent DEL-HKG frequency. HKG-JFK direct on Cathay."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. Strong DEL-SIN connectivity. SIN-JFK direct on Singapore Airlines."),
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. Cheap DEL-BKK. BKK-JFK via connection through NRT or ICN."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-JFK direct on multiple carriers. Strong Pacific gateway."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. ICN-JFK direct on Korean Air. DEL-ICN on Korean Air/Air India."),
 
 	// === EUROPE — Secondary corridor ===
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. IST-JFK direct. DEL-IST on Turkish. Strong option.",
-	},
-	{
-		City:    "London",
-		Airport: "LHR",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "BA hub. DEL-LHR on Air India/BA. LHR-JFK very frequent.",
-	},
-	{
-		City:    "Frankfurt",
-		Airport: "FRA",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Lufthansa hub. DEL-FRA on Lufthansa/Air India. FRA-JFK direct.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. IST-JFK direct. DEL-IST on Turkish. Strong option."),
+	newStopover("London", "LHR", "europe", "BA hub. DEL-LHR on Air India/BA. LHR-JFK very frequent."),
+	newStopover("Frankfurt", "FRA", "europe", "Lufthansa hub. DEL-FRA on Lufthansa/Air India. FRA-JFK direct."),
 }
 
 // BOMToJFKStopovers are the candidate stopover cities for Mumbai → New York JFK.
@@ -363,62 +158,13 @@ var DELToJFKStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. JFK is at ~40°N, 73°W.
 // High-demand corridor for the Indian diaspora to the US East Coast.
 var BOMToJFKStopovers = []StopoverCity{
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-JFK via connection.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Singapore Airlines hub. Strong BOM-SIN frequency. SIN-JFK direct on SQ.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-JFK direct on Cathay.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-JFK direct on multiple carriers.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-JFK direct.",
-	},
-	{
-		City:    "London",
-		Airport: "LHR",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "BA hub. BOM-LHR on BA/Air India/Virgin. LHR-JFK very frequent.",
-	},
-	{
-		City:    "Frankfurt",
-		Airport: "FRA",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Lufthansa hub. BOM-FRA on Lufthansa. FRA-JFK direct.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-JFK via connection."),
+	newStopover("Singapore", "SIN", "southeast_asia", "Singapore Airlines hub. Strong BOM-SIN frequency. SIN-JFK direct on SQ."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-JFK direct on Cathay."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-JFK direct on multiple carriers."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-JFK direct."),
+	newStopover("London", "LHR", "europe", "BA hub. BOM-LHR on BA/Air India/Virgin. LHR-JFK very frequent."),
+	newStopover("Frankfurt", "FRA", "europe", "Lufthansa hub. BOM-FRA on Lufthansa. FRA-JFK direct."),
 }
 
 // DELToLHRStopovers are the candidate stopover cities for Delhi → London Heathrow.
@@ -428,56 +174,14 @@ var BOMToJFKStopovers = []StopoverCity{
 // primary safe corridors avoiding Middle East airspace.
 var DELToLHRStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA — Primary corridor ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. DEL-BKK frequent and cheap. BKK-LHR direct on Thai/BA. Temples, street food, nightlife.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-LHR direct on Singapore Airlines. Strong DEL-SIN frequency. Clean, safe, great food.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines hub. KUL-LHR direct on MAS. Cheap DEL-KUL. Petronas Towers, Batu Caves.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-LHR direct on Cathay/BA. DEL-HKG frequent. Victoria Peak, harbour, dim sum.",
-	},
-	{
-		City:    "Colombo",
-		Airport: "CMB",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SriLankan Airlines hub. CMB-LHR direct on SriLankan. DEL-CMB frequent. Beaches, tea country, temples.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. DEL-BKK frequent and cheap. BKK-LHR direct on Thai/BA. Temples, street food, nightlife."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-LHR direct on Singapore Airlines. Strong DEL-SIN frequency. Clean, safe, great food."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines hub. KUL-LHR direct on MAS. Cheap DEL-KUL. Petronas Towers, Batu Caves."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-LHR direct on Cathay/BA. DEL-HKG frequent. Victoria Peak, harbour, dim sum."),
+	newStopover("Colombo", "CMB", "south_asia", "SriLankan Airlines hub. CMB-LHR direct on SriLankan. DEL-CMB frequent. Beaches, tea country, temples."),
 
 	// === EUROPE — Secondary corridor ===
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. IST-LHR very frequent. DEL-IST on Turkish. Bosphorus, bazaars, history.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. IST-LHR very frequent. DEL-IST on Turkish. Bosphorus, bazaars, history."),
 }
 
 // BOMToLHRStopovers are the candidate stopover cities for Mumbai → London Heathrow.
@@ -485,54 +189,12 @@ var DELToLHRStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. LHR is at ~51°N, 0°W.
 // Similar corridor to DEL→LHR but BOM has different hub connectivity.
 var BOMToLHRStopovers = []StopoverCity{
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-LHR direct on Thai/BA.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-LHR direct on Singapore Airlines. Strong BOM-SIN frequency.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines hub. KUL-LHR direct on MAS. Cheap BOM-KUL.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-LHR direct on Cathay/BA. BOM-HKG on Cathay/Air India.",
-	},
-	{
-		City:    "Colombo",
-		Airport: "CMB",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SriLankan Airlines hub. CMB-LHR direct on SriLankan. BOM-CMB short hop. Beaches, wildlife.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. IST-LHR very frequent. BOM-IST on Turkish.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-LHR direct on Thai/BA."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-LHR direct on Singapore Airlines. Strong BOM-SIN frequency."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines hub. KUL-LHR direct on MAS. Cheap BOM-KUL."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-LHR direct on Cathay/BA. BOM-HKG on Cathay/Air India."),
+	newStopover("Colombo", "CMB", "south_asia", "SriLankan Airlines hub. CMB-LHR direct on SriLankan. BOM-CMB short hop. Beaches, wildlife."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. IST-LHR very frequent. BOM-IST on Turkish."),
 }
 
 // DELToSFOStopovers are the candidate stopover cities for Delhi → San Francisco.
@@ -542,58 +204,16 @@ var BOMToLHRStopovers = []StopoverCity{
 // Pacific routing via East Asia is the primary safe corridor.
 var DELToSFOStopovers = []StopoverCity{
 	// === EAST ASIA — Primary corridor ===
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-SFO direct on ANA/JAL/United. DEL-NRT on JAL/ANA. Natural Pacific gateway.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. ICN-SFO direct on Korean Air/Asiana/United. DEL-ICN on Korean Air.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-SFO direct on Cathay/United. DEL-HKG frequent.",
-	},
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-SFO direct on ANA/JAL/United. DEL-NRT on JAL/ANA. Natural Pacific gateway."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. ICN-SFO direct on Korean Air/Asiana/United. DEL-ICN on Korean Air."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-SFO direct on Cathay/United. DEL-HKG frequent."),
 
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BKK-SFO via NRT/ICN connection. DEL-BKK frequent and cheap.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-SFO direct on Singapore Airlines/United. Strong DEL-SIN frequency.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BKK-SFO via NRT/ICN connection. DEL-BKK frequent and cheap."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-SFO direct on Singapore Airlines/United. Strong DEL-SIN frequency."),
 
 	// === EUROPE — Secondary corridor ===
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. IST-SFO direct on Turkish. DEL-IST on Turkish. Westbound option.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. IST-SFO direct on Turkish. DEL-IST on Turkish. Westbound option."),
 }
 
 // BOMToSFOStopovers are the candidate stopover cities for Mumbai → San Francisco.
@@ -601,46 +221,11 @@ var DELToSFOStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. SFO is at ~37°N, 122°W.
 // High-demand corridor for the Indian tech diaspora to the US West Coast.
 var BOMToSFOStopovers = []StopoverCity{
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-SFO direct on ANA/JAL/United. BOM-NRT on ANA.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-SFO direct on Cathay/United. BOM-HKG on Cathay/Air India.",
-	},
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-SFO via connection.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-SFO direct on Singapore Airlines/United. Strong BOM-SIN frequency.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. IST-SFO direct on Turkish. BOM-IST on Turkish.",
-	},
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-SFO direct on ANA/JAL/United. BOM-NRT on ANA."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-SFO direct on Cathay/United. BOM-HKG on Cathay/Air India."),
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-SFO via connection."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-SFO direct on Singapore Airlines/United. Strong BOM-SIN frequency."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. IST-SFO direct on Turkish. BOM-IST on Turkish."),
 }
 
 // DELToSYDStopovers are the candidate stopover cities for Delhi → Sydney.
@@ -650,56 +235,14 @@ var BOMToSFOStopovers = []StopoverCity{
 // on the route and have strong connectivity to both India and Australia.
 var DELToSYDStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA — Primary corridor ===
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-SYD very frequent on SQ/Qantas. Strong DEL-SIN frequency. Clean, safe, great food.",
-	},
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BKK-SYD direct on Thai. DEL-BKK frequent and cheap. Temples, street food.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines/AirAsia hub. KUL-SYD direct on MAS. Cheap DEL-KUL. Petronas Towers, Batu Caves.",
-	},
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-SYD very frequent on SQ/Qantas. Strong DEL-SIN frequency. Clean, safe, great food."),
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BKK-SYD direct on Thai. DEL-BKK frequent and cheap. Temples, street food."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines/AirAsia hub. KUL-SYD direct on MAS. Cheap DEL-KUL. Petronas Towers, Batu Caves."),
 
 	// === EAST ASIA ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-SYD direct on Cathay/Qantas. DEL-HKG frequent. Victoria Peak, dim sum.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-SYD direct on ANA/JAL/Qantas. DEL-NRT on JAL. Slight detour but great city.",
-	},
-	{
-		City:    "Osaka",
-		Airport: "KIX",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Peach/JAL hub. KIX-SYD on Jetstar/JAL. Less crowded than Tokyo. Dotonbori, Osaka Castle.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-SYD direct on Cathay/Qantas. DEL-HKG frequent. Victoria Peak, dim sum."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-SYD direct on ANA/JAL/Qantas. DEL-NRT on JAL. Slight detour but great city."),
+	newStopover("Osaka", "KIX", "east_asia", "Peach/JAL hub. KIX-SYD on Jetstar/JAL. Less crowded than Tokyo. Dotonbori, Osaka Castle."),
 }
 
 // BOMToSYDStopovers are the candidate stopover cities for Mumbai → Sydney.
@@ -707,46 +250,11 @@ var DELToSYDStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. SYD is at ~33°S, 151°E.
 // Southeast Asia is the natural corridor with strong BOM connectivity.
 var BOMToSYDStopovers = []StopoverCity{
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-SYD very frequent on SQ/Qantas. Strong BOM-SIN frequency.",
-	},
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-SYD direct on Thai.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines/AirAsia hub. KUL-SYD direct on MAS. Cheap BOM-KUL.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-SYD direct on Cathay/Qantas. BOM-HKG on Cathay/Air India.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-SYD direct on ANA/JAL/Qantas. BOM-NRT on ANA.",
-	},
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-SYD very frequent on SQ/Qantas. Strong BOM-SIN frequency."),
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-SYD direct on Thai."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines/AirAsia hub. KUL-SYD direct on MAS. Cheap BOM-KUL."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-SYD direct on Cathay/Qantas. BOM-HKG on Cathay/Air India."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-SYD direct on ANA/JAL/Qantas. BOM-NRT on ANA."),
 }
 
 // DELToFRAStopovers are the candidate stopover cities for Delhi → Frankfurt.
@@ -756,54 +264,12 @@ var BOMToSYDStopovers = []StopoverCity{
 // to both India and Frankfurt via ME3 airlines and Lufthansa partners.
 var DELToFRAStopovers = []StopoverCity{
 	// === GULF — Primary corridor ===
-	{
-		City:    "Doha",
-		Airport: "DOH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-FRA direct on QR/Lufthansa. Museum of Islamic Art, desert safaris.",
-	},
-	{
-		City:    "Abu Dhabi",
-		Airport: "AUH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Etihad hub. DEL-AUH on Etihad/Air India. AUH-FRA direct on Etihad. Louvre Abu Dhabi, Sheikh Zayed Mosque.",
-	},
-	{
-		City:    "Dubai",
-		Airport: "DXB",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-FRA direct on Emirates/Lufthansa.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-FRA direct on Turkish/Lufthansa. Bosphorus, bazaars.",
-	},
-	{
-		City:    "Bahrain",
-		Airport: "BAH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Gulf Air hub. DEL-BAH on Gulf Air. BAH-FRA direct on Gulf Air. Compact, walkable, historic sites.",
-	},
-	{
-		City:    "Kuwait City",
-		Airport: "KWI",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Kuwait Airways hub. DEL-KWI on Kuwait Airways/AI. KWI-FRA direct on Kuwait Airways. Kuwait Towers, souks.",
-	},
+	newStopover("Doha", "DOH", "gulf", "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-FRA direct on QR/Lufthansa. Museum of Islamic Art, desert safaris."),
+	newStopover("Abu Dhabi", "AUH", "gulf", "Etihad hub. DEL-AUH on Etihad/Air India. AUH-FRA direct on Etihad. Louvre Abu Dhabi, Sheikh Zayed Mosque."),
+	newStopover("Dubai", "DXB", "gulf", "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-FRA direct on Emirates/Lufthansa."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-FRA direct on Turkish/Lufthansa. Bosphorus, bazaars."),
+	newStopover("Bahrain", "BAH", "gulf", "Gulf Air hub. DEL-BAH on Gulf Air. BAH-FRA direct on Gulf Air. Compact, walkable, historic sites."),
+	newStopover("Kuwait City", "KWI", "gulf", "Kuwait Airways hub. DEL-KWI on Kuwait Airways/AI. KWI-FRA direct on Kuwait Airways. Kuwait Towers, souks."),
 }
 
 // BOMToFRAStopovers are the candidate stopover cities for Mumbai → Frankfurt.
@@ -811,46 +277,11 @@ var DELToFRAStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. FRA is at ~50°N, 8°E.
 // Gulf carrier hubs are the primary corridor with strong BOM connectivity.
 var BOMToFRAStopovers = []StopoverCity{
-	{
-		City:    "Doha",
-		Airport: "DOH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-FRA direct on QR/Lufthansa.",
-	},
-	{
-		City:    "Abu Dhabi",
-		Airport: "AUH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Etihad hub. BOM-AUH on Etihad/Air India. AUH-FRA direct on Etihad.",
-	},
-	{
-		City:    "Dubai",
-		Airport: "DXB",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-FRA direct on Emirates/Lufthansa.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-FRA direct on Turkish/Lufthansa.",
-	},
-	{
-		City:    "Bahrain",
-		Airport: "BAH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Gulf Air hub. BOM-BAH on Gulf Air. BAH-FRA direct on Gulf Air.",
-	},
+	newStopover("Doha", "DOH", "gulf", "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-FRA direct on QR/Lufthansa."),
+	newStopover("Abu Dhabi", "AUH", "gulf", "Etihad hub. BOM-AUH on Etihad/Air India. AUH-FRA direct on Etihad."),
+	newStopover("Dubai", "DXB", "gulf", "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-FRA direct on Emirates/Lufthansa."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-FRA direct on Turkish/Lufthansa."),
+	newStopover("Bahrain", "BAH", "gulf", "Gulf Air hub. BOM-BAH on Gulf Air. BAH-FRA direct on Gulf Air."),
 }
 
 // DELToBKKStopovers are the candidate stopover cities for Delhi → Bangkok.
@@ -859,58 +290,16 @@ var BOMToFRAStopovers = []StopoverCity{
 // Gulf carrier hubs and South Asian crossroads are the primary corridor.
 var DELToBKKStopovers = []StopoverCity{
 	// === GULF — Primary corridor ===
-	{
-		City:    "Doha",
-		Airport: "DOH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-BKK direct on QR. Desert safaris, Museum of Islamic Art.",
-	},
-	{
-		City:    "Abu Dhabi",
-		Airport: "AUH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Etihad hub. DEL-AUH on Etihad/Air India. AUH-BKK direct on Etihad. Louvre Abu Dhabi, Sheikh Zayed Mosque.",
-	},
-	{
-		City:    "Dubai",
-		Airport: "DXB",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-BKK direct on Emirates.",
-	},
+	newStopover("Doha", "DOH", "gulf", "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-BKK direct on QR. Desert safaris, Museum of Islamic Art."),
+	newStopover("Abu Dhabi", "AUH", "gulf", "Etihad hub. DEL-AUH on Etihad/Air India. AUH-BKK direct on Etihad. Louvre Abu Dhabi, Sheikh Zayed Mosque."),
+	newStopover("Dubai", "DXB", "gulf", "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-BKK direct on Emirates."),
 
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. DEL-SIN frequent. SIN-BKK very frequent on SQ/Thai. Clean, safe, great food.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines/AirAsia hub. DEL-KUL on AirAsia/MAS. KUL-BKK very frequent. Petronas Towers, Batu Caves.",
-	},
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. DEL-SIN frequent. SIN-BKK very frequent on SQ/Thai. Clean, safe, great food."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines/AirAsia hub. DEL-KUL on AirAsia/MAS. KUL-BKK very frequent. Petronas Towers, Batu Caves."),
 
 	// === SOUTH ASIA ===
-	{
-		City:    "Kolkata",
-		Airport: "CCU",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Eastern India gateway. DEL-CCU very frequent on AI/IndiGo. CCU-BKK direct on Thai/IndiGo. Victoria Memorial, street food.",
-	},
+	newStopover("Kolkata", "CCU", "south_asia", "Eastern India gateway. DEL-CCU very frequent on AI/IndiGo. CCU-BKK direct on Thai/IndiGo. Victoria Memorial, street food."),
 }
 
 // BOMToBKKStopovers are the candidate stopover cities for Mumbai → Bangkok.
@@ -918,46 +307,11 @@ var DELToBKKStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. BKK is at ~13°N, 100°E.
 // Gulf carrier hubs and Southeast Asian crossroads are the primary corridor.
 var BOMToBKKStopovers = []StopoverCity{
-	{
-		City:    "Doha",
-		Airport: "DOH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-BKK direct on QR.",
-	},
-	{
-		City:    "Abu Dhabi",
-		Airport: "AUH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Etihad hub. BOM-AUH on Etihad/Air India. AUH-BKK direct on Etihad.",
-	},
-	{
-		City:    "Dubai",
-		Airport: "DXB",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-BKK direct on Emirates.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. BOM-SIN frequent. SIN-BKK very frequent on SQ/Thai.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines/AirAsia hub. BOM-KUL on AirAsia/MAS. KUL-BKK very frequent.",
-	},
+	newStopover("Doha", "DOH", "gulf", "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-BKK direct on QR."),
+	newStopover("Abu Dhabi", "AUH", "gulf", "Etihad hub. BOM-AUH on Etihad/Air India. AUH-BKK direct on Etihad."),
+	newStopover("Dubai", "DXB", "gulf", "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-BKK direct on Emirates."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. BOM-SIN frequent. SIN-BKK very frequent on SQ/Thai."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines/AirAsia hub. BOM-KUL on AirAsia/MAS. KUL-BKK very frequent."),
 }
 
 // DELToNRTStopovers are the candidate stopover cities for Delhi → Tokyo Narita.
@@ -967,56 +321,14 @@ var BOMToBKKStopovers = []StopoverCity{
 // to both India and Japan.
 var DELToNRTStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. DEL-BKK frequent and cheap. BKK-NRT direct on Thai/ANA. Temples, street food.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. DEL-SIN frequent. SIN-NRT direct on SQ/ANA/JAL. Clean, safe, great food.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines/AirAsia hub. DEL-KUL on AirAsia/MAS. KUL-NRT direct on MAS/AirAsia X.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. DEL-BKK frequent and cheap. BKK-NRT direct on Thai/ANA. Temples, street food."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. DEL-SIN frequent. SIN-NRT direct on SQ/ANA/JAL. Clean, safe, great food."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines/AirAsia hub. DEL-KUL on AirAsia/MAS. KUL-NRT direct on MAS/AirAsia X."),
 
 	// === EAST ASIA ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. DEL-HKG frequent. HKG-NRT direct on Cathay/ANA/JAL. Victoria Peak, dim sum.",
-	},
-	{
-		City:    "Taipei",
-		Airport: "TPE",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "EVA Air/China Airlines hub. TPE-NRT very frequent. DEL-TPE on EVA/China Airlines. Night markets, temples.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. ICN-NRT very frequent. DEL-ICN on Korean Air/Air India. Palaces, street food.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. DEL-HKG frequent. HKG-NRT direct on Cathay/ANA/JAL. Victoria Peak, dim sum."),
+	newStopover("Taipei", "TPE", "east_asia", "EVA Air/China Airlines hub. TPE-NRT very frequent. DEL-TPE on EVA/China Airlines. Night markets, temples."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. ICN-NRT very frequent. DEL-ICN on Korean Air/Air India. Palaces, street food."),
 }
 
 // BOMToNRTStopovers are the candidate stopover cities for Mumbai → Tokyo Narita.
@@ -1024,46 +336,11 @@ var DELToNRTStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. NRT is at ~35°N, 140°E.
 // Similar corridor to DEL→NRT but BOM has different hub connectivity.
 var BOMToNRTStopovers = []StopoverCity{
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-NRT direct on Thai/ANA.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. BOM-SIN frequent. SIN-NRT direct on SQ/ANA/JAL.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-NRT direct on Cathay/ANA/JAL.",
-	},
-	{
-		City:    "Taipei",
-		Airport: "TPE",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "EVA Air/China Airlines hub. TPE-NRT very frequent. BOM-TPE on EVA/China Airlines.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. ICN-NRT very frequent. BOM-ICN on Korean Air.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-NRT direct on Thai/ANA."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. BOM-SIN frequent. SIN-NRT direct on SQ/ANA/JAL."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-NRT direct on Cathay/ANA/JAL."),
+	newStopover("Taipei", "TPE", "east_asia", "EVA Air/China Airlines hub. TPE-NRT very frequent. BOM-TPE on EVA/China Airlines."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. ICN-NRT very frequent. BOM-ICN on Korean Air."),
 }
 
 // DELToMELStopovers are the candidate stopover cities for Delhi → Melbourne.
@@ -1073,48 +350,13 @@ var BOMToNRTStopovers = []StopoverCity{
 // minus Osaka (weak KIX-MEL connectivity).
 var DELToMELStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA — Primary corridor ===
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-MEL very frequent on SQ/Qantas. Strong DEL-SIN frequency. Clean, safe, great food.",
-	},
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BKK-MEL direct on Thai. DEL-BKK frequent and cheap. Temples, street food.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines/AirAsia hub. KUL-MEL direct on MAS/AirAsia X. Cheap DEL-KUL.",
-	},
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-MEL very frequent on SQ/Qantas. Strong DEL-SIN frequency. Clean, safe, great food."),
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BKK-MEL direct on Thai. DEL-BKK frequent and cheap. Temples, street food."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines/AirAsia hub. KUL-MEL direct on MAS/AirAsia X. Cheap DEL-KUL."),
 
 	// === EAST ASIA ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-MEL direct on Cathay/Qantas. DEL-HKG frequent.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-MEL direct on JAL/Qantas. DEL-NRT on JAL. Slight detour but great city.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-MEL direct on Cathay/Qantas. DEL-HKG frequent."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-MEL direct on JAL/Qantas. DEL-NRT on JAL. Slight detour but great city."),
 }
 
 // BOMToMELStopovers are the candidate stopover cities for Mumbai → Melbourne.
@@ -1122,46 +364,11 @@ var DELToMELStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. MEL is at ~37°S, 144°E.
 // Southeast Asia is the natural corridor with strong BOM connectivity.
 var BOMToMELStopovers = []StopoverCity{
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. SIN-MEL very frequent on SQ/Qantas. Strong BOM-SIN frequency.",
-	},
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-MEL direct on Thai.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines/AirAsia hub. KUL-MEL direct on MAS/AirAsia X. Cheap BOM-KUL.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. HKG-MEL direct on Cathay/Qantas. BOM-HKG on Cathay/Air India.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-MEL direct on JAL/Qantas. BOM-NRT on ANA.",
-	},
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. SIN-MEL very frequent on SQ/Qantas. Strong BOM-SIN frequency."),
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-MEL direct on Thai."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines/AirAsia hub. KUL-MEL direct on MAS/AirAsia X. Cheap BOM-KUL."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. HKG-MEL direct on Cathay/Qantas. BOM-HKG on Cathay/Air India."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-MEL direct on JAL/Qantas. BOM-NRT on ANA."),
 }
 
 // DELToCDGStopovers are the candidate stopover cities for Delhi → Paris CDG.
@@ -1171,46 +378,11 @@ var BOMToMELStopovers = []StopoverCity{
 // to both India and Paris via ME3 airlines and Air France partners.
 var DELToCDGStopovers = []StopoverCity{
 	// === GULF — Primary corridor ===
-	{
-		City:    "Doha",
-		Airport: "DOH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-CDG direct on QR/Air France.",
-	},
-	{
-		City:    "Abu Dhabi",
-		Airport: "AUH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Etihad hub. DEL-AUH on Etihad/Air India. AUH-CDG direct on Etihad.",
-	},
-	{
-		City:    "Dubai",
-		Airport: "DXB",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-CDG direct on Emirates/Air France.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-CDG direct on Turkish/Air France. Bosphorus, bazaars.",
-	},
-	{
-		City:    "Bahrain",
-		Airport: "BAH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Gulf Air hub. DEL-BAH on Gulf Air. BAH-CDG direct on Gulf Air. Compact, walkable.",
-	},
+	newStopover("Doha", "DOH", "gulf", "Qatar Airways hub. DEL-DOH very frequent on QR. DOH-CDG direct on QR/Air France."),
+	newStopover("Abu Dhabi", "AUH", "gulf", "Etihad hub. DEL-AUH on Etihad/Air India. AUH-CDG direct on Etihad."),
+	newStopover("Dubai", "DXB", "gulf", "Emirates mega-hub. DEL-DXB very frequent on Emirates/AI. DXB-CDG direct on Emirates/Air France."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-CDG direct on Turkish/Air France. Bosphorus, bazaars."),
+	newStopover("Bahrain", "BAH", "gulf", "Gulf Air hub. DEL-BAH on Gulf Air. BAH-CDG direct on Gulf Air. Compact, walkable."),
 }
 
 // BOMToCDGStopovers are the candidate stopover cities for Mumbai → Paris CDG.
@@ -1218,46 +390,11 @@ var DELToCDGStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. CDG is at ~49°N, 2°E.
 // Gulf carrier hubs are the primary corridor with strong BOM connectivity.
 var BOMToCDGStopovers = []StopoverCity{
-	{
-		City:    "Doha",
-		Airport: "DOH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-CDG direct on QR/Air France.",
-	},
-	{
-		City:    "Abu Dhabi",
-		Airport: "AUH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Etihad hub. BOM-AUH on Etihad/Air India. AUH-CDG direct on Etihad.",
-	},
-	{
-		City:    "Dubai",
-		Airport: "DXB",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-CDG direct on Emirates/Air France.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-CDG direct on Turkish/Air France.",
-	},
-	{
-		City:    "Bahrain",
-		Airport: "BAH",
-		Region:  "gulf",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Gulf Air hub. BOM-BAH on Gulf Air. BAH-CDG direct on Gulf Air.",
-	},
+	newStopover("Doha", "DOH", "gulf", "Qatar Airways hub. BOM-DOH very frequent on QR. DOH-CDG direct on QR/Air France."),
+	newStopover("Abu Dhabi", "AUH", "gulf", "Etihad hub. BOM-AUH on Etihad/Air India. AUH-CDG direct on Etihad."),
+	newStopover("Dubai", "DXB", "gulf", "Emirates mega-hub. BOM-DXB very frequent on Emirates/AI. DXB-CDG direct on Emirates/Air France."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-CDG direct on Turkish/Air France."),
+	newStopover("Bahrain", "BAH", "gulf", "Gulf Air hub. BOM-BAH on Gulf Air. BAH-CDG direct on Gulf Air."),
 }
 
 // DELToICNStopovers are the candidate stopover cities for Delhi → Seoul Incheon.
@@ -1266,48 +403,13 @@ var BOMToCDGStopovers = []StopoverCity{
 // Southeast and East Asian corridor.
 var DELToICNStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Street food capital, temples, vibrant nightlife",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Singapore Airlines hub, major Asia-Pacific crossroads",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Petronas Towers, diverse cuisine, affordable luxury",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Street food capital, temples, vibrant nightlife"),
+	newStopover("Singapore", "SIN", "southeast_asia", "Singapore Airlines hub, major Asia-Pacific crossroads"),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Petronas Towers, diverse cuisine, affordable luxury"),
 
 	// === EAST ASIA ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Victoria Peak, dim sum, world-class shopping",
-	},
-	{
-		City:    "Taipei",
-		Airport: "TPE",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Night markets, Taipei 101, hot springs",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Victoria Peak, dim sum, world-class shopping"),
+	newStopover("Taipei", "TPE", "east_asia", "Night markets, Taipei 101, hot springs"),
 }
 
 // BOMToICNStopovers are the candidate stopover cities for Mumbai → Seoul Incheon.
@@ -1315,38 +417,10 @@ var DELToICNStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. ICN is at ~37°N, 126°E.
 // East Asian corridor with strong BOM connectivity.
 var BOMToICNStopovers = []StopoverCity{
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-ICN direct on Thai/Korean Air.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. BOM-SIN frequent. SIN-ICN direct on SQ/Korean Air.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-ICN direct on Cathay/Korean Air.",
-	},
-	{
-		City:    "Taipei",
-		Airport: "TPE",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "EVA Air/China Airlines hub. TPE-ICN very frequent. BOM-TPE on EVA/China Airlines.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-ICN direct on Thai/Korean Air."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. BOM-SIN frequent. SIN-ICN direct on SQ/Korean Air."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-ICN direct on Cathay/Korean Air."),
+	newStopover("Taipei", "TPE", "east_asia", "EVA Air/China Airlines hub. TPE-ICN very frequent. BOM-TPE on EVA/China Airlines."),
 }
 
 // DELToHKGStopovers are the candidate stopover cities for Delhi → Hong Kong.
@@ -1355,30 +429,9 @@ var BOMToICNStopovers = []StopoverCity{
 // Southeast Asian corridor.
 var DELToHKGStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Street food capital, temples, vibrant nightlife",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Singapore Airlines hub, major Asia-Pacific crossroads",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Petronas Towers, diverse cuisine, affordable luxury",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Street food capital, temples, vibrant nightlife"),
+	newStopover("Singapore", "SIN", "southeast_asia", "Singapore Airlines hub, major Asia-Pacific crossroads"),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Petronas Towers, diverse cuisine, affordable luxury"),
 
 	// === SOUTH ASIA ===
 	{
@@ -1391,14 +444,7 @@ var DELToHKGStopovers = []StopoverCity{
 	},
 
 	// === EAST ASIA ===
-	{
-		City:    "Taipei",
-		Airport: "TPE",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Night markets, Taipei 101, hot springs",
-	},
+	newStopover("Taipei", "TPE", "east_asia", "Night markets, Taipei 101, hot springs"),
 }
 
 // BOMToHKGStopovers are the candidate stopover cities for Mumbai → Hong Kong.
@@ -1406,38 +452,10 @@ var DELToHKGStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. HKG is at ~22°N, 114°E.
 // Southeast Asian corridor with strong BOM connectivity.
 var BOMToHKGStopovers = []StopoverCity{
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-HKG direct on Thai/Cathay.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. BOM-SIN frequent. SIN-HKG direct on SQ/Cathay.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines/AirAsia hub. BOM-KUL on AirAsia/MAS. KUL-HKG direct on MAS/Cathay.",
-	},
-	{
-		City:    "Taipei",
-		Airport: "TPE",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "EVA Air/China Airlines hub. TPE-HKG very frequent. BOM-TPE on EVA/China Airlines.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-HKG direct on Thai/Cathay."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. BOM-SIN frequent. SIN-HKG direct on SQ/Cathay."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines/AirAsia hub. BOM-KUL on AirAsia/MAS. KUL-HKG direct on MAS/Cathay."),
+	newStopover("Taipei", "TPE", "east_asia", "EVA Air/China Airlines hub. TPE-HKG very frequent. BOM-TPE on EVA/China Airlines."),
 }
 
 // DELToLAXStopovers are the candidate stopover cities for Delhi → Los Angeles.
@@ -1447,56 +465,14 @@ var BOMToHKGStopovers = []StopoverCity{
 // to both India and the US West Coast.
 var DELToLAXStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. DEL-BKK frequent and cheap. BKK-LAX via connection. Temples, street food.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. DEL-SIN frequent. SIN-LAX direct on Singapore Airlines. Clean, safe, great food.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines hub. DEL-KUL on AirAsia/MAS. KUL-LAX via connection.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. DEL-BKK frequent and cheap. BKK-LAX via connection. Temples, street food."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. DEL-SIN frequent. SIN-LAX direct on Singapore Airlines. Clean, safe, great food."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines hub. DEL-KUL on AirAsia/MAS. KUL-LAX via connection."),
 
 	// === EAST ASIA ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. DEL-HKG frequent. HKG-LAX direct on Cathay/United. Victoria Peak, dim sum.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-LAX direct on ANA/JAL/United. DEL-NRT on JAL. Natural Pacific gateway.",
-	},
-	{
-		City:    "Taipei",
-		Airport: "TPE",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "EVA Air hub. TPE-LAX direct on EVA Air. DEL-TPE on EVA/China Airlines. Night markets.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. DEL-HKG frequent. HKG-LAX direct on Cathay/United. Victoria Peak, dim sum."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-LAX direct on ANA/JAL/United. DEL-NRT on JAL. Natural Pacific gateway."),
+	newStopover("Taipei", "TPE", "east_asia", "EVA Air hub. TPE-LAX direct on EVA Air. DEL-TPE on EVA/China Airlines. Night markets."),
 }
 
 // BOMToLAXStopovers are the candidate stopover cities for Mumbai → Los Angeles.
@@ -1504,46 +480,11 @@ var DELToLAXStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. LAX is at ~33°N, 118°W.
 // East Asia Pacific corridor with strong BOM connectivity.
 var BOMToLAXStopovers = []StopoverCity{
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-LAX via connection.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. BOM-SIN frequent. SIN-LAX direct on Singapore Airlines.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-LAX direct on Cathay/United.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-LAX direct on ANA/JAL/United. BOM-NRT on ANA.",
-	},
-	{
-		City:    "Taipei",
-		Airport: "TPE",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "EVA Air hub. TPE-LAX direct on EVA Air. BOM-TPE on EVA/China Airlines.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-LAX via connection."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. BOM-SIN frequent. SIN-LAX direct on Singapore Airlines."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-LAX direct on Cathay/United."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-LAX direct on ANA/JAL/United. BOM-NRT on ANA."),
+	newStopover("Taipei", "TPE", "east_asia", "EVA Air hub. TPE-LAX direct on EVA Air. BOM-TPE on EVA/China Airlines."),
 }
 
 // DELToORDStopovers are the candidate stopover cities for Delhi → Chicago O'Hare.
@@ -1553,58 +494,16 @@ var BOMToLAXStopovers = []StopoverCity{
 // to both India and Chicago.
 var DELToORDStopovers = []StopoverCity{
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. DEL-BKK frequent and cheap. BKK-ORD via connection.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. DEL-SIN frequent. SIN-ORD via connection.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. DEL-BKK frequent and cheap. BKK-ORD via connection."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. DEL-SIN frequent. SIN-ORD via connection."),
 
 	// === EAST ASIA ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. DEL-HKG frequent. HKG-ORD direct on Cathay/United.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-ORD direct on ANA/JAL/United. DEL-NRT on JAL.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. ICN-ORD direct on Korean Air/United. DEL-ICN on Korean Air.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. DEL-HKG frequent. HKG-ORD direct on Cathay/United."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-ORD direct on ANA/JAL/United. DEL-NRT on JAL."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. ICN-ORD direct on Korean Air/United. DEL-ICN on Korean Air."),
 
 	// === EUROPE ===
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-ORD direct on Turkish.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-ORD direct on Turkish."),
 }
 
 // BOMToORDStopovers are the candidate stopover cities for Mumbai → Chicago O'Hare.
@@ -1612,54 +511,12 @@ var DELToORDStopovers = []StopoverCity{
 // Route geometry: BOM is at ~19°N, 73°E. ORD is at ~41°N, 87°W.
 // East Asia Pacific + European corridor with strong BOM connectivity.
 var BOMToORDStopovers = []StopoverCity{
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-ORD via connection.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. BOM-SIN frequent. SIN-ORD via connection.",
-	},
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-ORD direct on Cathay/United.",
-	},
-	{
-		City:    "Tokyo",
-		Airport: "NRT",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "ANA/JAL hub. NRT-ORD direct on ANA/JAL/United. BOM-NRT on ANA.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. ICN-ORD direct on Korean Air/United. BOM-ICN on Korean Air.",
-	},
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-ORD direct on Turkish.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-ORD via connection."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. BOM-SIN frequent. SIN-ORD via connection."),
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-ORD direct on Cathay/United."),
+	newStopover("Tokyo", "NRT", "east_asia", "ANA/JAL hub. NRT-ORD direct on ANA/JAL/United. BOM-NRT on ANA."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. ICN-ORD direct on Korean Air/United. BOM-ICN on Korean Air."),
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-ORD direct on Turkish."),
 }
 
 // LHRToBKKStopovers are the candidate stopover cities for London → Bangkok.
@@ -1669,58 +526,16 @@ var BOMToORDStopovers = []StopoverCity{
 // or Southeast Asian cities that are geographically on the way.
 var LHRToBKKStopovers = []StopoverCity{
 	// === EUROPE ===
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. LHR-IST very frequent on BA/Turkish. IST-BKK direct on Turkish.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. LHR-IST very frequent on BA/Turkish. IST-BKK direct on Turkish."),
 
 	// === INDIAN SUBCONTINENT ===
-	{
-		City:    "Delhi",
-		Airport: "DEL",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Air India hub. LHR-DEL on BA/Air India. DEL-BKK frequent on Thai/IndiGo. Taj Mahal day trip.",
-	},
-	{
-		City:    "Mumbai",
-		Airport: "BOM",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Air India hub. LHR-BOM on BA/Air India. BOM-BKK frequent on Thai/IndiGo.",
-	},
-	{
-		City:    "Colombo",
-		Airport: "CMB",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SriLankan Airlines hub. LHR-CMB on SriLankan. CMB-BKK direct. Beaches, temples.",
-	},
+	newStopover("Delhi", "DEL", "south_asia", "Air India hub. LHR-DEL on BA/Air India. DEL-BKK frequent on Thai/IndiGo. Taj Mahal day trip."),
+	newStopover("Mumbai", "BOM", "south_asia", "Air India hub. LHR-BOM on BA/Air India. BOM-BKK frequent on Thai/IndiGo."),
+	newStopover("Colombo", "CMB", "south_asia", "SriLankan Airlines hub. LHR-CMB on SriLankan. CMB-BKK direct. Beaches, temples."),
 
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines hub. LHR-KUL on MAS. KUL-BKK short hop on AirAsia/MAS.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. LHR-SIN on SQ/BA. SIN-BKK short hop on SQ/Thai. Clean, safe city.",
-	},
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines hub. LHR-KUL on MAS. KUL-BKK short hop on AirAsia/MAS."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. LHR-SIN on SQ/BA. SIN-BKK short hop on SQ/Thai. Clean, safe city."),
 }
 
 // LHRToNRTStopovers are the candidate stopover cities for London → Tokyo Narita.
@@ -1729,68 +544,19 @@ var LHRToBKKStopovers = []StopoverCity{
 // Gulf hubs blocked. Route via Istanbul, Indian subcontinent, or East/Southeast Asia.
 var LHRToNRTStopovers = []StopoverCity{
 	// === EUROPE ===
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. LHR-IST very frequent. IST-NRT direct on Turkish.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. LHR-IST very frequent. IST-NRT direct on Turkish."),
 
 	// === INDIAN SUBCONTINENT ===
-	{
-		City:    "Delhi",
-		Airport: "DEL",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Air India hub. LHR-DEL on BA/Air India. DEL-NRT on JAL/ANA. Taj Mahal day trip.",
-	},
+	newStopover("Delhi", "DEL", "south_asia", "Air India hub. LHR-DEL on BA/Air India. DEL-NRT on JAL/ANA. Taj Mahal day trip."),
 
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. LHR-BKK on Thai/BA. BKK-NRT direct on Thai/ANA. Temples, street food.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. LHR-SIN on SQ/BA. SIN-NRT direct on SQ/ANA/JAL.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines hub. LHR-KUL on MAS. KUL-NRT direct on MAS/AirAsia X.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. LHR-BKK on Thai/BA. BKK-NRT direct on Thai/ANA. Temples, street food."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. LHR-SIN on SQ/BA. SIN-NRT direct on SQ/ANA/JAL."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines hub. LHR-KUL on MAS. KUL-NRT direct on MAS/AirAsia X."),
 
 	// === EAST ASIA ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. LHR-HKG on Cathay/BA. HKG-NRT direct on Cathay/ANA/JAL.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. LHR-ICN on Korean Air/BA. ICN-NRT very frequent.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. LHR-HKG on Cathay/BA. HKG-NRT direct on Cathay/ANA/JAL."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. LHR-ICN on Korean Air/BA. ICN-NRT very frequent."),
 }
 
 // CDGToBKKStopovers are the candidate stopover cities for Paris → Bangkok.
@@ -1799,58 +565,16 @@ var LHRToNRTStopovers = []StopoverCity{
 // Gulf hubs blocked. Route via Istanbul, Indian subcontinent, or Southeast Asia.
 var CDGToBKKStopovers = []StopoverCity{
 	// === EUROPE ===
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. CDG-IST very frequent on AF/Turkish. IST-BKK direct on Turkish.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. CDG-IST very frequent on AF/Turkish. IST-BKK direct on Turkish."),
 
 	// === INDIAN SUBCONTINENT ===
-	{
-		City:    "Delhi",
-		Airport: "DEL",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Air India hub. CDG-DEL on Air France/Air India. DEL-BKK frequent on Thai/IndiGo.",
-	},
-	{
-		City:    "Mumbai",
-		Airport: "BOM",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Air India hub. CDG-BOM on Air France/Air India. BOM-BKK frequent on Thai/IndiGo.",
-	},
-	{
-		City:    "Colombo",
-		Airport: "CMB",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SriLankan Airlines hub. CDG-CMB on SriLankan. CMB-BKK direct. Beaches, temples.",
-	},
+	newStopover("Delhi", "DEL", "south_asia", "Air India hub. CDG-DEL on Air France/Air India. DEL-BKK frequent on Thai/IndiGo."),
+	newStopover("Mumbai", "BOM", "south_asia", "Air India hub. CDG-BOM on Air France/Air India. BOM-BKK frequent on Thai/IndiGo."),
+	newStopover("Colombo", "CMB", "south_asia", "SriLankan Airlines hub. CDG-CMB on SriLankan. CMB-BKK direct. Beaches, temples."),
 
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines hub. CDG-KUL on MAS. KUL-BKK short hop on AirAsia/MAS.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. CDG-SIN on SQ/AF. SIN-BKK short hop on SQ/Thai.",
-	},
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines hub. CDG-KUL on MAS. KUL-BKK short hop on AirAsia/MAS."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. CDG-SIN on SQ/AF. SIN-BKK short hop on SQ/Thai."),
 }
 
 // CDGToNRTStopovers are the candidate stopover cities for Paris → Tokyo Narita.
@@ -1859,68 +583,19 @@ var CDGToBKKStopovers = []StopoverCity{
 // Gulf hubs blocked. Route via Istanbul, Indian subcontinent, or East/Southeast Asia.
 var CDGToNRTStopovers = []StopoverCity{
 	// === EUROPE ===
-	{
-		City:    "Istanbul",
-		Airport: "IST",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Turkish Airlines mega-hub. CDG-IST very frequent. IST-NRT direct on Turkish.",
-	},
+	newStopover("Istanbul", "IST", "europe", "Turkish Airlines mega-hub. CDG-IST very frequent. IST-NRT direct on Turkish."),
 
 	// === INDIAN SUBCONTINENT ===
-	{
-		City:    "Delhi",
-		Airport: "DEL",
-		Region:  "south_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Air India hub. CDG-DEL on Air France/Air India. DEL-NRT on JAL/ANA.",
-	},
+	newStopover("Delhi", "DEL", "south_asia", "Air India hub. CDG-DEL on Air France/Air India. DEL-NRT on JAL/ANA."),
 
 	// === SOUTHEAST ASIA ===
-	{
-		City:    "Bangkok",
-		Airport: "BKK",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Thai Airways hub. CDG-BKK on Thai/AF. BKK-NRT direct on Thai/ANA. Temples, street food.",
-	},
-	{
-		City:    "Singapore",
-		Airport: "SIN",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "SQ hub. CDG-SIN on SQ/AF. SIN-NRT direct on SQ/ANA/JAL.",
-	},
-	{
-		City:    "Kuala Lumpur",
-		Airport: "KUL",
-		Region:  "southeast_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Malaysia Airlines hub. CDG-KUL on MAS. KUL-NRT direct on MAS/AirAsia X.",
-	},
+	newStopover("Bangkok", "BKK", "southeast_asia", "Thai Airways hub. CDG-BKK on Thai/AF. BKK-NRT direct on Thai/ANA. Temples, street food."),
+	newStopover("Singapore", "SIN", "southeast_asia", "SQ hub. CDG-SIN on SQ/AF. SIN-NRT direct on SQ/ANA/JAL."),
+	newStopover("Kuala Lumpur", "KUL", "southeast_asia", "Malaysia Airlines hub. CDG-KUL on MAS. KUL-NRT direct on MAS/AirAsia X."),
 
 	// === EAST ASIA ===
-	{
-		City:    "Hong Kong",
-		Airport: "HKG",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Cathay Pacific hub. CDG-HKG on Cathay/AF. HKG-NRT direct on Cathay/ANA/JAL.",
-	},
-	{
-		City:    "Seoul",
-		Airport: "ICN",
-		Region:  "east_asia",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Korean Air hub. CDG-ICN on Korean Air/AF. ICN-NRT very frequent.",
-	},
+	newStopover("Hong Kong", "HKG", "east_asia", "Cathay Pacific hub. CDG-HKG on Cathay/AF. HKG-NRT direct on Cathay/ANA/JAL."),
+	newStopover("Seoul", "ICN", "east_asia", "Korean Air hub. CDG-ICN on Korean Air/AF. ICN-NRT very frequent."),
 }
 
 // JFKToLHRStopovers are the candidate stopover cities for New York JFK → London Heathrow.
@@ -1928,30 +603,9 @@ var CDGToNRTStopovers = []StopoverCity{
 // Route geometry: JFK is at ~40°N, 73°W. LHR is at ~51°N, 0°W.
 // North Atlantic great-circle route passes near Iceland and Ireland.
 var JFKToLHRStopovers = []StopoverCity{
-	{
-		City:    "Reykjavik",
-		Airport: "KEF",
-		Region:  "north_atlantic",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "On the great-circle route between JFK and LHR. Icelandair hub with frequent transatlantic service both ways.",
-	},
-	{
-		City:    "Dublin",
-		Airport: "DUB",
-		Region:  "north_atlantic",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Natural North Atlantic waypoint with US preclearance — clear US customs before departure. Aer Lingus hub.",
-	},
-	{
-		City:    "Halifax",
-		Airport: "YHZ",
-		Region:  "north_atlantic",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Easternmost major Canadian airport. Short hop from JFK, cuts the Atlantic crossing. Maritime city with seafood culture.",
-	},
+	newStopover("Reykjavik", "KEF", "north_atlantic", "On the great-circle route between JFK and LHR. Icelandair hub with frequent transatlantic service both ways."),
+	newStopover("Dublin", "DUB", "north_atlantic", "Natural North Atlantic waypoint with US preclearance — clear US customs before departure. Aer Lingus hub."),
+	newStopover("Halifax", "YHZ", "north_atlantic", "Easternmost major Canadian airport. Short hop from JFK, cuts the Atlantic crossing. Maritime city with seafood culture."),
 }
 
 // JFKToCDGStopovers are the candidate stopover cities for New York JFK → Paris CDG.
@@ -1959,30 +613,9 @@ var JFKToLHRStopovers = []StopoverCity{
 // Route geometry: JFK is at ~40°N, 73°W. CDG is at ~49°N, 2°E.
 // North Atlantic route with Iceland and Ireland as natural waypoints.
 var JFKToCDGStopovers = []StopoverCity{
-	{
-		City:    "Reykjavik",
-		Airport: "KEF",
-		Region:  "north_atlantic",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Great-circle waypoint. Icelandair offers JFK-KEF and KEF-CDG. Golden Circle tourism.",
-	},
-	{
-		City:    "Dublin",
-		Airport: "DUB",
-		Region:  "north_atlantic",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "US preclearance simplifies return. Strong JFK-DUB frequency on Aer Lingus and Delta. DUB-CDG on Aer Lingus/Ryanair.",
-	},
-	{
-		City:    "London",
-		Airport: "LHR",
-		Region:  "europe",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Massive transatlantic hub. JFK-LHR among the world's busiest routes. Short LHR-CDG hop on BA/AF.",
-	},
+	newStopover("Reykjavik", "KEF", "north_atlantic", "Great-circle waypoint. Icelandair offers JFK-KEF and KEF-CDG. Golden Circle tourism."),
+	newStopover("Dublin", "DUB", "north_atlantic", "US preclearance simplifies return. Strong JFK-DUB frequency on Aer Lingus and Delta. DUB-CDG on Aer Lingus/Ryanair."),
+	newStopover("London", "LHR", "europe", "Massive transatlantic hub. JFK-LHR among the world's busiest routes. Short LHR-CDG hop on BA/AF."),
 }
 
 // LAXToLHRStopovers are the candidate stopover cities for Los Angeles → London Heathrow.
@@ -1990,30 +623,9 @@ var JFKToCDGStopovers = []StopoverCity{
 // Route geometry: LAX is at ~33°N, 118°W. LHR is at ~51°N, 0°W.
 // Longer transatlantic crossing; Canadian cities and Iceland break the journey.
 var LAXToLHRStopovers = []StopoverCity{
-	{
-		City:    "Vancouver",
-		Airport: "YVR",
-		Region:  "north_america",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Short LAX-YVR hop. YVR-LHR direct on BA/Air Canada. Beautiful Pacific coast city.",
-	},
-	{
-		City:    "Toronto",
-		Airport: "YYZ",
-		Region:  "north_america",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Air Canada hub with frequent YYZ-LHR service. LAX-YYZ well served. Multicultural city.",
-	},
-	{
-		City:    "Reykjavik",
-		Airport: "KEF",
-		Region:  "north_atlantic",
-		MinStay: types.DefaultMinStopover,
-		MaxStay: types.DefaultMaxStopover,
-		Notes:   "Splits the Atlantic crossing. Icelandair serves LAX-KEF and KEF-LHR. Unique landscape stopover.",
-	},
+	newStopover("Vancouver", "YVR", "north_america", "Short LAX-YVR hop. YVR-LHR direct on BA/Air Canada. Beautiful Pacific coast city."),
+	newStopover("Toronto", "YYZ", "north_america", "Air Canada hub with frequent YYZ-LHR service. LAX-YYZ well served. Multicultural city."),
+	newStopover("Reykjavik", "KEF", "north_atlantic", "Splits the Atlantic crossing. Icelandair serves LAX-KEF and KEF-LHR. Unique landscape stopover."),
 }
 
 // routeKey creates a lookup key for origin-destination pairs.

@@ -414,7 +414,7 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		history = append(history, llm.Message{Role: llm.RoleAssistant, Content: summary})
 		history = append(history, llm.Message{Role: llm.RoleSystem, Content: refinementHint()})
 
-		_, _ = fmt.Fprintln(out, "Want to refine? (e.g., 'show cheaper', 'try business class', or 'quit')")
+		_, _ = fmt.Fprintln(out, refinementSuggestion(results, params, pi))
 	}
 
 	return scanner.Err()

@@ -531,6 +531,47 @@ func profileWeights(name string) multicity.RankingWeights {
 	return multicity.WeightsBudget
 }
 
+// refinementSuggestion returns a context-aware refinement prompt based on
+// the current results, search params, and price insights. Generates specific
+// actionable advice rather than a generic "want to refine?" message.
+func refinementSuggestion(results []search.Itinerary, params tripParams, pi search.PriceInsights) string {
+	var suggestions []string
+
+	// Direct-only with few results.
+	if params.DirectOnly && len(results) < 5 {
+		suggestions = append(suggestions, "Showing direct flights only — remove direct_only for more options with connections.")
+	}
+
+	// High prices according to insights.
+	if pi.PriceLevel == "high" {
+		suggestions = append(suggestions, fmt.Sprintf("Prices look high (typical: $%.0f-$%.0f) — try flex_days to search nearby dates for better fares.",
+			pi.TypicalPriceRange[0], pi.TypicalPriceRange[1]))
+	}
+
+	// Flex-date with price variation — point out the cheapest date.
+	if params.FlexDays > 0 && len(results) > 1 {
+		ft := search.ComputeFareTrend(results)
+		if ft.CheapestDate != "" && ft.MinPrice < ft.MaxPrice*0.9 {
+			// Format date for readability.
+			dateStr := ft.CheapestDate
+			if t, err := time.Parse("2006-01-02", ft.CheapestDate); err == nil {
+				dateStr = t.Format("Jan 2")
+			}
+			suggestions = append(suggestions, fmt.Sprintf("Cheapest date is %s at $%.0f — try searching that date specifically.", dateStr, ft.MinPrice))
+		}
+	}
+
+	// Active filters might be limiting.
+	if params.MaxPrice > 0 && len(results) < 3 {
+		suggestions = append(suggestions, fmt.Sprintf("Budget cap at $%.0f may be limiting results — try increasing or removing max_price.", params.MaxPrice))
+	}
+
+	if len(suggestions) > 0 {
+		return strings.Join(suggestions, "\n")
+	}
+	return "Want to refine? (e.g., 'show cheaper', 'try business class', or 'quit')"
+}
+
 // refinementHint returns a system message listing available refinement levers.
 // Appended to conversation history after results so the LLM knows what to suggest.
 func refinementHint() string {

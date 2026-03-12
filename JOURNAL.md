@@ -795,3 +795,6 @@ Added relaxFilters() to chathelpers.go with priority-ordered filter relaxation (
 
 ### Session 58, Task 4 -- Search parameter echo in chat
 Added formatSearchParams() to chathelpers.go. Shows all active search parameters in a readable format: "Searching DEL -> YYZ on 2025-06-15 (business, flex +/-3 days, max $1200)". Replaced simple route+date line in chatSearch. formatTimeRange helper handles partial time ranges. 6 unit tests.
+
+### Session 58, Task 5 -- Context-aware refinement prompt
+Added refinementSuggestion() to chathelpers.go. Replaced static "Want to refine?" with context-aware suggestions: direct-only limiting results, high prices with flex-date advice, cheapest date pointer for flex searches, max_price cap warning. Falls back to generic prompt when no context-specific advice applies. 4 unit tests.

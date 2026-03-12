@@ -3214,6 +3214,63 @@ func TestFormatSearchParams_MinimalOutput(t *testing.T) {
 	}
 }
 
+func TestRefinementSuggestion_DirectOnlyFewResults(t *testing.T) {
+	results := make([]search.Itinerary, 2)
+	for i := range results {
+		results[i] = search.Itinerary{
+			Legs:       []search.Leg{{Flight: types.Flight{Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+			TotalPrice: types.Money{Amount: 500},
+		}
+	}
+	p := tripParams{DirectOnly: true}
+	got := refinementSuggestion(results, p, search.PriceInsights{})
+	if !strings.Contains(got, "direct") {
+		t.Errorf("expected direct-only suggestion, got %q", got)
+	}
+}
+
+func TestRefinementSuggestion_HighPrices(t *testing.T) {
+	results := make([]search.Itinerary, 5)
+	for i := range results {
+		results[i] = search.Itinerary{TotalPrice: types.Money{Amount: 800}}
+	}
+	pi := search.PriceInsights{PriceLevel: "high", TypicalPriceRange: [2]float64{400, 600}}
+	got := refinementSuggestion(results, tripParams{}, pi)
+	if !strings.Contains(got, "high") || !strings.Contains(got, "flex") {
+		t.Errorf("expected high-price suggestion with flex advice, got %q", got)
+	}
+}
+
+func TestRefinementSuggestion_FlexDateVariation(t *testing.T) {
+	results := []search.Itinerary{
+		{
+			Legs:       []search.Leg{{Flight: types.Flight{Outbound: []types.Segment{{DepartureTime: time.Date(2025, 6, 12, 10, 0, 0, 0, time.UTC)}}}}},
+			TotalPrice: types.Money{Amount: 400},
+		},
+		{
+			Legs:       []search.Leg{{Flight: types.Flight{Outbound: []types.Segment{{DepartureTime: time.Date(2025, 6, 15, 10, 0, 0, 0, time.UTC)}}}}},
+			TotalPrice: types.Money{Amount: 700},
+		},
+	}
+	p := tripParams{FlexDays: 3}
+	got := refinementSuggestion(results, p, search.PriceInsights{})
+	if !strings.Contains(got, "Jun 12") || !strings.Contains(got, "$400") {
+		t.Errorf("expected cheapest-date suggestion, got %q", got)
+	}
+}
+
+func TestRefinementSuggestion_NoSpecialContext(t *testing.T) {
+	results := make([]search.Itinerary, 10)
+	for i := range results {
+		results[i] = search.Itinerary{TotalPrice: types.Money{Amount: 500}}
+	}
+	got := refinementSuggestion(results, tripParams{}, search.PriceInsights{})
+	// Should return a generic prompt when nothing special to suggest.
+	if got == "" {
+		t.Error("expected non-empty generic refinement prompt")
+	}
+}
+
 // callCountStrategy tracks the number of Search calls and returns different
 // results on each call (empty on first, canned on subsequent).
 type callCountStrategy struct {

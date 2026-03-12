@@ -40,9 +40,9 @@
 - [x] Run go build ./... && go test ./... && go vet ./...
 
 ## Task 184: Context-aware refinement prompt
-**Status:** pending
-**Plan:** Replace static "Want to refine?" with context-aware suggestions.
-- [ ] Write tests for refinementSuggestion with various scenarios
-- [ ] Implement refinementSuggestion(results, params, PriceInsights) string in chathelpers.go
-- [ ] Replace static prompt in chatLoop with refinementSuggestion output
-- [ ] Run go build ./... && go test ./... && go vet ./...
+**Status:** done
+**Plan:** Add refinementSuggestion(results, params, pi) string to chathelpers.go. Generates context-aware suggestions: "direct_only is limiting results", "cheapest date is Jun 12", "prices look high, try flex_days". Replace static "Want to refine?" in chatLoop. Files: chathelpers.go, chat.go, chat_test.go.
+- [x] Write tests for refinementSuggestion with various scenarios
+- [x] Implement refinementSuggestion(results, params, PriceInsights) string in chathelpers.go
+- [x] Replace static prompt in chatLoop with refinementSuggestion output
+- [x] Run go build ./... && go test ./... && go vet ./...

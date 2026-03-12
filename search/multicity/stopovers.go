@@ -1440,6 +1440,228 @@ var BOMToHKGStopovers = []StopoverCity{
 	},
 }
 
+// DELToLAXStopovers are the candidate stopover cities for Delhi → Los Angeles.
+//
+// Route geometry: DEL is at ~28°N, 77°E. LAX is at ~33°N, 118°W.
+// East Asia Pacific corridor — cities with strong connectivity
+// to both India and the US West Coast.
+var DELToLAXStopovers = []StopoverCity{
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. DEL-BKK frequent and cheap. BKK-LAX via connection. Temples, street food.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. DEL-SIN frequent. SIN-LAX direct on Singapore Airlines. Clean, safe, great food.",
+	},
+	{
+		City:    "Kuala Lumpur",
+		Airport: "KUL",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Malaysia Airlines hub. DEL-KUL on AirAsia/MAS. KUL-LAX via connection.",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. DEL-HKG frequent. HKG-LAX direct on Cathay/United. Victoria Peak, dim sum.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-LAX direct on ANA/JAL/United. DEL-NRT on JAL. Natural Pacific gateway.",
+	},
+	{
+		City:    "Taipei",
+		Airport: "TPE",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "EVA Air hub. TPE-LAX direct on EVA Air. DEL-TPE on EVA/China Airlines. Night markets.",
+	},
+}
+
+// BOMToLAXStopovers are the candidate stopover cities for Mumbai → Los Angeles.
+//
+// Route geometry: BOM is at ~19°N, 73°E. LAX is at ~33°N, 118°W.
+// East Asia Pacific corridor with strong BOM connectivity.
+var BOMToLAXStopovers = []StopoverCity{
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-LAX via connection.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. BOM-SIN frequent. SIN-LAX direct on Singapore Airlines.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-LAX direct on Cathay/United.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-LAX direct on ANA/JAL/United. BOM-NRT on ANA.",
+	},
+	{
+		City:    "Taipei",
+		Airport: "TPE",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "EVA Air hub. TPE-LAX direct on EVA Air. BOM-TPE on EVA/China Airlines.",
+	},
+}
+
+// DELToORDStopovers are the candidate stopover cities for Delhi → Chicago O'Hare.
+//
+// Route geometry: DEL is at ~28°N, 77°E. ORD is at ~41°N, 87°W.
+// East Asia Pacific + European corridor — cities with strong connectivity
+// to both India and Chicago.
+var DELToORDStopovers = []StopoverCity{
+	// === SOUTHEAST ASIA ===
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. DEL-BKK frequent and cheap. BKK-ORD via connection.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. DEL-SIN frequent. SIN-ORD via connection.",
+	},
+
+	// === EAST ASIA ===
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. DEL-HKG frequent. HKG-ORD direct on Cathay/United.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-ORD direct on ANA/JAL/United. DEL-NRT on JAL.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. ICN-ORD direct on Korean Air/United. DEL-ICN on Korean Air.",
+	},
+
+	// === EUROPE ===
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. DEL-IST on Turkish. IST-ORD direct on Turkish.",
+	},
+}
+
+// BOMToORDStopovers are the candidate stopover cities for Mumbai → Chicago O'Hare.
+//
+// Route geometry: BOM is at ~19°N, 73°E. ORD is at ~41°N, 87°W.
+// East Asia Pacific + European corridor with strong BOM connectivity.
+var BOMToORDStopovers = []StopoverCity{
+	{
+		City:    "Bangkok",
+		Airport: "BKK",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Thai Airways hub. BOM-BKK very frequent and cheap. BKK-ORD via connection.",
+	},
+	{
+		City:    "Singapore",
+		Airport: "SIN",
+		Region:  "southeast_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "SQ hub. BOM-SIN frequent. SIN-ORD via connection.",
+	},
+	{
+		City:    "Hong Kong",
+		Airport: "HKG",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Cathay Pacific hub. BOM-HKG on Cathay/Air India. HKG-ORD direct on Cathay/United.",
+	},
+	{
+		City:    "Tokyo",
+		Airport: "NRT",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "ANA/JAL hub. NRT-ORD direct on ANA/JAL/United. BOM-NRT on ANA.",
+	},
+	{
+		City:    "Seoul",
+		Airport: "ICN",
+		Region:  "east_asia",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Korean Air hub. ICN-ORD direct on Korean Air/United. BOM-ICN on Korean Air.",
+	},
+	{
+		City:    "Istanbul",
+		Airport: "IST",
+		Region:  "europe",
+		MinStay: types.DefaultMinStopover,
+		MaxStay: types.DefaultMaxStopover,
+		Notes:   "Turkish Airlines mega-hub. BOM-IST on Turkish. IST-ORD direct on Turkish.",
+	},
+}
+
 // routeKey creates a lookup key for origin-destination pairs.
 func routeKey(origin, destination string) string {
 	return origin + "→" + destination
@@ -1472,6 +1694,10 @@ var stopoversMap = map[string][]StopoverCity{
 	routeKey("BOM", "ICN"): BOMToICNStopovers,
 	routeKey("DEL", "HKG"): DELToHKGStopovers,
 	routeKey("BOM", "HKG"): BOMToHKGStopovers,
+	routeKey("DEL", "LAX"): DELToLAXStopovers,
+	routeKey("BOM", "LAX"): BOMToLAXStopovers,
+	routeKey("DEL", "ORD"): DELToORDStopovers,
+	routeKey("BOM", "ORD"): BOMToORDStopovers,
 }
 
 // GlobalFallbackHubs are well-connected hub airports used as stopover

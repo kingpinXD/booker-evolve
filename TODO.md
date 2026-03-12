@@ -35,10 +35,10 @@
 - [x] Run go build && go test ./... && go vet ./...
 
 ## Task 179: North America to Europe stopover corridors
-**Status:** pending
+**Status:** done
 **Plan:** Add JFK→LHR, JFK→CDG, LAX→LHR transatlantic corridors using KEF, DUB as waypoints.
-- [ ] Add JFK→LHR stopover corridor (KEF, DUB, YHZ)
-- [ ] Add JFK→CDG stopover corridor (KEF, DUB, LHR)
-- [ ] Add LAX→LHR stopover corridor (YVR, YYZ, KEF)
-- [ ] Add specific lookup tests for new corridors
-- [ ] Run go build && go test ./... && go vet ./...
+- [x] Add JFK→LHR stopover corridor (KEF, DUB, YHZ)
+- [x] Add JFK→CDG stopover corridor (KEF, DUB, LHR)
+- [x] Add LAX→LHR stopover corridor (YVR, YYZ, KEF)
+- [x] Add specific lookup tests for new corridors
+- [x] Run go build && go test ./... && go vet ./...

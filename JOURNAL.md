@@ -786,6 +786,6 @@ Changed multi-leg table headers from "Leg 1 Airlines" etc. to "L1 Airlines", "L1
 ### Session 57, Task 5 -- North America to Europe stopover corridors
 Added 3 transatlantic stopover corridors: JFK→LHR (KEF, DUB, YHZ), JFK→CDG (KEF, DUB, LHR), LAX→LHR (YVR, YYZ, KEF). Ran in parallel worktree, rebased cleanly. TestStopoverDataConsistency auto-validates all new entries.
 
-## Session 57 -- 07:50 -- CLI output improvements + transatlantic stopovers
+## Session 57 -- 05:38 -- CLI output improvements + transatlantic stopovers
 
 All 5 tasks completed with zero reverts and zero API calls. Tasks 1-4 ran sequentially on main (shared display.go); Task 5 ran in parallel worktree. Key changes: Book column removed from table, chat defaults to bullet-point format, Reason truncated to 50 chars, multi-leg headers shortened from "Leg N" to "LN", 3 transatlantic stopover corridors added. Build, tests, vet, lint all clean.

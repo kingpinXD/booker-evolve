@@ -462,6 +462,66 @@ func inferProfile(history []llm.Message) string {
 	}
 }
 
+// contextWeights scans user messages for specific preference signals and returns
+// additive weight deltas. These are applied on top of the base profile weights.
+// Returns zero weights when no signals are detected.
+func contextWeights(history []llm.Message) multicity.RankingWeights {
+	type signal struct {
+		keywords []string
+		field    string
+	}
+	signals := []signal{
+		{keywords: []string{"hate layover", "short layover", "long layover", "connection time"}, field: "layover"},
+		{keywords: []string{"carbon", "environment", "emission", "eco", "green"}, field: "carbon"},
+		{keywords: []string{"schedule matters", "departure time", "arrival time", "timing"}, field: "schedule"},
+		{keywords: []string{"short flight", "long flight", "flight duration", "travel time"}, field: "duration"},
+	}
+
+	hits := make(map[string]bool)
+	for _, msg := range history {
+		if msg.Role != llm.RoleUser {
+			continue
+		}
+		lower := strings.ToLower(msg.Content)
+		for _, s := range signals {
+			for _, kw := range s.keywords {
+				if strings.Contains(lower, kw) {
+					hits[s.field] = true
+				}
+			}
+		}
+	}
+
+	const boost = 10
+	var delta multicity.RankingWeights
+	if hits["layover"] {
+		delta.LayoverQuality = boost
+	}
+	if hits["carbon"] {
+		delta.Carbon = boost
+	}
+	if hits["schedule"] {
+		delta.Schedule = boost
+	}
+	if hits["duration"] {
+		delta.FlightDuration = boost
+	}
+	return delta
+}
+
+// addWeights returns the sum of base and delta weights.
+func addWeights(base, delta multicity.RankingWeights) multicity.RankingWeights {
+	return multicity.RankingWeights{
+		Cost:               base.Cost + delta.Cost,
+		AirlineConsistency: base.AirlineConsistency + delta.AirlineConsistency,
+		LayoverQuality:     base.LayoverQuality + delta.LayoverQuality,
+		FlightDuration:     base.FlightDuration + delta.FlightDuration,
+		StopoverCity:       base.StopoverCity + delta.StopoverCity,
+		Schedule:           base.Schedule + delta.Schedule,
+		Carbon:             base.Carbon + delta.Carbon,
+	}
+}
+
 // profileWeights maps a profile name to the corresponding ranking weights.
 // Unknown or empty profiles default to budget.
 func profileWeights(name string) multicity.RankingWeights {

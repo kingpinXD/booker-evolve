@@ -757,3 +757,6 @@ Added DiversifyResults in search/filter.go that selects cheapest, fastest, best-
 
 ### Session 56, Task 2 -- Fare trend summary for flex-date searches
 Added FareTrend struct and ComputeFareTrend in search/search.go as a pure function. Added formatFareTrend/formatDateShort in display.go. Wired into chatLoop to display after flex-date results, and into resultSummaryForChat so the LLM can reference date-price relationships. 6 tests total (3 for ComputeFareTrend, 3 for formatFareTrend). Chose pure-function approach over stateful Searcher field to keep it simple.
+
+### Session 56, Task 4 -- Context-aware ranking weight adjustment
+Added contextWeights function that scans user messages for preference signals (layovers, carbon, schedule, flight duration) and returns additive RankingWeights deltas (+10 per detected signal). Combined with base profile weights via addWeights helper in chatLoop. Always runs — gracefully returns zero delta when no signals detected. Updated existing profile switch test to account for combined weights. 7 new tests.

@@ -20,29 +20,27 @@
 - [x] Run go build && go test ./... && go vet ./...
 
 ## Task 172: Ranker cache max size with eviction
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Write tests for cache eviction at maxCacheSize
-- [ ] Add maxCacheSize const and keys slice to Ranker
-- [ ] Implement eviction in Rank method when inserting new entry
-- [ ] Verify CacheStats still accurate after eviction
-- [ ] Run go build && go test ./... && go vet ./...
+**Status:** done (completed in worktree)
+- [x] Write tests for cache eviction at maxCacheSize
+- [x] Add maxCacheSize const and keys slice to Ranker
+- [x] Implement eviction in Rank method when inserting new entry
+- [x] Verify CacheStats still accurate after eviction
+- [x] Run go build && go test ./... && go vet ./...
 
 ## Task 173: Context-aware ranking weight adjustment from conversation
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Write tests for contextWeights with various user phrases
-- [ ] Implement contextWeights in cmd/chathelpers.go
-- [ ] Wire into chatLoop to apply weight deltas before each search
-- [ ] Test integration with chatLoop mock
-- [ ] Run go build && go test ./... && go vet ./...
+**Status:** done
+**Plan:** Add contextWeights function in chathelpers.go that scans user messages for preference phrases and returns additive RankingWeights deltas. Wire into chatLoop to apply deltas before search via weightsUpdater. Tests in chat_test.go.
+- [x] Write 7 tests for contextWeights (layover, carbon, schedule, duration, no-signal, ignore-assistant, multiple)
+- [x] Implement contextWeights + addWeights in cmd/chathelpers.go
+- [x] Wire into chatLoop to apply combined (base + context delta) weights before each search
+- [x] Update existing TestChatLoop_ProfileSwitchUpdatesWeights for new behavior
+- [x] Run go build && go test ./... && go vet ./...
 
 ## Task 174: Europe-to-Asia stopover corridors
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Add LHR→BKK stopover corridor
-- [ ] Add LHR→NRT stopover corridor
-- [ ] Add CDG→BKK stopover corridor
-- [ ] Add CDG→NRT stopover corridor
-- [ ] Add specific lookup tests for new corridors
-- [ ] Run go build && go test ./... && go vet ./...
+**Status:** done (completed in worktree)
+- [x] Add LHR→BKK stopover corridor
+- [x] Add LHR→NRT stopover corridor
+- [x] Add CDG→BKK stopover corridor
+- [x] Add CDG→NRT stopover corridor
+- [x] Add specific lookup tests for new corridors
+- [x] Run go build && go test ./... && go vet ./...

@@ -339,9 +339,11 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 
 		lastParams = params
 
-		// Update ranking weights when the profile changes mid-session.
-		if params.Profile != "" && wu != nil {
-			wu.SetWeights(profileWeights(params.Profile))
+		// Update ranking weights: base profile + context-aware deltas from conversation.
+		if wu != nil {
+			base := profileWeights(params.Profile)
+			delta := contextWeights(history)
+			wu.SetWeights(addWeights(base, delta))
 		}
 
 		// Build and execute the search.

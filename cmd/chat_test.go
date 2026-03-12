@@ -669,6 +669,79 @@ func TestInferProfile(t *testing.T) {
 	}
 }
 
+func TestContextWeights_HateLayovers(t *testing.T) {
+	history := []llm.Message{
+		{Role: llm.RoleUser, Content: "I hate layovers, keep them short please"},
+	}
+	delta := contextWeights(history)
+	if delta.LayoverQuality <= 0 {
+		t.Errorf("expected positive LayoverQuality delta for 'hate layovers', got %d", delta.LayoverQuality)
+	}
+}
+
+func TestContextWeights_CareAboutEnvironment(t *testing.T) {
+	history := []llm.Message{
+		{Role: llm.RoleUser, Content: "I care about the environment"},
+	}
+	delta := contextWeights(history)
+	if delta.Carbon <= 0 {
+		t.Errorf("expected positive Carbon delta for 'environment', got %d", delta.Carbon)
+	}
+}
+
+func TestContextWeights_ScheduleMatters(t *testing.T) {
+	history := []llm.Message{
+		{Role: llm.RoleUser, Content: "schedule matters a lot to me"},
+	}
+	delta := contextWeights(history)
+	if delta.Schedule <= 0 {
+		t.Errorf("expected positive Schedule delta for 'schedule matters', got %d", delta.Schedule)
+	}
+}
+
+func TestContextWeights_ShortFlights(t *testing.T) {
+	history := []llm.Message{
+		{Role: llm.RoleUser, Content: "I prefer short flights, hate long ones"},
+	}
+	delta := contextWeights(history)
+	if delta.FlightDuration <= 0 {
+		t.Errorf("expected positive FlightDuration delta for 'short flights', got %d", delta.FlightDuration)
+	}
+}
+
+func TestContextWeights_NoSignal(t *testing.T) {
+	history := []llm.Message{
+		{Role: llm.RoleUser, Content: "fly me from Delhi to Toronto"},
+	}
+	delta := contextWeights(history)
+	zero := multicity.RankingWeights{}
+	if delta != zero {
+		t.Errorf("expected zero delta for no signals, got %+v", delta)
+	}
+}
+
+func TestContextWeights_IgnoresAssistant(t *testing.T) {
+	history := []llm.Message{
+		{Role: llm.RoleAssistant, Content: "I hate layovers too! Let me find short flights."},
+		{Role: llm.RoleSystem, Content: "schedule matters for the user"},
+	}
+	delta := contextWeights(history)
+	zero := multicity.RankingWeights{}
+	if delta != zero {
+		t.Errorf("expected zero delta when only assistant/system messages, got %+v", delta)
+	}
+}
+
+func TestContextWeights_MultipleSignals(t *testing.T) {
+	history := []llm.Message{
+		{Role: llm.RoleUser, Content: "I hate layovers and care about carbon emissions"},
+	}
+	delta := contextWeights(history)
+	if delta.LayoverQuality <= 0 || delta.Carbon <= 0 {
+		t.Errorf("expected both LayoverQuality and Carbon boosted, got %+v", delta)
+	}
+}
+
 func TestFormatLayoverSummary_Direct(t *testing.T) {
 	segs := []types.Segment{
 		{Origin: "DEL", Destination: "YYZ"},
@@ -1984,14 +2057,20 @@ Let me search with eco ranking.`,
 	}
 
 	// Should have called SetWeights twice: once for "budget", once for "eco".
+	// Context-aware deltas may adjust weights beyond the base profile.
 	if len(wu.calls) != 2 {
 		t.Fatalf("expected 2 SetWeights calls, got %d", len(wu.calls))
 	}
 	if wu.calls[0] != multicity.WeightsBudget {
 		t.Errorf("first SetWeights should be WeightsBudget, got %+v", wu.calls[0])
 	}
-	if wu.calls[1] != multicity.WeightsEco {
-		t.Errorf("second SetWeights should be WeightsEco, got %+v", wu.calls[1])
+	// Second call: eco base + context delta (user said "eco" -> Carbon +10).
+	wantEco := addWeights(multicity.WeightsEco, contextWeights([]llm.Message{
+		{Role: llm.RoleUser, Content: "find flights"},
+		{Role: llm.RoleUser, Content: "switch to eco"},
+	}))
+	if wu.calls[1] != wantEco {
+		t.Errorf("second SetWeights should be eco+context, got %+v, want %+v", wu.calls[1], wantEco)
 	}
 }
 

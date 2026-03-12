@@ -789,3 +789,6 @@ Added 3 transatlantic stopover corridors: JFK→LHR (KEF, DUB, YHZ), JFK→CDG (
 ## Session 57 -- 05:38 -- CLI output improvements + transatlantic stopovers
 
 All 5 tasks completed with zero reverts and zero API calls. Tasks 1-4 ran sequentially on main (shared display.go); Task 5 ran in parallel worktree. Key changes: Book column removed from table, chat defaults to bullet-point format, Reason truncated to 50 chars, multi-leg headers shortened from "Leg N" to "LN", 3 transatlantic stopover corridors added. Build, tests, vet, lint all clean.
+
+### Session 58, Task 2 -- Auto-retry with relaxed filters on zero results
+Added relaxFilters() to chathelpers.go with priority-ordered filter relaxation (direct_only -> alliance -> airlines -> max_price -> time -> duration). Wired into chatLoop zero-results block with single auto-retry. 9 unit tests + 1 integration test. Uses goto for clean fall-through to results display.

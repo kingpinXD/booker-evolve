@@ -3014,3 +3014,186 @@ func TestChatSystemPrompt_MultiCityGuidance(t *testing.T) {
 		t.Error("system prompt should mention leg2_date in multi-city guidance")
 	}
 }
+
+func TestRelaxFilters_DirectOnly(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		DirectOnly: true,
+	}
+	relaxed, desc := relaxFilters(p)
+	if relaxed.DirectOnly {
+		t.Error("expected DirectOnly to be cleared")
+	}
+	if desc == "" {
+		t.Error("expected non-empty description")
+	}
+}
+
+func TestRelaxFilters_PreferredAlliance(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		PreferredAlliance: "Star Alliance",
+	}
+	relaxed, desc := relaxFilters(p)
+	if relaxed.PreferredAlliance != "" {
+		t.Error("expected PreferredAlliance to be cleared")
+	}
+	if !strings.Contains(desc, "preferred_alliance") {
+		t.Errorf("expected description to mention preferred_alliance, got %q", desc)
+	}
+}
+
+func TestRelaxFilters_PreferredAirlines(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		PreferredAirlines: "AC,UA",
+	}
+	relaxed, desc := relaxFilters(p)
+	if relaxed.PreferredAirlines != "" {
+		t.Error("expected PreferredAirlines to be cleared")
+	}
+	if !strings.Contains(desc, "preferred_airlines") {
+		t.Errorf("expected description to mention preferred_airlines, got %q", desc)
+	}
+}
+
+func TestRelaxFilters_MaxPrice(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		MaxPrice: 1000,
+	}
+	relaxed, desc := relaxFilters(p)
+	if relaxed.MaxPrice != 1500 {
+		t.Errorf("expected MaxPrice = 1500, got %.0f", relaxed.MaxPrice)
+	}
+	if !strings.Contains(desc, "max_price") {
+		t.Errorf("expected description to mention max_price, got %q", desc)
+	}
+}
+
+func TestRelaxFilters_DepartureTime(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		DepartureAfter: "08:00", DepartureBefore: "12:00",
+	}
+	relaxed, desc := relaxFilters(p)
+	if relaxed.DepartureAfter != "" || relaxed.DepartureBefore != "" {
+		t.Error("expected departure time constraints to be cleared")
+	}
+	if !strings.Contains(desc, "departure time") {
+		t.Errorf("expected description to mention departure time, got %q", desc)
+	}
+}
+
+func TestRelaxFilters_ArrivalTime(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		ArrivalAfter: "08:00", ArrivalBefore: "18:00",
+	}
+	relaxed, desc := relaxFilters(p)
+	if relaxed.ArrivalAfter != "" || relaxed.ArrivalBefore != "" {
+		t.Error("expected arrival time constraints to be cleared")
+	}
+	if !strings.Contains(desc, "arrival time") {
+		t.Errorf("expected description to mention arrival time, got %q", desc)
+	}
+}
+
+func TestRelaxFilters_MaxDuration(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		MaxDurationHours: 12,
+	}
+	relaxed, desc := relaxFilters(p)
+	if relaxed.MaxDurationHours != 0 {
+		t.Error("expected MaxDurationHours to be cleared")
+	}
+	if !strings.Contains(desc, "max_duration") {
+		t.Errorf("expected description to mention max_duration, got %q", desc)
+	}
+}
+
+func TestRelaxFilters_Priority(t *testing.T) {
+	// When multiple filters are active, direct_only should be relaxed first.
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		DirectOnly: true, MaxPrice: 1000, PreferredAlliance: "OneWorld",
+	}
+	relaxed, _ := relaxFilters(p)
+	if relaxed.DirectOnly {
+		t.Error("expected DirectOnly to be cleared first (highest priority)")
+	}
+	// Other filters should remain.
+	if relaxed.MaxPrice != 1000 {
+		t.Errorf("expected MaxPrice unchanged at 1000, got %.0f", relaxed.MaxPrice)
+	}
+	if relaxed.PreferredAlliance != "OneWorld" {
+		t.Errorf("expected PreferredAlliance unchanged, got %q", relaxed.PreferredAlliance)
+	}
+}
+
+func TestRelaxFilters_NoFilters(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+	}
+	_, desc := relaxFilters(p)
+	if desc != "" {
+		t.Errorf("expected empty description when no filters active, got %q", desc)
+	}
+}
+
+// callCountStrategy tracks the number of Search calls and returns different
+// results on each call (empty on first, canned on subsequent).
+type callCountStrategy struct {
+	callCount int
+	results   []search.Itinerary
+}
+
+func (s *callCountStrategy) Name() string        { return "direct" }
+func (s *callCountStrategy) Description() string { return "call-count fake" }
+func (s *callCountStrategy) Search(_ context.Context, _ search.Request) ([]search.Itinerary, error) {
+	s.callCount++
+	if s.callCount == 1 {
+		return nil, nil // first call: empty
+	}
+	return s.results, nil
+}
+
+func TestChatLoop_AutoRetryOnZeroResults(t *testing.T) {
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15","direct_only":true}
+Searching for direct flights.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	strat := &callCountStrategy{
+		results: []search.Itinerary{{
+			Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 500, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+			TotalPrice: types.Money{Amount: 500, Currency: "USD"},
+		}},
+	}
+	picker := search.NewPicker(mock, strat)
+
+	in := strings.NewReader("find direct flights\nquit\n")
+	var out strings.Builder
+
+	viper.Set(keyFormat, "bullet")
+	viper.Set(keyCurrency, "USD")
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	// Should show the relaxation message.
+	if !strings.Contains(output, "Relaxed") {
+		t.Errorf("expected relaxation message in output, got:\n%s", output)
+	}
+	// Should have retried and found results (DEL→YYZ route).
+	if !strings.Contains(output, "DEL") || !strings.Contains(output, "YYZ") {
+		t.Errorf("expected results from retry in output, got:\n%s", output)
+	}
+	// Strategy should have been called twice.
+	if strat.callCount != 2 {
+		t.Errorf("expected 2 search calls (original + retry), got %d", strat.callCount)
+	}
+}

@@ -359,6 +359,19 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		lastResults = results
 
 		if len(results) == 0 {
+			// Auto-retry with relaxed filters before showing zero-results suggestions.
+			if relaxed, desc := relaxFilters(params); desc != "" {
+				_, _ = fmt.Fprintln(out, desc)
+				retryResults, retryErr := chatSearch(ctx, relaxed, picker, out)
+				if retryErr == nil && len(retryResults) > 0 {
+					results = retryResults
+					lastResults = results
+					params = relaxed
+					lastParams = params
+					// Fall through to display results below.
+					goto showResults
+				}
+			}
 			_, _ = fmt.Fprintln(out, "No flights found. Try different dates or airports.")
 			if hint := filterSuggestion(params); hint != "" {
 				_, _ = fmt.Fprintln(out, hint)
@@ -373,6 +386,7 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 			}
 			continue
 		}
+	showResults:
 
 		var pi search.PriceInsights
 		if insights != nil {

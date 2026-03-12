@@ -1,44 +1,49 @@
 # TODO
 
-## Task 175: Remove Book column from table output
-**Status:** done
-**Plan:** Remove "Book" header and legBookingURL data from printTable for both single-leg and multi-leg layouts. Keep BookingURL in JSON output.
-- [x] Write test asserting table output does not contain "BOOK" column
-- [x] Remove Book column from single-leg header and row in printTable
-- [x] Remove Book column from multi-leg header and row in printTable
-- [x] Verify legBookingURL is still used by formatOptionDetail (keep helper)
-- [x] Run go build && go test ./... && go vet ./...
+## Task 180: Refactor stopovers.go with newStopover helper
+**Status:** pending
+**Plan:** Add newStopover helper that applies default MinStay/MaxStay, replace all 209 entries with single-line calls.
+- [ ] Add newStopover(city, airport, region, notes) helper function
+- [ ] Replace all StopoverCity literal entries with newStopover calls
+- [ ] Verify file compiles and all tests pass (TestStopoverDataConsistency)
+- [ ] Run go build ./... && go test ./... && go vet ./...
 
-## Task 176: Bullet-point display for chat results
+## Task 181: Auto-retry with relaxed filters on zero results
 **Status:** done
-**Plan:** Add printBulletResults in display.go for concise per-itinerary bullets. Change displayChatResults default from table to bullet format. Keep --format table/json as overrides.
-- [x] Write tests for printBulletResults (single-leg, multi-leg, scored, empty)
-- [x] Implement printBulletResults in display.go
-- [x] Update displayChatResults to use bullet format by default
-- [x] Add "bullet" format option, keep table/json as explicit choices
-- [x] Run go build && go test ./... && go vet ./...
+**Plan:** Add relaxFilters(tripParams) (tripParams, string) to chathelpers.go. Relaxation priority: direct_only -> preferred_alliance -> preferred_airlines -> max_price (50% increase) -> departure/arrival time -> max_duration. Wire into chatLoop zero-results block: if filters active, relax and retry chatSearch once. Files: chathelpers.go, chat.go, chat_test.go.
+- [x] Write tests for relaxFilters helper (direct_only, alliance, max_price, time constraints)
+- [x] Implement relaxFilters(tripParams) (tripParams, string) in chathelpers.go
+- [x] Wire auto-retry into chatLoop zero-results block
+- [x] Write integration test for chatLoop auto-retry behavior
+- [x] Run go build ./... && go test ./... && go vet ./...
+- [ ] Write tests for relaxFilters helper (direct_only, alliance, max_price, time constraints)
+- [ ] Implement relaxFilters(tripParams) (tripParams, string) in chathelpers.go
+- [ ] Wire auto-retry into chatLoop zero-results block
+- [ ] Write integration test for chatLoop auto-retry behavior
+- [ ] Run go build ./... && go test ./... && go vet ./...
 
-## Task 177: Truncate Reason column in table
-**Status:** done
-**Plan:** Add truncateText helper, apply to Reason field in printTable row construction. Cap at 50 chars with "..." suffix.
-- [x] Write test for truncateText at boundary cases (49, 50, 51 chars)
-- [x] Implement truncateText helper in display.go
-- [x] Apply truncateText to Reason in both single-leg and multi-leg rows
-- [x] Run go build && go test ./... && go vet ./...
+## Task 182: Enrich bullet output with departure date and per-leg price
+**Status:** pending
+**Plan:** Add departure date, per-leg price, and cabin class to bullet output format.
+- [ ] Write tests for bullet output with departure date, multi-leg per-leg prices, cabin class
+- [ ] Add departure date to single-leg and multi-leg bullet lines
+- [ ] Add per-leg price to multi-leg sub-bullets
+- [ ] Show cabin class when non-economy
+- [ ] Run go build ./... && go test ./... && go vet ./...
 
-## Task 178: Shorten multi-leg table headers
-**Status:** done
-**Plan:** Replace verbose "Leg 1 X" / "Leg 2 X" headers with "L1 X" / "L2 X" variants. Single-leg headers unchanged.
-- [x] Write test asserting multi-leg table has "L1" / "L2" prefixed headers
-- [x] Update multi-leg header row in printTable
-- [x] Update any tests that check for old header text
-- [x] Run go build && go test ./... && go vet ./...
+## Task 183: Search parameter echo in chat
+**Status:** pending
+**Plan:** Show what parameters are being searched before results appear.
+- [ ] Write tests for formatSearchParams with various param combinations
+- [ ] Implement formatSearchParams(tripParams) string in chathelpers.go
+- [ ] Wire into chatLoop before chatSearch call
+- [ ] Write integration test verifying parameter echo in chatLoop output
+- [ ] Run go build ./... && go test ./... && go vet ./...
 
-## Task 179: North America to Europe stopover corridors
-**Status:** done
-**Plan:** Add JFK→LHR, JFK→CDG, LAX→LHR transatlantic corridors using KEF, DUB as waypoints.
-- [x] Add JFK→LHR stopover corridor (KEF, DUB, YHZ)
-- [x] Add JFK→CDG stopover corridor (KEF, DUB, LHR)
-- [x] Add LAX→LHR stopover corridor (YVR, YYZ, KEF)
-- [x] Add specific lookup tests for new corridors
-- [x] Run go build && go test ./... && go vet ./...
+## Task 184: Context-aware refinement prompt
+**Status:** pending
+**Plan:** Replace static "Want to refine?" with context-aware suggestions.
+- [ ] Write tests for refinementSuggestion with various scenarios
+- [ ] Implement refinementSuggestion(results, params, PriceInsights) string in chathelpers.go
+- [ ] Replace static prompt in chatLoop with refinementSuggestion output
+- [ ] Run go build ./... && go test ./... && go vet ./...

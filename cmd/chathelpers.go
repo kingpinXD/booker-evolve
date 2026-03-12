@@ -606,6 +606,41 @@ func priceInsightHint(pi search.PriceInsights) string {
 		pi.TypicalPriceRange[0], pi.TypicalPriceRange[1], pi.PriceLevel)
 }
 
+// relaxFilters removes the strictest active filter from params and returns
+// the relaxed params along with a human-readable description of what changed.
+// Returns empty description when no optional filters are active.
+// Relaxation priority: direct_only -> preferred_alliance -> preferred_airlines
+// -> max_price (50% increase) -> departure/arrival time -> max_duration.
+func relaxFilters(p tripParams) (tripParams, string) {
+	switch {
+	case p.DirectOnly:
+		p.DirectOnly = false
+		return p, "Relaxed direct_only — now including connecting flights."
+	case p.PreferredAlliance != "":
+		p.PreferredAlliance = ""
+		return p, "Relaxed preferred_alliance — now searching all alliances."
+	case p.PreferredAirlines != "":
+		p.PreferredAirlines = ""
+		return p, "Relaxed preferred_airlines — now searching all airlines."
+	case p.MaxPrice > 0:
+		p.MaxPrice *= 1.5
+		return p, fmt.Sprintf("Relaxed max_price — increased budget to $%.0f.", p.MaxPrice)
+	case p.DepartureAfter != "" || p.DepartureBefore != "":
+		p.DepartureAfter = ""
+		p.DepartureBefore = ""
+		return p, "Relaxed departure time window — now searching all departure times."
+	case p.ArrivalAfter != "" || p.ArrivalBefore != "":
+		p.ArrivalAfter = ""
+		p.ArrivalBefore = ""
+		return p, "Relaxed arrival time window — now searching all arrival times."
+	case p.MaxDurationHours > 0:
+		p.MaxDurationHours = 0
+		return p, "Relaxed max_duration — now searching all flight durations."
+	default:
+		return p, ""
+	}
+}
+
 // zeroResultsSuggestion returns proactive suggestions when a search returns no
 // results, including nearby airports and flex-date advice.
 func zeroResultsSuggestion(params tripParams) string {

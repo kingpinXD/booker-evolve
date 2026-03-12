@@ -80,9 +80,7 @@ type weightsUpdater interface {
 func looksLikeHelp(input string) bool {
 	lower := strings.ToLower(input)
 	return lower == "help" || lower == "?" ||
-		strings.HasPrefix(lower, "what can") ||
-		strings.HasPrefix(lower, "how do") ||
-		strings.HasPrefix(lower, "how does")
+		strings.HasPrefix(lower, "what can")
 }
 
 // chatHelpText returns a summary of available chat capabilities.
@@ -378,8 +376,10 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		displayChatResults(out, results, pi)
 
 		// Suggest multi-city routing for single-leg trips with known stopovers.
+		// Add to LLM history so it can guide the user through stopover setup.
 		if tip := stopoverSuggestion(params.Origin, params.Destination, params.Leg2Date); tip != "" {
 			_, _ = fmt.Fprintln(out, tip)
+			history = append(history, llm.Message{Role: llm.RoleAssistant, Content: tip})
 		}
 
 		// Add result summary and refinement guidance to conversation history

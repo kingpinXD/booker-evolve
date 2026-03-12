@@ -732,3 +732,22 @@ Added DELToLAXStopovers (6 cities: BKK, SIN, KUL, HKG, NRT, TPE) and BOMToLAXSto
 ## Session 54 -- 05:43 -- Chat file split, reflection filterSuggestion, multi-leg comparison, LAX/ORD stopovers
 
 All 5 tasks completed across 4 commits with zero reverts and zero API calls. Split chat.go (913 lines) into chat.go (387 lines) + chathelpers.go (539 lines) for better maintainability. Replaced per-field if-blocks in filterSuggestion with reflection-based iteration using filterLabels map -- new filter fields auto-supported. Added legSummary helper and multi-leg display to formatComparison so multi-city users see all legs instead of just leg 0. Added India-LAX (DEL: 6 cities, BOM: 5 cities) and India-ORD (DEL: 6, BOM: 6) stopover corridors via parallel worktree -- 33 route-specific corridors total. Build, tests, vet, lint all clean.
+
+### Session 55, Task 1 -- Fix looksLikeHelp false positive
+Removed "how do"/"how does" prefixes from looksLikeHelp. These were catching contextual questions like "how do I do this" that should go to the LLM for conversation-aware responses. Kept "help", "?", "what can" triggers. Updated 4 test cases.
+
+### Session 55, Task 2 -- Conversational stopover suggestion with LLM history
+Replaced raw "Try setting leg2_date" in stopoverSuggestion with conversational "Would you like me to search a two-leg journey with a stopover?" Added the tip to LLM history as assistant message so the LLM can guide users through multi-city setup. Updated chatSystemPrompt with multi-city conversational flow instructions.
+
+### Session 55, Task 3 -- Per-search timeout in chatSearch
+Added 2-minute context.WithTimeout in chatSearch. Added wrapTimeoutError/isContextError helpers to convert context errors to friendly "search timed out" message. Prevents hung multicity searches from blocking the chat session.
+
+### Session 55, Task 4 -- Search progress feedback for multicity
+Added stopoverProgressMessage helper that shows "Searching via N stopover cities (Bangkok, Singapore, ...)" when multicity strategy is selected. Uses StopoversForRoute to get city names. Gives users feedback during long-running searches.
+
+### Session 55, Task 5 -- Integration tests for new chat behavior
+Added 3 integration tests: (a) "how do I do this" after stopover tip goes to LLM with stopover context in history, (b) chatLoop shows friendly "timed out" on slow strategy, (c) system prompt contains multi-city guidance. All pass.
+
+## Session 55 -- 07:07 -- Chat UX improvements: help fix, conversational stopovers, timeout, progress
+
+All 5 tasks completed in a single commit with zero reverts and zero API calls. Fixed looksLikeHelp false positive that was intercepting contextual "how do" questions. Made stopover suggestions conversational and added them to LLM history for contextual follow-up. Added per-search 2-minute timeout with friendly error messages. Added multicity search progress showing stopover cities being searched. 3 new integration tests validate the end-to-end chat flow. Build, tests, vet, lint all clean.

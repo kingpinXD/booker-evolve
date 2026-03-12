@@ -184,3 +184,9 @@ When a function like mergeParams has N if-blocks for N struct fields (one for cl
 
 ## Lesson: File splits are low-risk refactors that pay off immediately
 When a file crosses ~800 lines with a mix of core logic and helpers, splitting into two files (core + helpers) reduces cognitive load for future changes. The key is a clean separation: keep the main loop and user-facing interaction code in the original file, move pure functions and utility helpers to a new file. Since Go packages are the compilation unit (not files), this is purely organizational with zero behavior change. All tests remain in the original test file and pass unchanged. The hardest part is getting imports right -- both files may need different subsets of the original import list.
+
+## Lesson: Thread assistant-generated tips into LLM history, not just stdout
+When a chat system generates tips (like stopover suggestions) and displays them to the user but does not append them to the conversation history, the LLM cannot follow up on them. The user sees "Flying via Bangkok saves money" and asks "how do I do this", but the LLM has no context about Bangkok. The fix: append the tip as an assistant message in history. This also means the LLM's "how do" prefixes in looksLikeHelp were masking the problem -- removing the broad prefix match lets contextual questions reach the LLM, which now has the context to answer them.
+
+## Lesson: Per-operation timeouts prevent cascading hangs in interactive loops
+A chat loop with a single session-level timeout (e.g. 5 minutes) lets individual operations hang for the entire budget. Adding a per-search timeout (2 minutes) with context.WithTimeout ensures one slow multicity search doesn't freeze the entire session. The key is wrapping context errors (DeadlineExceeded, Canceled) with user-friendly messages at the call site, so the user sees "search timed out" instead of raw Go errors.

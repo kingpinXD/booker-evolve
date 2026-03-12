@@ -60,7 +60,9 @@ Be a helpful travel advisor:
 When you have at least the origin, destination, and departure_date, output the parameters as a JSON object on its own line. You may include optional fields if the user mentioned them. Example:
 {"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15","passengers":2,"cabin":"economy","context":"budget trip"}
 
-After outputting the JSON, briefly explain what you're searching for and why you chose that approach.`
+After outputting the JSON, briefly explain what you're searching for and why you chose that approach.
+
+Multi-city flow: When you suggest a stopover city and the user shows interest (e.g. "yes", "sure", "sounds good", "how do I do that"), ask them what date they want to leave the stopover city, then emit a JSON with the original route plus leg2_date set to that date. Do not ask the user to type raw parameter names — guide them conversationally.`
 }
 
 // nearbyAirportHint returns a message mentioning nearby airports for the
@@ -150,9 +152,16 @@ func buildRequestFromParams(p tripParams) search.Request {
 	}
 }
 
+// searchTimeout is the per-search context timeout for chatSearch.
+const searchTimeout = 2 * time.Minute
+
 // chatSearch builds a request from params, picks a strategy, and executes the search.
 // Status messages and tips are written to out during execution.
+// A per-search timeout prevents individual searches from hanging the chat session.
 func chatSearch(ctx context.Context, params tripParams, picker *search.Picker, out io.Writer) ([]search.Itinerary, error) {
+	ctx, cancel := context.WithTimeout(ctx, searchTimeout)
+	defer cancel()
+
 	req := buildRequestFromParams(params)
 	_, _ = fmt.Fprintf(out, "Searching %s -> %s on %s...\n", req.Origin, req.Destination, req.DepartureDate)
 	if hint := nearbyAirportHint(req.Origin, req.Destination); hint != "" {
@@ -161,11 +170,58 @@ func chatSearch(ctx context.Context, params tripParams, picker *search.Picker, o
 
 	strategy, reason, err := picker.Pick(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("picking strategy: %w", err)
+		return nil, wrapTimeoutError(err)
 	}
 	_, _ = fmt.Fprintf(out, "Using %s strategy (%s)\n", strategy.Name(), reason)
 
-	return strategy.Search(ctx, req)
+	// Show stopover cities for multicity searches so user knows what's happening.
+	if strategy.Name() == "multicity" {
+		if msg := stopoverProgressMessage(req.Origin, req.Destination); msg != "" {
+			_, _ = fmt.Fprintln(out, msg)
+		}
+	}
+
+	results, err := strategy.Search(ctx, req)
+	if err != nil {
+		return nil, wrapTimeoutError(err)
+	}
+	return results, nil
+}
+
+// stopoverProgressMessage returns a progress line listing stopover cities for
+// the given route. Returns empty string when no stopovers are known.
+func stopoverProgressMessage(origin, dest string) string {
+	stopovers := multicity.StopoversForRoute(origin, dest)
+	if len(stopovers) == 0 {
+		return ""
+	}
+	var cities []string
+	for _, s := range stopovers {
+		cities = append(cities, s.City)
+	}
+	n := len(cities)
+	preview := cities
+	if n > 4 {
+		preview = cities[:4]
+	}
+	suffix := ""
+	if n > 4 {
+		suffix = ", ..."
+	}
+	return fmt.Sprintf("Searching via %d stopover cities (%s%s)...", n, strings.Join(preview, ", "), suffix)
+}
+
+// wrapTimeoutError returns a user-friendly message for context deadline/cancellation errors.
+func wrapTimeoutError(err error) error {
+	if isContextError(err) {
+		return fmt.Errorf("search timed out — try a more specific route or add filters to narrow results")
+	}
+	return err
+}
+
+// isContextError checks if an error is a context timeout or cancellation.
+func isContextError(err error) bool {
+	return err == context.DeadlineExceeded || err == context.Canceled
 }
 
 // resultSummaryForChat builds a summary of search results for the conversation
@@ -540,6 +596,6 @@ func stopoverSuggestion(origin, dest, leg2Date string) string {
 	for _, s := range stopovers[:n] {
 		cities = append(cities, s.City)
 	}
-	return fmt.Sprintf("Tip: Flying via %s often saves money on this route. Try setting leg2_date to search multi-city.",
+	return fmt.Sprintf("Flying via %s often saves money on this route. Would you like me to search a two-leg journey with a stopover?",
 		strings.Join(cities, " or "))
 }

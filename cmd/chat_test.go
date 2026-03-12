@@ -2403,12 +2403,17 @@ func TestStopoverSuggestion_KnownRoute(t *testing.T) {
 	if tip == "" {
 		t.Fatal("expected stopover suggestion for DEL->YYZ")
 	}
-	if !strings.Contains(tip, "Tip:") {
-		t.Errorf("suggestion should start with 'Tip:', got: %s", tip)
-	}
 	// Should mention at least one stopover city name.
 	if !strings.Contains(tip, "Hong Kong") && !strings.Contains(tip, "Bangkok") && !strings.Contains(tip, "Singapore") {
 		t.Errorf("suggestion should mention a stopover city, got: %s", tip)
+	}
+	// Should be conversational, not expose raw parameter names.
+	if strings.Contains(tip, "leg2_date") {
+		t.Errorf("suggestion should not contain raw parameter 'leg2_date', got: %s", tip)
+	}
+	// Should ask if user wants a stopover search.
+	if !strings.Contains(tip, "Would you like") {
+		t.Errorf("suggestion should ask user about stopover search, got: %s", tip)
 	}
 }
 
@@ -2432,8 +2437,9 @@ func TestChatLoop_StopoverSuggestionShown(t *testing.T) {
 	responses := []string{
 		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
 Searching for flights.`,
+		"Sure, I can help with that.",
 	}
-	mock := &chatMockLLM{responses: responses}
+	mock := &chatMockLLM{responses: responses, captureHistory: true}
 	fakeStrat := &fakeSearchStrategy{
 		results: []search.Itinerary{
 			{
@@ -2444,7 +2450,7 @@ Searching for flights.`,
 	}
 	picker := search.NewPicker(mock, fakeStrat)
 
-	in := strings.NewReader("find flights\nquit\n")
+	in := strings.NewReader("find flights\ntell me more\nquit\n")
 	var out strings.Builder
 
 	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
@@ -2453,8 +2459,28 @@ Searching for flights.`,
 	}
 
 	output := out.String()
-	if !strings.Contains(output, "Tip:") {
-		t.Errorf("expected stopover suggestion tip in output, got:\n%s", output)
+	// Should show conversational stopover suggestion.
+	if !strings.Contains(output, "Would you like") {
+		t.Errorf("expected conversational stopover suggestion in output, got:\n%s", output)
+	}
+	// Stopover tip should not contain raw parameter names.
+	if strings.Contains(output, "leg2_date") {
+		t.Errorf("stopover suggestion should not contain raw 'leg2_date', got:\n%s", output)
+	}
+
+	// Stopover tip should be in LLM history for the follow-up call.
+	if len(mock.historyLog) < 2 {
+		t.Fatalf("expected at least 2 LLM calls, got %d", len(mock.historyLog))
+	}
+	found := false
+	for _, msg := range mock.historyLog[1] {
+		if msg.Role == "assistant" && strings.Contains(msg.Content, "stopover") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected stopover suggestion in LLM history for second call")
 	}
 }
 
@@ -2487,7 +2513,7 @@ Searching for multi-city.`,
 
 	output := out.String()
 	// Should NOT show stopover suggestion for multi-city trip.
-	if strings.Contains(output, "Tip:") && strings.Contains(output, "leg2_date") {
+	if strings.Contains(output, "Would you like me to search a two-leg") {
 		t.Errorf("should not show stopover suggestion for multi-city trip, got:\n%s", output)
 	}
 }
@@ -2566,8 +2592,11 @@ func TestLooksLikeHelp(t *testing.T) {
 		{"?", true},
 		{"what can you do", true},
 		{"What can I search for?", true},
-		{"how do I search", true},
-		{"how does this work", true},
+		// Contextual "how do" questions should go to LLM, not help.
+		{"how do I search", false},
+		{"how does this work", false},
+		{"how do I do this", false},
+		{"how do I set leg2_date", false},
 		{"find flights to Paris", false},
 		{"show cheaper", false},
 		{"compare 1 and 2", false},
@@ -2640,6 +2669,169 @@ func TestChatSearch(t *testing.T) {
 	}
 }
 
+// slowSearchStrategy blocks until context is cancelled, simulating a hung search.
+type slowSearchStrategy struct{}
+
+func (s *slowSearchStrategy) Name() string        { return "direct" }
+func (s *slowSearchStrategy) Description() string { return "slow" }
+func (s *slowSearchStrategy) Search(ctx context.Context, _ search.Request) ([]search.Itinerary, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+// fakeMulticityStrategy returns canned results and identifies as "multicity".
+type fakeMulticityStrategy struct {
+	results []search.Itinerary
+}
+
+func (f *fakeMulticityStrategy) Name() string        { return "multicity" }
+func (f *fakeMulticityStrategy) Description() string { return "fake multicity" }
+func (f *fakeMulticityStrategy) Search(_ context.Context, _ search.Request) ([]search.Itinerary, error) {
+	return f.results, nil
+}
+
+func TestChatSearch_MulticityProgress(t *testing.T) {
+	mock := &chatMockLLM{responses: []string{""}}
+	mcStrat := &fakeMulticityStrategy{
+		results: []search.Itinerary{
+			{
+				Legs: []search.Leg{
+					{Flight: types.Flight{Price: types.Money{Amount: 400, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "BKK"}}}},
+					{Flight: types.Flight{Price: types.Money{Amount: 400, Currency: "USD"}, Outbound: []types.Segment{{Origin: "BKK", Destination: "YYZ"}}}},
+				},
+				TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, mcStrat)
+
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	var out strings.Builder
+	_, err := chatSearch(context.Background(), params, picker, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	output := out.String()
+	// Should show stopover cities being searched.
+	if !strings.Contains(output, "stopover") {
+		t.Errorf("expected stopover progress message for multicity, got:\n%s", output)
+	}
+	// Should mention at least one known city name.
+	if !strings.Contains(output, "Bangkok") && !strings.Contains(output, "Singapore") && !strings.Contains(output, "Hong Kong") {
+		t.Errorf("expected stopover city names in progress, got:\n%s", output)
+	}
+}
+
+func TestChatSearch_Timeout(t *testing.T) {
+	mock := &chatMockLLM{responses: []string{""}}
+	slowStrat := &slowSearchStrategy{}
+	picker := search.NewPicker(mock, slowStrat)
+
+	params := tripParams{Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15"}
+	var out strings.Builder
+
+	// Use a context that is already cancelled to trigger immediate timeout.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := chatSearch(ctx, params, picker, &out)
+	if err == nil {
+		t.Fatal("expected error from cancelled context")
+	}
+	if !strings.Contains(err.Error(), "timed out") {
+		t.Errorf("expected friendly timeout message, got: %v", err)
+	}
+}
+
+func TestChatLoop_HowDoAfterStopoverGoesToLLM(t *testing.T) {
+	// After search results + stopover tip, "how do I do this" should go to
+	// the LLM (not be intercepted by help), and the LLM should have the
+	// stopover suggestion in its history.
+	responses := []string{
+		// First: triggers search.
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+		// Second: LLM response to "how do I do this" — should guide through multi-city.
+		"Just tell me the date you'd like to leave the stopover city, and I'll search a two-leg journey for you.",
+	}
+	mock := &chatMockLLM{responses: responses, captureHistory: true}
+	fakeStrat := &fakeSearchStrategy{
+		results: []search.Itinerary{
+			{
+				Legs:       []search.Leg{{Flight: types.Flight{Price: types.Money{Amount: 800, Currency: "USD"}, Outbound: []types.Segment{{Origin: "DEL", Destination: "YYZ"}}}}},
+				TotalPrice: types.Money{Amount: 800, Currency: "USD"},
+			},
+		},
+	}
+	picker := search.NewPicker(mock, fakeStrat)
+
+	in := strings.NewReader("find flights\nhow do I do this\nquit\n")
+	var out strings.Builder
+
+	err := chatLoop(context.Background(), mock, picker, nil, nil, in, &out)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := out.String()
+	// "how do I do this" should NOT trigger help text.
+	if strings.Contains(output, "Available filters") {
+		t.Errorf("'how do I do this' should not trigger help, got:\n%s", output)
+	}
+	// The LLM should receive the "how do I do this" message (second call).
+	if len(mock.historyLog) < 2 {
+		t.Fatalf("expected at least 2 LLM calls, got %d", len(mock.historyLog))
+	}
+	// The LLM's second call should have the stopover tip in history.
+	foundStopover := false
+	foundUserQ := false
+	for _, msg := range mock.historyLog[1] {
+		if msg.Role == "assistant" && strings.Contains(msg.Content, "stopover") {
+			foundStopover = true
+		}
+		if msg.Role == "user" && strings.Contains(msg.Content, "how do I do this") {
+			foundUserQ = true
+		}
+	}
+	if !foundStopover {
+		t.Error("expected stopover suggestion in LLM history for second call")
+	}
+	if !foundUserQ {
+		t.Error("expected user question 'how do I do this' in LLM history for second call")
+	}
+	// LLM response should be shown to the user.
+	if !strings.Contains(output, "tell me the date") {
+		t.Errorf("expected LLM multi-city guidance in output, got:\n%s", output)
+	}
+}
+
+func TestChatLoop_SearchTimeoutFriendlyError(t *testing.T) {
+	// When the search strategy hangs and the per-search timeout fires,
+	// the chatLoop should show a friendly error instead of raw context error.
+	responses := []string{
+		`{"origin":"DEL","destination":"YYZ","departure_date":"2025-06-15"}
+Searching for flights.`,
+	}
+	mock := &chatMockLLM{responses: responses}
+	slowStrat := &slowSearchStrategy{}
+	picker := search.NewPicker(mock, slowStrat)
+
+	// Use a context with a very short deadline so the per-search timeout
+	// or the parent timeout fires quickly.
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	in := strings.NewReader("find flights\nquit\n")
+	var out strings.Builder
+
+	_ = chatLoop(ctx, mock, picker, nil, nil, in, &out)
+
+	output := out.String()
+	if !strings.Contains(output, "timed out") {
+		t.Errorf("expected friendly timeout message in output, got:\n%s", output)
+	}
+}
+
 func TestDisplayChatResults_Table(t *testing.T) {
 	results := []search.Itinerary{{
 		Legs: []search.Leg{{Flight: types.Flight{
@@ -2700,5 +2892,15 @@ func TestParsePartialParams_ClearFields(t *testing.T) {
 	}
 	if p.ClearFields[0] != "direct_only" || p.ClearFields[1] != "max_price" {
 		t.Errorf("ClearFields = %v, want [direct_only max_price]", p.ClearFields)
+	}
+}
+
+func TestChatSystemPrompt_MultiCityGuidance(t *testing.T) {
+	prompt := chatSystemPrompt(time.Now())
+	if !strings.Contains(prompt, "Multi-city flow") {
+		t.Error("system prompt should contain multi-city conversational guidance")
+	}
+	if !strings.Contains(prompt, "leg2_date") {
+		t.Error("system prompt should mention leg2_date in multi-city guidance")
 	}
 }

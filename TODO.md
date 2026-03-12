@@ -1,44 +1,44 @@
 # TODO
 
-## Task 160: Extract chat helpers into cmd/chathelpers.go
+## Task 165: Fix looksLikeHelp false positive
 **Status:** done
-**Plan:** Move ~20 helper functions from chat.go to new chathelpers.go. Pure file split, no logic changes.
-- [x] Identify functions to extract (helpers, param functions, utilities)
-- [x] Create cmd/chathelpers.go with extracted functions
-- [x] Remove extracted functions from cmd/chat.go
-- [x] Verify go build && go test ./cmd/...
+**Plan:** Remove "how do"/"how does" prefixes from looksLikeHelp. Keep only exact/near-exact triggers.
+- [x] Write test: "how do I do this" should NOT trigger help
+- [x] Write test: "how do I set leg2_date" should NOT trigger help
+- [x] Update looksLikeHelp to remove "how do"/"how does" prefixes
+- [x] Verify existing help tests still pass
+- [x] Run go build && go test ./cmd/... && go vet ./...
 
-## Task 161: filterSuggestion reflection refactor
+## Task 166: Conversational stopover suggestion with LLM history
 **Status:** done
-**Plan:** Replace per-field if-blocks with reflection loop. Define filterLabels map from json tag to human-readable name. Iterate tripParams fields, check non-zero + in label map.
-- [x] Define filterLabels map
-- [x] Rewrite filterSuggestion using reflection
-- [x] Verify existing tests pass
-- [x] Run full verification
+**Plan:** Make stopoverSuggestion conversational, add to LLM history, update system prompt for multi-city guidance.
+- [x] Write test: stopoverSuggestion should not contain "leg2_date"
+- [x] Write test: LLM history should contain stopover tip after results
+- [x] Update stopoverSuggestion message to be conversational
+- [x] Add stopover tip to LLM history in chatLoop
+- [x] Update chatSystemPrompt with multi-city conversational guidance
+- [x] Run go build && go test ./cmd/... && go vet ./...
 
-## Task 162: Multi-leg info in formatComparison
+## Task 167: Per-search timeout in chatSearch
 **Status:** done
-**Plan:** Show per-leg details for multi-city itineraries. Extract shared leg-extraction logic into legSummary helper used by both formatComparison and formatOptionDetail.
-- [x] Extract legSummary helper function
-- [x] Update formatComparison to show all legs
-- [x] Update formatOptionDetail to use legSummary
-- [x] Add test for 2-leg comparison
-- [x] Run full verification
+**Plan:** Add 2-minute per-search context timeout in chatSearch. Return friendly message on timeout.
+- [x] Write test: chatSearch with cancelled context returns friendly error
+- [x] Add context.WithTimeout in chatSearch
+- [x] Wrap context.DeadlineExceeded with user-friendly message
+- [x] Run go build && go test ./cmd/... && go vet ./...
 
-## Task 163: India-Los Angeles stopover corridors
-**Status:** done (parallel worktree)
-**Plan:** Add DELToLAXStopovers and BOMToLAXStopovers via East Asia Pacific corridor (BKK, SIN, KUL, HKG, NRT, TPE). Register in stopoversMap.
-- [x] Add DELToLAXStopovers variable
-- [x] Add BOMToLAXStopovers variable
-- [x] Register both in stopoversMap
-- [x] Add route-specific tests + reverse lookup tests
-- [x] Run full verification
+## Task 168: Search progress feedback for multicity
+**Status:** done
+**Plan:** Show stopover cities being searched when multicity strategy is used.
+- [x] Write test: multicity search output contains stopover city names
+- [x] Detect multicity strategy in chatSearch by name
+- [x] Call StopoversForRoute and display city list
+- [x] Run go build && go test ./cmd/... && go vet ./...
 
-## Task 164: India-Chicago stopover corridors
-**Status:** done (parallel worktree)
-**Plan:** Add DELToORDStopovers and BOMToORDStopovers via East Asia Pacific (BKK, SIN, HKG, NRT, ICN) + European (IST) corridor. Register in stopoversMap.
-- [x] Add DELToORDStopovers variable
-- [x] Add BOMToORDStopovers variable
-- [x] Register both in stopoversMap
-- [x] Add route-specific tests + reverse lookup tests
-- [x] Run full verification
+## Task 169: Tests for new chat behavior
+**Status:** done
+**Plan:** Integration-style chatLoop tests for the new conversational flow.
+- [x] Test: "how do I do this" after stopover tip goes to LLM
+- [x] Test: LLM history contains stopover suggestion
+- [x] Test: per-search timeout produces friendly error in chatLoop
+- [x] Run full go build && go test ./... && go vet ./...

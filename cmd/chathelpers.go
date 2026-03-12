@@ -291,6 +291,14 @@ func resultSummaryForChat(results []search.Itinerary, params tripParams, pi sear
 		fmt.Fprintf(&b, " Typical prices for this route: $%.0f-$%.0f (price level: %s).",
 			pi.TypicalPriceRange[0], pi.TypicalPriceRange[1], pi.PriceLevel)
 	}
+	// Include fare trend when flex-date search produced multi-date results.
+	if params.FlexDays > 0 {
+		ft := search.ComputeFareTrend(results)
+		if ft.CheapestDate != "" && ft.CheapestDate != ft.PriciestDate {
+			fmt.Fprintf(&b, " Fare trend: %s is cheapest ($%.0f), %s most expensive ($%.0f).",
+				ft.CheapestDate, ft.MinPrice, ft.PriciestDate, ft.MaxPrice)
+		}
+	}
 	return b.String()
 }
 

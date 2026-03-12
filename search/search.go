@@ -74,3 +74,63 @@ type Stopover struct {
 	Duration time.Duration // how long the traveler stays in the city
 	Notes    string        // context about the stopover city (connectivity, food, visa, etc.)
 }
+
+// FareTrend summarizes price variation across dates in a flex-date search.
+// Empty when FlexDays is 0 or there are no results.
+type FareTrend struct {
+	CheapestDate string  // YYYY-MM-DD of the cheapest departure
+	PriciestDate string  // YYYY-MM-DD of the most expensive departure
+	MinPrice     float64 // lowest price across all dates
+	MaxPrice     float64 // highest price across all dates
+}
+
+// ComputeFareTrend analyzes itineraries from a flex-date search and returns
+// per-date price extremes. Returns a zero FareTrend when itineraries is empty.
+func ComputeFareTrend(itineraries []Itinerary) FareTrend {
+	if len(itineraries) == 0 {
+		return FareTrend{}
+	}
+
+	// Find cheapest itinerary per date, track overall min/max.
+	dateBest := make(map[string]float64) // date -> cheapest price
+	for _, itin := range itineraries {
+		date := itinDate(itin)
+		if date == "" {
+			continue
+		}
+		price := itin.TotalPrice.Amount
+		if best, ok := dateBest[date]; !ok || price < best {
+			dateBest[date] = price
+		}
+	}
+
+	if len(dateBest) == 0 {
+		return FareTrend{}
+	}
+
+	var ft FareTrend
+	first := true
+	for date, price := range dateBest {
+		if first || price < ft.MinPrice {
+			ft.MinPrice = price
+			ft.CheapestDate = date
+		}
+		if first || price > ft.MaxPrice {
+			ft.MaxPrice = price
+			ft.PriciestDate = date
+		}
+		first = false
+	}
+	return ft
+}
+
+// itinDate extracts the departure date (YYYY-MM-DD) from an itinerary's first leg.
+func itinDate(itin Itinerary) string {
+	if len(itin.Legs) > 0 && len(itin.Legs[0].Flight.Outbound) > 0 {
+		t := itin.Legs[0].Flight.Outbound[0].DepartureTime
+		if !t.IsZero() {
+			return t.Format("2006-01-02")
+		}
+	}
+	return ""
+}

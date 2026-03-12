@@ -10,14 +10,14 @@
 - [x] Run go build && go test ./... && go vet ./...
 
 ## Task 171: Fare trend summary for flex-date searches
-**Status:** pending
-**Plan:** to be filled during implementation
-- [ ] Define FareTrend struct in search/types.go
-- [ ] Implement ComputeFareTrend from itineraries
-- [ ] Wire into direct.go to compute trend when FlexDays > 0
-- [ ] Add formatFareTrend display helper in cmd/display.go
-- [ ] Include fare trend in chat result summary (chathelpers.go)
-- [ ] Run go build && go test ./... && go vet ./...
+**Status:** done
+**Plan:** Add FareTrend struct + ComputeFareTrend in search/search.go as pure function on []Itinerary. Add formatFareTrend in cmd/display.go. Include in chat summary and display in chatLoop when FlexDays>0.
+- [x] Define FareTrend struct and ComputeFareTrend in search/search.go
+- [x] Write tests for ComputeFareTrend (multi-date, empty, single-date)
+- [x] Add formatFareTrend in cmd/display.go + 3 tests
+- [x] Include fare trend in chat result summary (chathelpers.go)
+- [x] Display fare trend in chatLoop after results (chat.go)
+- [x] Run go build && go test ./... && go vet ./...
 
 ## Task 172: Ranker cache max size with eviction
 **Status:** pending

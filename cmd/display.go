@@ -621,3 +621,25 @@ func printJSON(w io.Writer, itineraries []search.Itinerary, cur string) error {
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
 }
+
+// formatFareTrend returns a human-readable fare trend summary for flex-date
+// searches. Returns empty string when the trend has no data or a single date.
+func formatFareTrend(ft search.FareTrend) string {
+	if ft.CheapestDate == "" || ft.CheapestDate == ft.PriciestDate {
+		return ""
+	}
+	cheapDay := formatDateShort(ft.CheapestDate)
+	priceDay := formatDateShort(ft.PriciestDate)
+	diff := ft.MaxPrice - ft.MinPrice
+	return fmt.Sprintf("Fare trend: %s is cheapest ($%.0f), %s is most expensive ($%.0f) — $%.0f difference.",
+		cheapDay, ft.MinPrice, priceDay, ft.MaxPrice, diff)
+}
+
+// formatDateShort converts "2026-03-16" to "Mar 16".
+func formatDateShort(dateStr string) string {
+	t, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return dateStr
+	}
+	return t.Format("Jan 2")
+}

@@ -754,3 +754,6 @@ All 5 tasks completed in a single commit with zero reverts and zero API calls. F
 
 ### Session 56, Task 1 -- Result diversification for search output
 Added DiversifyResults in search/filter.go that selects cheapest, fastest, best-scored, then fills remaining slots by maximizing airline diversity. Wired into direct.go and composite.go replacing the simple truncation. 5 tests cover near-identical results, scored results, fewer-than-N, empty, and zero-max edge cases.
+
+### Session 56, Task 2 -- Fare trend summary for flex-date searches
+Added FareTrend struct and ComputeFareTrend in search/search.go as a pure function. Added formatFareTrend/formatDateShort in display.go. Wired into chatLoop to display after flex-date results, and into resultSummaryForChat so the LLM can reference date-price relationships. 6 tests total (3 for ComputeFareTrend, 3 for formatFareTrend). Chose pure-function approach over stateful Searcher field to keep it simple.

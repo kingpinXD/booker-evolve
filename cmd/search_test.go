@@ -1434,6 +1434,47 @@ func TestBuildJSONItineraries_TotalTrip_OmitEmpty(t *testing.T) {
 	}
 }
 
+// --- formatFareTrend ---
+
+func TestFormatFareTrend_MultiDate(t *testing.T) {
+	ft := search.FareTrend{
+		CheapestDate: "2026-03-16",
+		PriciestDate: "2026-03-18",
+		MinPrice:     300,
+		MaxPrice:     800,
+	}
+	got := formatFareTrend(ft)
+	if !strings.Contains(got, "Mar 16") || !strings.Contains(got, "cheapest") {
+		t.Errorf("formatFareTrend missing cheapest date: %q", got)
+	}
+	if !strings.Contains(got, "Mar 18") || !strings.Contains(got, "expensive") {
+		t.Errorf("formatFareTrend missing priciest date: %q", got)
+	}
+	if !strings.Contains(got, "$500") {
+		t.Errorf("formatFareTrend missing difference: %q", got)
+	}
+}
+
+func TestFormatFareTrend_SameDate(t *testing.T) {
+	ft := search.FareTrend{
+		CheapestDate: "2026-03-16",
+		PriciestDate: "2026-03-16",
+		MinPrice:     300,
+		MaxPrice:     300,
+	}
+	got := formatFareTrend(ft)
+	if got != "" {
+		t.Errorf("formatFareTrend(same date) = %q, want empty", got)
+	}
+}
+
+func TestFormatFareTrend_Empty(t *testing.T) {
+	got := formatFareTrend(search.FareTrend{})
+	if got != "" {
+		t.Errorf("formatFareTrend(empty) = %q, want empty", got)
+	}
+}
+
 func TestPrintTable_MultiLeg_CabinBothLegs(t *testing.T) {
 	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
 		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})

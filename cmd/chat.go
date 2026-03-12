@@ -375,6 +375,13 @@ func chatLoop(ctx context.Context, llmClient search.ChatCompleter, picker *searc
 		}
 		displayChatResults(out, results, pi)
 
+		// Show fare trend for flex-date searches.
+		if params.FlexDays > 0 {
+			if hint := formatFareTrend(search.ComputeFareTrend(results)); hint != "" {
+				_, _ = fmt.Fprintln(out, hint)
+			}
+		}
+
 		// Suggest multi-city routing for single-leg trips with known stopovers.
 		// Add to LLM history so it can guide the user through stopover setup.
 		if tip := stopoverSuggestion(params.Origin, params.Destination, params.Leg2Date); tip != "" {

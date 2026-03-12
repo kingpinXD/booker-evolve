@@ -856,6 +856,64 @@ func TestDiversifyResults_ZeroMaxReturnsAll(t *testing.T) {
 	}
 }
 
+// --- ComputeFareTrend ---
+
+func makeFlexItinerary(price float64, depDate string) Itinerary {
+	t, _ := time.Parse("2006-01-02", depDate)
+	return Itinerary{
+		TotalPrice: types.Money{Amount: price, Currency: "USD"},
+		Legs: []Leg{{
+			Flight: types.Flight{
+				Price:    types.Money{Amount: price, Currency: "USD"},
+				Outbound: []types.Segment{{DepartureTime: t}},
+			},
+		}},
+	}
+}
+
+func TestComputeFareTrend_MultiDate(t *testing.T) {
+	itins := []Itinerary{
+		makeFlexItinerary(500, "2026-03-15"),
+		makeFlexItinerary(300, "2026-03-16"),
+		makeFlexItinerary(800, "2026-03-17"),
+		makeFlexItinerary(350, "2026-03-16"), // same date, higher price
+	}
+	ft := ComputeFareTrend(itins)
+	if ft.CheapestDate != "2026-03-16" {
+		t.Errorf("CheapestDate = %q, want 2026-03-16", ft.CheapestDate)
+	}
+	if ft.PriciestDate != "2026-03-17" {
+		t.Errorf("PriciestDate = %q, want 2026-03-17", ft.PriciestDate)
+	}
+	if ft.MinPrice != 300 {
+		t.Errorf("MinPrice = %.0f, want 300", ft.MinPrice)
+	}
+	if ft.MaxPrice != 800 {
+		t.Errorf("MaxPrice = %.0f, want 800", ft.MaxPrice)
+	}
+}
+
+func TestComputeFareTrend_Empty(t *testing.T) {
+	ft := ComputeFareTrend(nil)
+	if ft.CheapestDate != "" || ft.PriciestDate != "" {
+		t.Errorf("empty itins should give empty FareTrend, got %+v", ft)
+	}
+}
+
+func TestComputeFareTrend_SingleDate(t *testing.T) {
+	itins := []Itinerary{
+		makeFlexItinerary(500, "2026-03-15"),
+		makeFlexItinerary(600, "2026-03-15"),
+	}
+	ft := ComputeFareTrend(itins)
+	if ft.CheapestDate != "2026-03-15" || ft.PriciestDate != "2026-03-15" {
+		t.Errorf("single date: CheapestDate=%q, PriciestDate=%q", ft.CheapestDate, ft.PriciestDate)
+	}
+	if ft.MinPrice != 500 || ft.MaxPrice != 500 {
+		t.Errorf("single date: MinPrice=%.0f, MaxPrice=%.0f, want 500/500", ft.MinPrice, ft.MaxPrice)
+	}
+}
+
 // --- firstDeparture edge cases ---
 
 func TestFirstDeparture_ZeroLegs(t *testing.T) {

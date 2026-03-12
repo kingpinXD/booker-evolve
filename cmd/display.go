@@ -55,7 +55,6 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 		if scored {
 			header = append(header, "Reason")
 		}
-		header = append(header, "Book")
 	} else {
 		header = table.Row{"#"}
 		if scored {
@@ -66,7 +65,6 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 		if scored {
 			header = append(header, "Reason")
 		}
-		header = append(header, "Book")
 	}
 	t.AppendHeader(header)
 
@@ -100,7 +98,6 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 			if scored {
 				row = append(row, itin.Reasoning)
 			}
-			row = append(row, legBookingURL(itin, 0))
 		} else {
 			row = table.Row{i + 1}
 			if scored {
@@ -119,7 +116,6 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 			if scored {
 				row = append(row, itin.Reasoning)
 			}
-			row = append(row, legBookingURL(itin, 0))
 		}
 		t.AppendRow(row)
 	}

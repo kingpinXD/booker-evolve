@@ -770,3 +770,6 @@ Added 4 corridor pairs: LHR→BKK (6 cities), LHR→NRT (7 cities), CDG→BKK (6
 ## Session 56 -- 07:55 -- Five features: diversify, fare trends, cache eviction, context weights, EU-Asia stopovers
 
 All 5 tasks completed with zero reverts and zero API calls. Tasks 3 and 5 ran in parallel worktrees; Tasks 1, 2, 4 ran sequentially on main. Key features: DiversifyResults ensures variety in capped results; FareTrend shows cheapest/priciest dates in flex-date searches; ranker cache capped at 64 entries with FIFO eviction; contextWeights detects preference signals and adjusts ranking weights dynamically; 4 new Europe→Asia stopover corridors expand geographic coverage. ~30 new tests total. Build, tests, vet, lint all clean.
+
+### Session 57, Task 1 -- Remove Book column from table output
+Removed "Book" column header and legBookingURL row data from both single-leg and multi-leg table layouts in printTable. BookingURL preserved in JSON output and formatOptionDetail. Updated 3 existing BOOK tests to assert column absence.

@@ -1,46 +1,44 @@
 # TODO
 
-## Task 170: Result diversification for search output
+## Task 175: Remove Book column from table output
 **Status:** done
-**Plan:** Add DiversifyResults in search/filter.go that selects: 1 cheapest, 1 fastest, 1 best-scored (if scored), then fills remaining slots maximizing airline diversity. Wire into direct.go and composite.go before MaxResults cap. Tests in filter_test.go.
-- [x] Write tests for DiversifyResults with near-identical itineraries
-- [x] Implement DiversifyResults in search/filter.go
-- [x] Wire into direct.go Search after ranking, before MaxResults cap
-- [x] Wire into composite.go Search after ranking, before MaxResults cap
+**Plan:** Remove "Book" header and legBookingURL data from printTable for both single-leg and multi-leg layouts. Keep BookingURL in JSON output.
+- [x] Write test asserting table output does not contain "BOOK" column
+- [x] Remove Book column from single-leg header and row in printTable
+- [x] Remove Book column from multi-leg header and row in printTable
+- [x] Verify legBookingURL is still used by formatOptionDetail (keep helper)
 - [x] Run go build && go test ./... && go vet ./...
 
-## Task 171: Fare trend summary for flex-date searches
-**Status:** done
-**Plan:** Add FareTrend struct + ComputeFareTrend in search/search.go as pure function on []Itinerary. Add formatFareTrend in cmd/display.go. Include in chat summary and display in chatLoop when FlexDays>0.
-- [x] Define FareTrend struct and ComputeFareTrend in search/search.go
-- [x] Write tests for ComputeFareTrend (multi-date, empty, single-date)
-- [x] Add formatFareTrend in cmd/display.go + 3 tests
-- [x] Include fare trend in chat result summary (chathelpers.go)
-- [x] Display fare trend in chatLoop after results (chat.go)
-- [x] Run go build && go test ./... && go vet ./...
+## Task 176: Bullet-point display for chat results
+**Status:** pending
+**Plan:** Add printBulletResults in display.go for concise per-itinerary bullets. Change displayChatResults default from table to bullet format. Keep --format table/json as overrides.
+- [ ] Write tests for printBulletResults (single-leg, multi-leg, scored, empty)
+- [ ] Implement printBulletResults in display.go
+- [ ] Update displayChatResults to use bullet format by default
+- [ ] Add "bullet" format option, keep table/json as explicit choices
+- [ ] Run go build && go test ./... && go vet ./...
 
-## Task 172: Ranker cache max size with eviction
-**Status:** done (completed in worktree)
-- [x] Write tests for cache eviction at maxCacheSize
-- [x] Add maxCacheSize const and keys slice to Ranker
-- [x] Implement eviction in Rank method when inserting new entry
-- [x] Verify CacheStats still accurate after eviction
-- [x] Run go build && go test ./... && go vet ./...
+## Task 177: Truncate Reason column in table
+**Status:** pending
+**Plan:** Add truncateText helper, apply to Reason field in printTable row construction. Cap at 50 chars with "..." suffix.
+- [ ] Write test for truncateText at boundary cases (49, 50, 51 chars)
+- [ ] Implement truncateText helper in display.go
+- [ ] Apply truncateText to Reason in both single-leg and multi-leg rows
+- [ ] Run go build && go test ./... && go vet ./...
 
-## Task 173: Context-aware ranking weight adjustment from conversation
-**Status:** done
-**Plan:** Add contextWeights function in chathelpers.go that scans user messages for preference phrases and returns additive RankingWeights deltas. Wire into chatLoop to apply deltas before search via weightsUpdater. Tests in chat_test.go.
-- [x] Write 7 tests for contextWeights (layover, carbon, schedule, duration, no-signal, ignore-assistant, multiple)
-- [x] Implement contextWeights + addWeights in cmd/chathelpers.go
-- [x] Wire into chatLoop to apply combined (base + context delta) weights before each search
-- [x] Update existing TestChatLoop_ProfileSwitchUpdatesWeights for new behavior
-- [x] Run go build && go test ./... && go vet ./...
+## Task 178: Shorten multi-leg table headers
+**Status:** pending
+**Plan:** Replace verbose "Leg 1 X" / "Leg 2 X" headers with "L1 X" / "L2 X" variants. Single-leg headers unchanged.
+- [ ] Write test asserting multi-leg table has "L1" / "L2" prefixed headers
+- [ ] Update multi-leg header row in printTable
+- [ ] Update any tests that check for old header text
+- [ ] Run go build && go test ./... && go vet ./...
 
-## Task 174: Europe-to-Asia stopover corridors
-**Status:** done (completed in worktree)
-- [x] Add LHR→BKK stopover corridor
-- [x] Add LHR→NRT stopover corridor
-- [x] Add CDG→BKK stopover corridor
-- [x] Add CDG→NRT stopover corridor
-- [x] Add specific lookup tests for new corridors
-- [x] Run go build && go test ./... && go vet ./...
+## Task 179: North America to Europe stopover corridors
+**Status:** pending
+**Plan:** Add JFK→LHR, JFK→CDG, LAX→LHR transatlantic corridors using KEF, DUB as waypoints.
+- [ ] Add JFK→LHR stopover corridor (KEF, DUB, YHZ)
+- [ ] Add JFK→CDG stopover corridor (KEF, DUB, LHR)
+- [ ] Add LAX→LHR stopover corridor (YVR, YYZ, KEF)
+- [ ] Add specific lookup tests for new corridors
+- [ ] Run go build && go test ./... && go vet ./...

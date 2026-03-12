@@ -198,3 +198,7 @@ FareTrend could have been stored on the Searcher (like PriceInsights on the prov
 ## Lesson: Additive weight deltas compose cleanly with base profiles
 
 contextWeights returns deltas that are added to base profile weights rather than replacing them. This means signals accumulate across the conversation without overriding explicit profile choices. The zero-value fallback (no signals = no change) preserves backward compatibility. This additive pattern works well for any "modifier on top of a base" scenario.
+
+## Lesson: Constructor helpers eliminate boilerplate in large data files
+
+stopovers.go had 209 StopoverCity entries repeating MinStay/MaxStay defaults verbatim across 2122 lines. A single newStopover(city, airport, region, notes) helper that applies defaults reduced this to 734 lines -- 65% reduction with zero behavior change. When a data file has many entries sharing identical default fields, a constructor helper pays for itself immediately. The 1-2 entries with non-default values can still use struct literals directly.

@@ -494,3 +494,98 @@ func TestPrintBulletResults_Empty(t *testing.T) {
 		t.Errorf("expected empty output for nil itineraries, got %q", buf.String())
 	}
 }
+
+func TestPrintBulletResults_DepartureDate_SingleLeg(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	// basetime is Apr 10 -- departure date should appear in bullet.
+	if !strings.Contains(out, "Apr 10") {
+		t.Errorf("expected departure date 'Apr 10' in bullet, got:\n%s", out)
+	}
+}
+
+func TestPrintBulletResults_DepartureDate_MultiLeg(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil)
+	itin := makeItin(leg1, leg2)
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	// First line should show departure date.
+	if !strings.Contains(out, "Apr 10") {
+		t.Errorf("expected departure date 'Apr 10' in multi-leg bullet, got:\n%s", out)
+	}
+}
+
+func TestPrintBulletResults_PerLegPrice(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil)
+	itin := makeItin(leg1, leg2)
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	// Sub-bullets should show per-leg prices.
+	if !strings.Contains(out, "$300") {
+		t.Errorf("expected leg 1 price '$300' in sub-bullet, got:\n%s", out)
+	}
+	if !strings.Contains(out, "$500") {
+		t.Errorf("expected leg 2 price '$500' in sub-bullet, got:\n%s", out)
+	}
+}
+
+func TestPrintBulletResults_CabinClass_NonEconomy(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 1200, nil)
+	leg.Flight.Outbound[0].CabinClass = types.CabinBusiness
+	itin := makeItin(leg)
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	if !strings.Contains(out, "business") {
+		t.Errorf("expected cabin class 'business' in bullet, got:\n%s", out)
+	}
+}
+
+func TestPrintBulletResults_CabinClass_Economy_Hidden(t *testing.T) {
+	leg := makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil)
+	leg.Flight.Outbound[0].CabinClass = types.CabinEconomy
+	itin := makeItin(leg)
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	if strings.Contains(out, "economy") {
+		t.Errorf("should not show 'economy' cabin class, got:\n%s", out)
+	}
+}
+
+func TestPrintBulletResults_CabinClass_MultiLeg(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 600, nil)
+	leg1.Flight.Outbound[0].CabinClass = types.CabinBusiness
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 800, nil)
+	leg2.Flight.Outbound[0].CabinClass = types.CabinFirst
+	itin := makeItin(leg1, leg2)
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	if !strings.Contains(out, "business") {
+		t.Errorf("expected 'business' for leg 1, got:\n%s", out)
+	}
+	if !strings.Contains(out, "first") {
+		t.Errorf("expected 'first' for leg 2, got:\n%s", out)
+	}
+}

@@ -8,6 +8,7 @@ import (
 
 	"booker/currency"
 	"booker/search"
+	"booker/types"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 )
@@ -138,8 +139,30 @@ func printTable(w io.Writer, itineraries []search.Itinerary, cur string) {
 	_, _ = fmt.Fprintln(w)
 }
 
+// bulletDepartureDate returns the departure date ("Jan 2") from the first
+// segment of leg 0. Returns empty string if unavailable.
+func bulletDepartureDate(itin search.Itinerary) string {
+	if len(itin.Legs) == 0 || len(itin.Legs[0].Flight.Outbound) == 0 {
+		return ""
+	}
+	t := itin.Legs[0].Flight.Outbound[0].DepartureTime
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("Jan 2")
+}
+
+// bulletCabin returns the cabin class string when non-economy, empty otherwise.
+func bulletCabin(itin search.Itinerary, legIdx int) string {
+	c := legCabin(itin, legIdx)
+	if c == "" || c == string(types.CabinEconomy) {
+		return ""
+	}
+	return c
+}
+
 // printBulletResults renders itineraries as concise numbered bullets.
-// Multi-leg itineraries show per-leg sub-bullets.
+// Multi-leg itineraries show per-leg sub-bullets with price.
 func printBulletResults(w io.Writer, itineraries []search.Itinerary, cur string) {
 	if len(itineraries) == 0 {
 		return
@@ -150,6 +173,7 @@ func printBulletResults(w io.Writer, itineraries []search.Itinerary, cur string)
 		converted, _ := currency.Convert(itin.TotalPrice, cur)
 		dur := formatDuration(itin.TotalTravel)
 		stops := formatStops(itin)
+		depDate := bulletDepartureDate(itin)
 
 		var score string
 		if scored && itin.Score != 0 {
@@ -157,17 +181,27 @@ func printBulletResults(w io.Writer, itineraries []search.Itinerary, cur string)
 		}
 
 		if len(itin.Legs) <= 1 {
-			_, _ = fmt.Fprintf(w, "%d. %s | %s | %s | %s stops | %s%.0f%s\n",
-				i+1, legAirlines(itin, 0), routeString(itin), dur, stops, sym, converted.Amount, score)
+			cabin := bulletCabin(itin, 0)
+			airline := legAirlines(itin, 0)
+			if cabin != "" {
+				airline += " " + cabin
+			}
+			_, _ = fmt.Fprintf(w, "%d. %s | %s %s | %s | %s stops | %s%.0f%s\n",
+				i+1, airline, routeString(itin), depDate, dur, stops, sym, converted.Amount, score)
 		} else {
-			_, _ = fmt.Fprintf(w, "%d. %s | %s%.0f%s\n",
-				i+1, routeString(itin), sym, converted.Amount, score)
+			_, _ = fmt.Fprintf(w, "%d. %s %s | %s%.0f%s\n",
+				i+1, routeString(itin), depDate, sym, converted.Amount, score)
 			for j, leg := range itin.Legs {
+				cabin := bulletCabin(itin, j)
 				airline := legAirlines(itin, j)
+				if cabin != "" {
+					airline += " " + cabin
+				}
 				legDur := formatDuration(leg.Flight.TotalDuration)
 				legStops := leg.Flight.Stops()
-				_, _ = fmt.Fprintf(w, "   Leg %d: %s | %s | %s stops\n",
-					j+1, airline, legDur, fmt.Sprint(legStops))
+				legConverted, _ := currency.Convert(leg.Flight.Price, cur)
+				_, _ = fmt.Fprintf(w, "   Leg %d: %s | %s | %s stops | %s%.0f\n",
+					j+1, airline, legDur, fmt.Sprint(legStops), sym, legConverted.Amount)
 			}
 		}
 	}

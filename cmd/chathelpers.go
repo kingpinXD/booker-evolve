@@ -163,7 +163,7 @@ func chatSearch(ctx context.Context, params tripParams, picker *search.Picker, o
 	defer cancel()
 
 	req := buildRequestFromParams(params)
-	_, _ = fmt.Fprintf(out, "Searching %s -> %s on %s...\n", req.Origin, req.Destination, req.DepartureDate)
+	_, _ = fmt.Fprintln(out, formatSearchParams(params)+"...")
 	if hint := nearbyAirportHint(req.Origin, req.Destination); hint != "" {
 		_, _ = fmt.Fprintf(out, "Tip: %s\n", hint)
 	}
@@ -638,6 +638,73 @@ func relaxFilters(p tripParams) (tripParams, string) {
 		return p, "Relaxed max_duration — now searching all flight durations."
 	default:
 		return p, ""
+	}
+}
+
+// formatSearchParams returns a human-readable summary of search parameters.
+// Example: "Searching DEL -> YYZ on 2025-06-15 (business, flex +/-3 days, max $1200, direct only)"
+func formatSearchParams(p tripParams) string {
+	base := fmt.Sprintf("Searching %s -> %s on %s", p.Origin, p.Destination, p.DepartureDate)
+
+	var opts []string
+	if p.ReturnDate != "" {
+		opts = append(opts, "return "+p.ReturnDate)
+	}
+	if p.Leg2Date != "" {
+		opts = append(opts, "leg2 "+p.Leg2Date)
+	}
+	if p.Cabin != "" && p.Cabin != defaultCabin {
+		opts = append(opts, p.Cabin)
+	}
+	if p.Passengers > 1 {
+		opts = append(opts, fmt.Sprintf("%d pax", p.Passengers))
+	}
+	if p.FlexDays > 0 {
+		opts = append(opts, fmt.Sprintf("flex +/-%d days", p.FlexDays))
+	}
+	if p.DirectOnly {
+		opts = append(opts, "direct only")
+	}
+	if p.MaxPrice > 0 {
+		opts = append(opts, fmt.Sprintf("max $%.0f", p.MaxPrice))
+	}
+	if p.PreferredAlliance != "" {
+		opts = append(opts, p.PreferredAlliance)
+	}
+	if p.DepartureAfter != "" || p.DepartureBefore != "" {
+		opts = append(opts, "depart "+formatTimeRange(p.DepartureAfter, p.DepartureBefore))
+	}
+	if p.ArrivalAfter != "" || p.ArrivalBefore != "" {
+		opts = append(opts, "arrive "+formatTimeRange(p.ArrivalAfter, p.ArrivalBefore))
+	}
+	if p.MaxDurationHours > 0 {
+		opts = append(opts, fmt.Sprintf("max %dh", p.MaxDurationHours))
+	}
+	if p.AvoidAirlines != "" {
+		opts = append(opts, "avoid "+p.AvoidAirlines)
+	}
+	if p.PreferredAirlines != "" {
+		opts = append(opts, "only "+p.PreferredAirlines)
+	}
+	if p.Profile != "" && p.Profile != "budget" {
+		opts = append(opts, p.Profile+" profile")
+	}
+
+	if len(opts) == 0 {
+		return base
+	}
+	return base + " (" + strings.Join(opts, ", ") + ")"
+}
+
+// formatTimeRange returns "HH:MM-HH:MM", handling empty after/before.
+func formatTimeRange(after, before string) string {
+	switch {
+	case after != "" && before != "":
+		return after + "-" + before
+	case after != "":
+		return "after " + after
+	default:
+		return "before " + before
 	}
 }
 

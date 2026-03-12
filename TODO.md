@@ -32,13 +32,12 @@
 - [ ] Run go build ./... && go test ./... && go vet ./...
 
 ## Task 183: Search parameter echo in chat
-**Status:** pending
-**Plan:** Show what parameters are being searched before results appear.
-- [ ] Write tests for formatSearchParams with various param combinations
-- [ ] Implement formatSearchParams(tripParams) string in chathelpers.go
-- [ ] Wire into chatLoop before chatSearch call
-- [ ] Write integration test verifying parameter echo in chatLoop output
-- [ ] Run go build ./... && go test ./... && go vet ./...
+**Status:** done
+**Plan:** Add formatSearchParams(tripParams) string to chathelpers.go. Format: "Searching DEL -> YYZ on 2025-06-15 (economy, flex +/-3 days, max $1200)". Wire into chatSearch to replace the current simple "Searching X -> Y on Z..." line. Files: chathelpers.go, chat_test.go.
+- [x] Write tests for formatSearchParams with various param combinations
+- [x] Implement formatSearchParams(tripParams) string in chathelpers.go
+- [x] Wire into chatSearch to replace simple output line
+- [x] Run go build ./... && go test ./... && go vet ./...
 
 ## Task 184: Context-aware refinement prompt
 **Status:** pending

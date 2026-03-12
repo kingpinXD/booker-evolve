@@ -792,3 +792,6 @@ All 5 tasks completed with zero reverts and zero API calls. Tasks 1-4 ran sequen
 
 ### Session 58, Task 2 -- Auto-retry with relaxed filters on zero results
 Added relaxFilters() to chathelpers.go with priority-ordered filter relaxation (direct_only -> alliance -> airlines -> max_price -> time -> duration). Wired into chatLoop zero-results block with single auto-retry. 9 unit tests + 1 integration test. Uses goto for clean fall-through to results display.
+
+### Session 58, Task 4 -- Search parameter echo in chat
+Added formatSearchParams() to chathelpers.go. Shows all active search parameters in a readable format: "Searching DEL -> YYZ on 2025-06-15 (business, flex +/-3 days, max $1200)". Replaced simple route+date line in chatSearch. formatTimeRange helper handles partial time ranges. 6 unit tests.

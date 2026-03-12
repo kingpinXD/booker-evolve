@@ -3142,6 +3142,78 @@ func TestRelaxFilters_NoFilters(t *testing.T) {
 	}
 }
 
+func TestFormatSearchParams_Basic(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+	}
+	got := formatSearchParams(p)
+	if !strings.Contains(got, "DEL") || !strings.Contains(got, "YYZ") || !strings.Contains(got, "2025-06-15") {
+		t.Errorf("expected route and date in output, got %q", got)
+	}
+}
+
+func TestFormatSearchParams_WithOptions(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		Cabin: "business", FlexDays: 3, MaxPrice: 1200, DirectOnly: true,
+		Passengers: 2, PreferredAlliance: "Star Alliance",
+	}
+	got := formatSearchParams(p)
+	for _, want := range []string{"business", "flex +/-3", "max $1200", "direct only", "2 pax", "Star Alliance"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("expected %q in output, got %q", want, got)
+		}
+	}
+}
+
+func TestFormatSearchParams_RoundTrip(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		ReturnDate: "2025-06-25",
+	}
+	got := formatSearchParams(p)
+	if !strings.Contains(got, "return 2025-06-25") {
+		t.Errorf("expected return date in output, got %q", got)
+	}
+}
+
+func TestFormatSearchParams_Leg2Date(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		Leg2Date: "2025-06-20",
+	}
+	got := formatSearchParams(p)
+	if !strings.Contains(got, "leg2 2025-06-20") {
+		t.Errorf("expected leg2 date in output, got %q", got)
+	}
+}
+
+func TestFormatSearchParams_TimeFilters(t *testing.T) {
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+		DepartureAfter: "08:00", DepartureBefore: "22:00",
+		AvoidAirlines: "BA,LH",
+	}
+	got := formatSearchParams(p)
+	if !strings.Contains(got, "depart 08:00-22:00") {
+		t.Errorf("expected departure time range in output, got %q", got)
+	}
+	if !strings.Contains(got, "avoid BA,LH") {
+		t.Errorf("expected avoid airlines in output, got %q", got)
+	}
+}
+
+func TestFormatSearchParams_MinimalOutput(t *testing.T) {
+	// With no optional params, should just show route and date without parens.
+	p := tripParams{
+		Origin: "DEL", Destination: "YYZ", DepartureDate: "2025-06-15",
+	}
+	got := formatSearchParams(p)
+	if strings.Contains(got, "(") {
+		t.Errorf("expected no parentheses when no optional params, got %q", got)
+	}
+}
+
 // callCountStrategy tracks the number of Search calls and returns different
 // results on each call (empty on first, canned on subsequent).
 type callCountStrategy struct {

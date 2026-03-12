@@ -1,7 +1,7 @@
 APP_NAME := booker
 GO       := go
 
-.PHONY: install build test clean lint vet fmt cover verify evolve evolve-local cron-install cron-uninstall cron-status
+.PHONY: install build test clean lint vet fmt cover verify evolve evolve-local cron-install cron-uninstall cron-status trigger
 
 install:
 	$(GO) install .
@@ -45,3 +45,6 @@ cron-uninstall:
 
 cron-status:
 	bash scripts/install-cron.sh status
+
+trigger:
+	launchctl kickstart gui/$(shell id -u)/com.booker.evolve

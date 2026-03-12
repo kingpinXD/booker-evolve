@@ -148,6 +148,22 @@ func parseOptionIndices(input string) []int {
 	return indices
 }
 
+// legSummary returns "airline, route, duration, stops" for a single leg.
+// Returns empty string when the leg has no outbound segments.
+func legSummary(leg search.Leg) string {
+	segs := leg.Flight.Outbound
+	if len(segs) == 0 {
+		return ""
+	}
+	airline := segs[0].AirlineName
+	if airline == "" {
+		airline = segs[0].Airline
+	}
+	route := segs[0].Origin + " -> " + segs[len(segs)-1].Destination
+	stops := formatLayoverSummary(segs)
+	return fmt.Sprintf("%s, %s, %s, %s", airline, route, formatFlightDuration(leg.Flight.TotalDuration), stops)
+}
+
 // formatOptionDetail returns a detailed summary of a single search result.
 // idx is 1-based.
 func formatOptionDetail(results []search.Itinerary, idx int) string {
@@ -160,17 +176,11 @@ func formatOptionDetail(results []search.Itinerary, idx int) string {
 	fmt.Fprintf(&b, "  Price: $%.0f USD\n", itin.TotalPrice.Amount)
 	fmt.Fprintf(&b, "  Duration: %s\n", formatFlightDuration(itin.TotalTravel))
 	for i, leg := range itin.Legs {
-		segs := leg.Flight.Outbound
-		if len(segs) == 0 {
+		summary := legSummary(leg)
+		if summary == "" {
 			continue
 		}
-		airline := segs[0].AirlineName
-		if airline == "" {
-			airline = segs[0].Airline
-		}
-		route := segs[0].Origin + " -> " + segs[len(segs)-1].Destination
-		stops := formatLayoverSummary(segs)
-		fmt.Fprintf(&b, "  Leg %d: %s, %s, %s, %s\n", i+1, airline, route, formatFlightDuration(leg.Flight.TotalDuration), stops)
+		fmt.Fprintf(&b, "  Leg %d: %s\n", i+1, summary)
 		if leg.Flight.CarbonKg > 0 {
 			fmt.Fprintf(&b, "    CO2: %dkg\n", leg.Flight.CarbonKg)
 		}
@@ -185,7 +195,7 @@ func formatOptionDetail(results []search.Itinerary, idx int) string {
 }
 
 // formatComparison returns a side-by-side comparison of the specified results.
-// indices are 1-based.
+// indices are 1-based. For multi-leg itineraries, shows per-leg details.
 func formatComparison(results []search.Itinerary, indices []int) string {
 	var b strings.Builder
 	b.WriteString("Comparison:\n")
@@ -195,21 +205,19 @@ func formatComparison(results []search.Itinerary, indices []int) string {
 			continue
 		}
 		itin := results[idx-1]
-		airline := ""
-		route := ""
-		stops := ""
-		if len(itin.Legs) > 0 && len(itin.Legs[0].Flight.Outbound) > 0 {
-			seg := itin.Legs[0].Flight.Outbound[0]
-			airline = seg.AirlineName
-			if airline == "" {
-				airline = seg.Airline
+		if len(itin.Legs) <= 1 {
+			// Single-leg: compact one-line format.
+			summary := legSummary(itin.Legs[0])
+			fmt.Fprintf(&b, "  Option %d: %s, $%.0f\n", idx, summary, itin.TotalPrice.Amount)
+		} else {
+			// Multi-leg: show each leg.
+			fmt.Fprintf(&b, "  Option %d: $%.0f, %s\n", idx, itin.TotalPrice.Amount, formatFlightDuration(itin.TotalTravel))
+			for i, leg := range itin.Legs {
+				if summary := legSummary(leg); summary != "" {
+					fmt.Fprintf(&b, "    Leg %d: %s\n", i+1, summary)
+				}
 			}
-			lastSeg := itin.Legs[0].Flight.Outbound[len(itin.Legs[0].Flight.Outbound)-1]
-			route = seg.Origin + " -> " + lastSeg.Destination
-			stops = formatLayoverSummary(itin.Legs[0].Flight.Outbound)
 		}
-		fmt.Fprintf(&b, "  Option %d: %s, %s, %s, %s, $%.0f\n",
-			idx, airline, route, formatFlightDuration(itin.TotalTravel), stops, itin.TotalPrice.Amount)
 	}
 	return b.String()
 }

@@ -379,3 +379,74 @@ func TestBuildJSONItineraries_SegmentsOmittedWhenEmpty(t *testing.T) {
 		t.Error("segments key should be omitted when no segments exist")
 	}
 }
+
+// --- printBulletResults ---
+
+func TestPrintBulletResults_SingleLeg(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 85
+	itin.Reasoning = "good value"
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	if !strings.Contains(out, "1.") {
+		t.Error("expected numbered bullet")
+	}
+	if !strings.Contains(out, "BA") {
+		t.Error("expected airline")
+	}
+	if !strings.Contains(out, "JFK") || !strings.Contains(out, "LHR") {
+		t.Error("expected route airports")
+	}
+	if !strings.Contains(out, "$450") {
+		t.Error("expected price")
+	}
+	if !strings.Contains(out, "Score: 85") {
+		t.Error("expected score when scored")
+	}
+}
+
+func TestPrintBulletResults_MultiLeg(t *testing.T) {
+	leg1 := makeLeg("CX", "DEL", "HKG", basetime, 8*time.Hour, 300,
+		&search.Stopover{City: "Hong Kong", Airport: "HKG", Duration: 72 * time.Hour})
+	leg2 := makeLeg("AC", "HKG", "YYZ", basetime.Add(72*time.Hour), 16*time.Hour, 500, nil)
+	itin := makeItin(leg1, leg2)
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	if !strings.Contains(out, "1.") {
+		t.Error("expected numbered bullet")
+	}
+	// Should show per-leg sub-bullets.
+	if !strings.Contains(out, "Leg 1") {
+		t.Error("expected Leg 1 sub-bullet")
+	}
+	if !strings.Contains(out, "Leg 2") {
+		t.Error("expected Leg 2 sub-bullet")
+	}
+}
+
+func TestPrintBulletResults_NoScore(t *testing.T) {
+	itin := makeItin(makeLeg("BA", "JFK", "LHR", basetime, 7*time.Hour, 450, nil))
+	itin.Score = 0
+
+	var buf bytes.Buffer
+	printBulletResults(&buf, []search.Itinerary{itin}, "USD")
+	out := buf.String()
+
+	if strings.Contains(out, "Score:") {
+		t.Error("should not show score when zero")
+	}
+}
+
+func TestPrintBulletResults_Empty(t *testing.T) {
+	var buf bytes.Buffer
+	printBulletResults(&buf, nil, "USD")
+	if buf.Len() != 0 {
+		t.Errorf("expected empty output for nil itineraries, got %q", buf.String())
+	}
+}

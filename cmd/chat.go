@@ -32,7 +32,7 @@ func init() {
 
 	f := chatCmd.Flags()
 	f.String(keyCurrency, defaultCurrency, "display currency (e.g. CAD, USD, EUR)")
-	f.String(keyFormat, "table", "output format: table or json")
+	f.String(keyFormat, "", "output format: bullet (default), table, or json")
 	f.String(keyProfile, "budget", "ranking profile: budget, comfort, balanced, or eco")
 	f.BoolP(keyVerbose, "v", false, "show debug output")
 	_ = viper.BindPFlags(f)
@@ -221,7 +221,8 @@ func formatComparison(results []search.Itinerary, indices []int) string {
 }
 
 // displayChatResults renders search results to out in the configured format
-// (table or JSON) and displays price insights if available.
+// and displays price insights if available. Defaults to bullet format for
+// readability; "table" and "json" are available as explicit overrides.
 func displayChatResults(out io.Writer, results []search.Itinerary, pi search.PriceInsights) {
 	cur := viper.GetString(keyCurrency)
 	switch viper.GetString(keyFormat) {
@@ -229,11 +230,13 @@ func displayChatResults(out io.Writer, results []search.Itinerary, pi search.Pri
 		if err := printJSONWithInsights(out, results, cur, pi); err != nil {
 			_, _ = fmt.Fprintf(out, "Error: %v\n", err)
 		}
-	default:
+	case "table":
 		printTable(out, results, cur)
-		if s := formatPriceInsights(pi); s != "" {
-			_, _ = fmt.Fprintln(out, s)
-		}
+	default:
+		printBulletResults(out, results, cur)
+	}
+	if s := formatPriceInsights(pi); s != "" {
+		_, _ = fmt.Fprintln(out, s)
 	}
 }
 

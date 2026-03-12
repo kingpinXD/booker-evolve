@@ -10,13 +10,13 @@
 - [x] Run go build && go test ./... && go vet ./...
 
 ## Task 176: Bullet-point display for chat results
-**Status:** pending
+**Status:** done
 **Plan:** Add printBulletResults in display.go for concise per-itinerary bullets. Change displayChatResults default from table to bullet format. Keep --format table/json as overrides.
-- [ ] Write tests for printBulletResults (single-leg, multi-leg, scored, empty)
-- [ ] Implement printBulletResults in display.go
-- [ ] Update displayChatResults to use bullet format by default
-- [ ] Add "bullet" format option, keep table/json as explicit choices
-- [ ] Run go build && go test ./... && go vet ./...
+- [x] Write tests for printBulletResults (single-leg, multi-leg, scored, empty)
+- [x] Implement printBulletResults in display.go
+- [x] Update displayChatResults to use bullet format by default
+- [x] Add "bullet" format option, keep table/json as explicit choices
+- [x] Run go build && go test ./... && go vet ./...
 
 ## Task 177: Truncate Reason column in table
 **Status:** pending

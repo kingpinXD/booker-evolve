@@ -773,3 +773,6 @@ All 5 tasks completed with zero reverts and zero API calls. Tasks 3 and 5 ran in
 
 ### Session 57, Task 1 -- Remove Book column from table output
 Removed "Book" column header and legBookingURL row data from both single-leg and multi-leg table layouts in printTable. BookingURL preserved in JSON output and formatOptionDetail. Updated 3 existing BOOK tests to assert column absence.
+
+### Session 57, Task 2 -- Bullet-point display for chat results
+Added printBulletResults rendering numbered bullets per itinerary with airline, route, duration, stops, price, and optional score. Multi-leg shows per-leg sub-bullets. Changed displayChatResults default from table to bullet format; table and json remain as explicit overrides. Also moved price insights display outside the format switch so it applies to all formats.

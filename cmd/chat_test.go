@@ -2960,6 +2960,37 @@ func TestDisplayChatResults_JSON(t *testing.T) {
 	}
 }
 
+func TestDisplayChatResults_DefaultBullet(t *testing.T) {
+	results := []search.Itinerary{{
+		Legs: []search.Leg{{Flight: types.Flight{
+			Price:         types.Money{Amount: 500, Currency: "USD"},
+			TotalDuration: 14 * time.Hour,
+			Outbound:      []types.Segment{{Airline: "AC", AirlineName: "Air Canada", Origin: "DEL", Destination: "YYZ"}},
+		}}},
+		TotalPrice:  types.Money{Amount: 500, Currency: "USD"},
+		TotalTravel: 14 * time.Hour,
+	}}
+	pi := search.PriceInsights{PriceLevel: "low", TypicalPriceRange: [2]float64{600, 900}}
+
+	var buf strings.Builder
+	viper.Set(keyFormat, "")
+	viper.Set(keyCurrency, "USD")
+	displayChatResults(&buf, results, pi)
+
+	out := buf.String()
+	// Bullet format: numbered list, not a go-pretty table.
+	if !strings.Contains(out, "1.") {
+		t.Errorf("expected numbered bullet in default output, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Air Canada") {
+		t.Errorf("expected airline in bullet output, got:\n%s", out)
+	}
+	// Price insights should still be displayed.
+	if !strings.Contains(out, "low") {
+		t.Errorf("expected price level in output, got:\n%s", out)
+	}
+}
+
 func TestParsePartialParams_ClearFields(t *testing.T) {
 	input := `{"clear_fields":["direct_only","max_price"]}`
 	p, ok := parsePartialParams(input)
